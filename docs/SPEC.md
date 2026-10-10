@@ -269,3 +269,20 @@ RLS applies to every table: `user_id = auth.uid()`. Guest sessions are stored in
 4. **Brand assets:** is there an existing logo or brand, or do we create one?
 5. **Clinical advisor:** will a licensed professional review the prompts and safety flows? Strongly recommended before launch.
 6. **Voice:** is one default voice fine, or does the client want to pick it?
+
+---
+
+## 12. As built (implementation notes)
+
+Where the build differs from the plan above, and why:
+
+| Spec | As built | Why |
+|---|---|---|
+| Public name TBD | Placeholder **"Haven"** in `src/lib/brand.ts` | Keeps "therapy/therapist" out of public copy (§8.6) until the client decides. |
+| Orb via react-three-fiber | A raw WebGL fragment shader (`src/components/presence`) | One full-screen quad doesn't need a 3D library; smaller and faster. A CSS fallback covers reduced motion and devices without WebGL. |
+| Framer Motion for UI | CSS transitions with motion tokens | Fewer dependencies; every duration and easing lives in `tokens.css` for the redesign. |
+| Realtime streaming STT | ElevenLabs Scribe **per utterance** (voice activity detection decides when you've finished), with the browser Web Speech API as fallback | Simpler and robust. Realtime streaming can replace `ServerRecognizer` later without UI changes. |
+| Classifier model | Claude (`claude-opus-5-5`) runs the reply, the per-turn analysis, and the end-of-session reflection | Analysis runs in parallel with the reply, so it doesn't add latency. A cheaper model can be measured against `evals/` later. |
+| Thought Constellations, card export (v1.1) | **Built** | — |
+| Daily reminders, multi-language, PostHog, Sentry | **Not built yet** | They need client decisions and keys. See docs/DEPLOY.md. |
+| — | **Demo mode** when keys are missing | So the whole experience can be reviewed before any accounts or keys exist. |
