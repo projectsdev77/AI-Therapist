@@ -6,7 +6,7 @@ A voice-first AI companion for everyday conversations, emotional support, and se
 
 - **Spec:** [docs/SPEC.md](docs/SPEC.md)
 - **Deploying:** [docs/DEPLOY.md](docs/DEPLOY.md)
-- **Design handoff (for the redesign):** [docs/DESIGN_HANDOFF.md](docs/DESIGN_HANDOFF.md)
+- **Design handoff (for the redesign):** [docs/DESIGN_HANDOFF.md](docs/DESIGN_HANDOFF.md), with the prompt for Claude Design in [docs/design-handoff/PROMPT.md](docs/design-handoff/PROMPT.md)
 - **Client reference mock:** https://ai-therapist-1.lovable.app
 
 ## What's in it
