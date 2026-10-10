@@ -71,6 +71,10 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
   const contextRef = useRef<CompanionContext | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const turnRef = useRef<Promise<void>>(Promise.resolve());
+  // Resolves once the session and context exist, so an early send can't race the opening.
+  const setupRef = useRef<Promise<void> | null>(null);
+  // Sends run one at a time, in order; each new one interrupts the previous reply.
+  const sendChainRef = useRef<Promise<void>>(Promise.resolve());
   const startedRef = useRef(false);
   const toneRef = useRef<Tone>("neutral");
   const firstToneRef = useRef(true);
@@ -172,18 +176,23 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
   const start = useCallback(async () => {
     if (startedRef.current || !profile) return;
     startedRef.current = true;
-    const s = await store.createSession(modeRef.current);
-    sessionRef.current = s;
-    setSession(s);
-    contextRef.current = await buildCompanionContext(store, profile, modeRef.current, s.id);
+    setupRef.current = (async () => {
+      const s = await store.createSession(modeRef.current);
+      sessionRef.current = s;
+      contextRef.current = await buildCompanionContext(store, profile, modeRef.current, s.id);
+      setSession(s);
+    })();
+    await setupRef.current;
     await runTurn();
   }, [store, profile, runTurn]);
 
-  const send = useCallback(
+  const sendNow = useCallback(
     async (raw: string) => {
       const text = raw.trim();
+      if (!text) return;
+      await setupRef.current;
       const s = sessionRef.current;
-      if (!text || !s) return;
+      if (!s) return;
       // Let an interrupted reply land in the history before the new turn.
       interrupt();
       await turnRef.current;
@@ -198,9 +207,19 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
         callbacksRef.current.onRisk?.(risk);
       }
       await store.addMessage({ sessionId: s.id, role: "user", content: text, tone: null, riskLevel: risk, interrupted: false });
-      await runTurn();
+      // Not awaited: the next send may interrupt this reply.
+      void runTurn();
     },
     [store, interrupt, runTurn],
+  );
+
+  const send = useCallback(
+    (raw: string) => {
+      const next = sendChainRef.current.then(() => sendNow(raw));
+      sendChainRef.current = next.catch(() => undefined);
+      return next;
+    },
+    [sendNow],
   );
 
   const end = useCallback(async () => {

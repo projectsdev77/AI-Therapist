@@ -176,7 +176,7 @@ export function TalkScreen({ initialMode }: { initialMode: SessionMode }) {
       <footer className="relative z-10 mx-auto flex w-full max-w-2xl items-end gap-2 px-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
         {mode === "text" ? (
           <>
-            <TextComposer onSend={convo.send} onTypingChange={setTyping} disabled={!convo.session} />
+            <TextComposer onSend={convo.send} onTypingChange={setTyping} />
             <Button variant="ghost" size="icon" onClick={() => switchMode("voice")} aria-label="Switch to talking">
               <MicIcon />
             </Button>

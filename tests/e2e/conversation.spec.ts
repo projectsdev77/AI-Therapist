@@ -42,3 +42,25 @@ test("the companion remembers you next time", async ({ page }) => {
   await page.goto("/talk?mode=text");
   await expect(page.getByText(/Welcome back\. Last time we talked about/).first()).toBeVisible();
 });
+
+test("sending right away, or twice quickly, never duplicates replies", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Write", exact: true }).click();
+  await page.getByLabel("I'm 18 or older").check();
+  await page.getByRole("button", { name: "I understand" }).click();
+  await page.waitForURL("**/talk?mode=text");
+  const box = page.getByLabel("Write to your companion");
+  await box.fill("Work has been so stressful.");
+  await box.press("Enter");
+  await box.fill("And I can't sleep.");
+  await box.press("Enter");
+  await page.waitForTimeout(4000);
+
+  const lines = await page.getByRole("dialog", { name: "Conversation transcript", includeHidden: true }).locator("li").allInnerTexts();
+  const user = lines.filter((l) => l.startsWith("You"));
+  const companion = lines.filter((l) => l.startsWith("Companion"));
+  expect(user).toHaveLength(2);
+  expect(new Set(companion).size).toBe(companion.length);
+  // The last line is a complete reply to the last message.
+  expect(lines.at(-1)).toMatch(/^Companion/);
+});
