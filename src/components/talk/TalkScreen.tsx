@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BreatheMode } from "@/components/breathe/BreatheMode";
 import { Captions } from "@/components/captions/Captions";
 import { ConsentSheet } from "@/components/consent/ConsentSheet";
@@ -10,15 +10,18 @@ import { CrisisPanel } from "@/components/safety/CrisisPanel";
 import { HelpSheet } from "@/components/safety/HelpSheet";
 import { Sky } from "@/components/sky/Sky";
 import { Button } from "@/components/ui/Button";
-import { HeartHandIcon, KeyboardIcon, MicIcon, TranscriptIcon, WindIcon } from "@/components/ui/icons";
+import { HeartHandIcon, MicIcon, TranscriptIcon, WindIcon } from "@/components/ui/icons";
 import type { PresenceState, RiskLevel } from "@/lib/conversation/types";
-import { useConversation } from "@/lib/conversation/useConversation";
+import { useConversation, type ConversationCallbacks } from "@/lib/conversation/useConversation";
 import { toneToWeather } from "@/lib/conversation/weather";
 import { useStore } from "@/lib/data/StoreProvider";
 import { riskAtLeast } from "@/lib/safety/keywords";
+import { useServiceStatus } from "@/lib/serviceStatus";
+import { useVoice, type Voice } from "@/lib/voice/useVoice";
 import type { SessionMode } from "@/lib/data/types";
 import { TextComposer } from "./TextComposer";
 import { TranscriptSheet } from "./TranscriptSheet";
+import { VoiceControls } from "./VoiceControls";
 
 export function TalkScreen({ initialMode }: { initialMode: SessionMode }) {
   const router = useRouter();
@@ -34,22 +37,63 @@ export function TalkScreen({ initialMode }: { initialMode: SessionMode }) {
   const [panelRisk, setPanelRisk] = useState<RiskLevel | null>(null);
   const [panelExpanded, setPanelExpanded] = useState(false);
 
-  const convo = useConversation(mode, {
-    onRisk: (risk) => {
-      setPanelRisk((prev) => (prev === "acute" ? prev : risk));
-      if (risk === "acute") setPanelExpanded(true);
-    },
+  // Voice and conversation depend on each other; the voice's reply callbacks go through a ref.
+  const voiceRef = useRef<Voice | null>(null);
+  const callbacks = useMemo<ConversationCallbacks>(
+    () => ({
+      onRisk: (risk) => {
+        setPanelRisk((prev) => (prev === "acute" ? prev : risk));
+        if (risk === "acute") setPanelExpanded(true);
+      },
+      onReplyStart: () => voiceRef.current?.callbacks.onReplyStart?.(),
+      onReplyDelta: (t) => voiceRef.current?.callbacks.onReplyDelta?.(t),
+      onReplyEnd: (t, i) => voiceRef.current?.callbacks.onReplyEnd?.(t, i),
+    }),
+    [],
+  );
+  const convo = useConversation(mode, callbacks);
+  const services = useServiceStatus();
+  const voice = useVoice({
+    serverVoice: Boolean(services?.voice),
+    voiceId: profile?.voiceId,
+    phase: convo.phase,
+    onUtterance: convo.send,
+    onBargeIn: convo.interrupt,
+  });
+  useEffect(() => {
+    voiceRef.current = voice;
   });
   const consented = Boolean(profile?.consentedAt);
 
+  // Text starts right away; voice waits for a tap so the greeting can be heard.
   const { start } = convo;
   useEffect(() => {
-    if (consented) void start();
-  }, [consented, start]);
+    if (consented && mode === "text") void start();
+  }, [consented, mode, start]);
+
+  async function startVoice() {
+    await voice.start();
+    void start();
+  }
+
+  function switchMode(next: SessionMode) {
+    if (next === "text") voice.stop();
+    setMode(next);
+  }
+
+  const voiceActive = mode === "voice" && voice.status !== "off" && voice.status !== "error" && voice.status !== "unsupported";
+  const lines = voice.partial ? [...convo.lines, { id: "partial", speaker: "user" as const, text: voice.partial, pending: true }] : convo.lines;
 
   const concerned = riskAtLeast(convo.latestRisk, "elevated") || panelRisk === "acute";
-  const presence: PresenceState =
-    convo.phase === "waiting"
+  const presence: PresenceState = voiceActive
+    ? voice.status === "speaking"
+      ? "speaking"
+      : voice.status === "thinking" || voice.status === "transcribing" || convo.phase === "waiting"
+        ? "thinking"
+        : concerned
+          ? "concerned"
+          : "listening"
+    : convo.phase === "waiting"
       ? "thinking"
       : convo.phase === "streaming"
         ? "speaking"
@@ -61,6 +105,7 @@ export function TalkScreen({ initialMode }: { initialMode: SessionMode }) {
 
   async function endSession() {
     setEnding(true);
+    voice.stop();
     const session = await convo.end();
     router.push(session && convo.userTurns > 0 ? `/history/${session.id}?new=1` : "/");
   }
@@ -105,9 +150,10 @@ export function TalkScreen({ initialMode }: { initialMode: SessionMode }) {
             <Presence
               state={presence}
               tone={convo.tone}
+              getLevel={voiceActive ? voice.getLevel : undefined}
               className={panelRisk && panelExpanded ? "w-[min(40vw,18dvh)]" : "w-[min(70vw,38dvh,22rem)]"}
             />
-            <Captions lines={convo.lines} />
+            <Captions lines={lines} />
             {panelRisk && (
               <div className="w-full max-w-xl">
                 <CrisisPanel
@@ -131,17 +177,12 @@ export function TalkScreen({ initialMode }: { initialMode: SessionMode }) {
         {mode === "text" ? (
           <>
             <TextComposer onSend={convo.send} onTypingChange={setTyping} disabled={!convo.session} />
-            <Button variant="ghost" size="icon" onClick={() => setMode("voice")} aria-label="Switch to talking">
+            <Button variant="ghost" size="icon" onClick={() => switchMode("voice")} aria-label="Switch to talking">
               <MicIcon />
             </Button>
           </>
         ) : (
-          <div className="flex w-full items-center justify-center gap-3">
-            <p className="text-sm text-muted">Voice is coming in the next step.</p>
-            <Button variant="ghost" size="icon" onClick={() => setMode("text")} aria-label="Switch to writing">
-              <KeyboardIcon />
-            </Button>
-          </div>
+          <VoiceControls voice={voice} onStart={startVoice} onSwitchToText={() => switchMode("text")} />
         )}
       </footer>
 
