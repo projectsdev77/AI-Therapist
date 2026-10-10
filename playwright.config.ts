@@ -6,8 +6,11 @@ export default defineConfig({
   testDir: "tests/e2e",
   timeout: 30_000,
   retries: process.env.CI ? 1 : 0,
+  // Every test gets a fresh browser context (and so fresh on-device storage).
+  fullyParallel: true,
   use: {
     baseURL: `http://localhost:${PORT}`,
+    locale: "en-US",
     trace: "retain-on-failure",
   },
   projects: [

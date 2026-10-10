@@ -25,7 +25,8 @@ export const metadata: Metadata = {
   },
   description: BRAND.description,
   applicationName: BRAND.name,
-  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: BRAND.name, statusBarStyle: "black-translucent" },
+  icons: { apple: "/icons/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {

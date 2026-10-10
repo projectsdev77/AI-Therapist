@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { PageShell } from "@/components/shell/PageShell";
 import { Button, LinkButton } from "@/components/ui/Button";
@@ -23,7 +22,6 @@ function Section({ title, description, children }: { title: string; description?
 }
 
 export function SettingsView() {
-  const router = useRouter();
   const { store, profile, updateProfile, user, signOut } = useStore();
   const region = useRegion();
   const [name, setName] = useState("");
@@ -31,6 +29,8 @@ export function SettingsView() {
   const [voices, setVoices] = useState<{ id: string; name: string }[]>([]);
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
+  // Optimistic so the switch responds instantly while the save happens.
+  const [memoryOn, setMemoryOn] = useState<boolean | null>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reads browser-only preferences
@@ -60,8 +60,9 @@ export function SettingsView() {
   async function deleteEverything() {
     setDeleting(true);
     await store.deleteEverything();
-    router.push("/");
-    window.location.reload();
+    // Full reload on purpose: clears every in-memory copy of the deleted data.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    window.location.assign("/");
   }
 
   if (!profile) return <PageShell title="Settings">{null}</PageShell>;
@@ -109,11 +110,15 @@ export function SettingsView() {
           <input
             type="checkbox"
             role="switch"
-            checked={profile.memoryEnabled}
-            onChange={(e) => void updateProfile({ memoryEnabled: e.target.checked })}
+            checked={memoryOn ?? profile.memoryEnabled}
+            onChange={(e) => {
+              const on = e.target.checked;
+              setMemoryOn(on);
+              void updateProfile({ memoryEnabled: on }).catch(() => setMemoryOn(null));
+            }}
             className="size-5 accent-[var(--color-accent)]"
           />
-          <span>{profile.memoryEnabled ? "Memory is on" : "Memory is off"}</span>
+          <span>{(memoryOn ?? profile.memoryEnabled) ? "Memory is on" : "Memory is off"}</span>
         </label>
       </Section>
 

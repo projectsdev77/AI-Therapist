@@ -53,7 +53,7 @@
   --color-border: rgba(255, 255, 255, 0.12);
   --color-text: #eef0ff;
   --color-text-muted: #a9adcf;
-  --color-text-faint: #6d7199;
+  --color-text-faint: #8d92bd;
   --color-accent: #b8a6ff;
   --color-accent-strong: #d7ccff;
   --color-on-accent: #160f33;
@@ -100,12 +100,12 @@
     --color-border: rgba(60, 40, 90, 0.14);
     --color-text: #2a2140;
     --color-text-muted: #5e5577;
-    --color-text-faint: #958cab;
+    --color-text-faint: #6a6085;
     --color-accent: #6d55c9;
     --color-accent-strong: #4f3aa3;
     --color-on-accent: #ffffff;
     --color-focus: #c86a2a;
-    --color-care: #b5582a;
+    --color-care: #97441a;
     --color-care-surface: rgba(200, 106, 42, 0.1);
 
     --tone-neutral: #8a86d8;
@@ -143,12 +143,12 @@
   --color-border: rgba(60, 40, 90, 0.14);
   --color-text: #2a2140;
   --color-text-muted: #5e5577;
-  --color-text-faint: #958cab;
+  --color-text-faint: #6a6085;
   --color-accent: #6d55c9;
   --color-accent-strong: #4f3aa3;
   --color-on-accent: #ffffff;
   --color-focus: #c86a2a;
-  --color-care: #b5582a;
+  --color-care: #97441a;
   --color-care-surface: rgba(200, 106, 42, 0.1);
 
   --tone-neutral: #8a86d8;
