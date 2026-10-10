@@ -27,11 +27,11 @@ interface Params {
 
 /** Motion character of each state. Tuned to feel unhurried. */
 export const PRESENCE_STATES: Record<PresenceState, Params> = {
-  idle: { scale: 1, wobble: 0.035, swirl: 0.12, ripple: 0, glow: 1, breathAmp: 0.04, breathPeriod: 10 },
-  listening: { scale: 1.05, wobble: 0.05, swirl: 0.18, ripple: 1, glow: 1.15, breathAmp: 0.015, breathPeriod: 10 },
-  thinking: { scale: 0.9, wobble: 0.028, swirl: 0.9, ripple: 0, glow: 0.9, breathAmp: 0.02, breathPeriod: 6 },
-  speaking: { scale: 1.02, wobble: 0.05, swirl: 0.25, ripple: 0.6, glow: 1.2, breathAmp: 0.01, breathPeriod: 10 },
-  concerned: { scale: 0.97, wobble: 0.014, swirl: 0.05, ripple: 0, glow: 1.1, breathAmp: 0.03, breathPeriod: 12 },
+  idle: { scale: 1, wobble: 0.022, swirl: 0.12, ripple: 0, glow: 1, breathAmp: 0.04, breathPeriod: 10 },
+  listening: { scale: 1.05, wobble: 0.032, swirl: 0.18, ripple: 1, glow: 1.15, breathAmp: 0.015, breathPeriod: 10 },
+  thinking: { scale: 0.9, wobble: 0.018, swirl: 0.9, ripple: 0, glow: 0.9, breathAmp: 0.02, breathPeriod: 6 },
+  speaking: { scale: 1.02, wobble: 0.03, swirl: 0.25, ripple: 0.6, glow: 1.2, breathAmp: 0.01, breathPeriod: 10 },
+  concerned: { scale: 0.97, wobble: 0.01, swirl: 0.05, ripple: 0, glow: 1.1, breathAmp: 0.03, breathPeriod: 12 },
 };
 
 const STATE_LABELS: Record<PresenceState, string> = {

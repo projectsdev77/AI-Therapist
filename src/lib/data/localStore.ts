@@ -28,10 +28,13 @@ const PROFILE_KEY = "me";
 /** Guest storage: everything stays in this browser (IndexedDB). */
 export class LocalStore implements DataStore {
   readonly kind = "local" as const;
-  private dbPromise: Promise<IDBPDatabase<HavenDB>>;
+  private db: Promise<IDBPDatabase<HavenDB>> | null = null;
 
-  constructor(name = "haven") {
-    this.dbPromise = openDB<HavenDB>(name, 1, {
+  constructor(private readonly name = "haven") {}
+
+  /** Opened lazily so constructing the store during server rendering is safe. */
+  private get dbPromise(): Promise<IDBPDatabase<HavenDB>> {
+    this.db ??= openDB<HavenDB>(this.name, 1, {
       upgrade(db) {
         db.createObjectStore("profile");
         db.createObjectStore("sessions", { keyPath: "id" }).createIndex("byStartedAt", "startedAt");
@@ -43,6 +46,7 @@ export class LocalStore implements DataStore {
         db.createObjectStore("safetyEvents", { keyPath: "id" });
       },
     });
+    return this.db;
   }
 
   async getProfile(): Promise<Profile> {

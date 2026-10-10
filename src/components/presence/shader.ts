@@ -98,7 +98,9 @@ void main() {
   float highlight = smoothstep(radius * 0.9, 0.0, length(uv - vec2(-0.09, 0.11) * u_scale));
   col += highlight * 0.16;
 
-  float glow = exp(-max(d, 0.0) * 10.0) * (0.36 + u_level * 0.25) * u_glow;
+  float glow = exp(-max(d, 0.0) * 12.0) * (0.36 + u_level * 0.25) * u_glow;
+  // Fade to nothing before the canvas edge so the glow never shows a square.
+  glow *= smoothstep(0.5, 0.36, r);
   // Premultiplied: body over glow.
   float alpha = body + glow * (1.0 - body);
   vec3 outCol = col * body + u_color * glow * (1.0 - body);
