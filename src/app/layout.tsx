@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import { BRAND } from "@/lib/brand";
+import { InlineScript } from "@/components/InlineScript";
+import { THEME_SCRIPT } from "@/lib/theme";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -43,6 +45,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${fraunces.variable} ${inter.variable} h-full`}
       suppressHydrationWarning
     >
+      <head>
+        <InlineScript html={THEME_SCRIPT} />
+      </head>
       <body className="min-h-full">
         <Providers>{children}</Providers>
       </body>
