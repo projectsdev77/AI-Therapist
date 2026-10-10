@@ -1,15 +1,24 @@
 "use client";
 
+import type { User } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { getSupabase } from "@/lib/supabase/client";
 import { LocalStore } from "./localStore";
+import { SupabaseStore } from "./supabaseStore";
 import type { DataStore, Profile } from "./types";
 
 interface StoreContextValue {
+  /** LocalStore for guests, SupabaseStore when signed in. */
   store: DataStore;
   /** null while loading. */
   profile: Profile | null;
+  /** Signed-in user, or null for guests. */
+  user: User | null;
+  /** True until we know whether someone is signed in. */
+  authLoading: boolean;
   updateProfile: (patch: Partial<Omit<Profile, "id" | "createdAt">>) => Promise<Profile>;
   refreshProfile: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -21,22 +30,49 @@ export function getLocalStore(): LocalStore {
 }
 
 export function StoreProvider({ store: injected, children }: { store?: DataStore; children: ReactNode }) {
-  const [store] = useState<DataStore>(() => injected ?? getLocalStore());
+  const supabase = injected ? null : getSupabase();
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(Boolean(supabase));
   const [profile, setProfile] = useState<Profile | null>(null);
+
+  useEffect(() => {
+    if (!supabase) return;
+    let cancelled = false;
+    supabase.auth.getUser().then(({ data }) => {
+      if (cancelled) return;
+      setUser(data.user ?? null);
+      setAuthLoading(false);
+    });
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser((prev) => (prev?.id === session?.user?.id ? prev : (session?.user ?? null)));
+    });
+    return () => {
+      cancelled = true;
+      data.subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  const store = useMemo<DataStore>(() => {
+    if (injected) return injected;
+    if (supabase && user) return new SupabaseStore(supabase, user.id);
+    return getLocalStore();
+  }, [injected, supabase, user]);
 
   const refreshProfile = useCallback(async () => {
     setProfile(await store.getProfile());
   }, [store]);
 
   useEffect(() => {
+    if (authLoading) return;
     let cancelled = false;
-    store.getProfile().then((p) => {
-      if (!cancelled) setProfile(p);
-    });
+    store.getProfile().then(
+      (p) => !cancelled && setProfile(p),
+      (err) => console.error("profile load failed", err),
+    );
     return () => {
       cancelled = true;
     };
-  }, [store]);
+  }, [store, authLoading]);
 
   const updateProfile = useCallback(
     async (patch: Partial<Omit<Profile, "id" | "createdAt">>) => {
@@ -47,7 +83,15 @@ export function StoreProvider({ store: injected, children }: { store?: DataStore
     [store],
   );
 
-  const value = useMemo(() => ({ store, profile, updateProfile, refreshProfile }), [store, profile, updateProfile, refreshProfile]);
+  const signOut = useCallback(async () => {
+    await supabase?.auth.signOut();
+    setUser(null);
+  }, [supabase]);
+
+  const value = useMemo(
+    () => ({ store, profile: authLoading ? null : profile, user, authLoading, updateProfile, refreshProfile, signOut }),
+    [store, profile, user, authLoading, updateProfile, refreshProfile, signOut],
+  );
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
 

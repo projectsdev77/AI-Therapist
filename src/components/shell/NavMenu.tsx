@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useStore } from "@/lib/data/StoreProvider";
+import { accountsEnabled } from "@/lib/supabase/config";
 
 const LINKS = [
   { href: "/", label: "Home" },
@@ -17,6 +19,8 @@ export function NavMenu() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const ref = useRef<HTMLDivElement>(null);
+  const { user } = useStore();
+  const links = accountsEnabled && !user ? [...LINKS, { href: "/signin", label: "Sign in" }] : LINKS;
 
   useEffect(() => {
     if (!open) return;
@@ -51,7 +55,7 @@ export function NavMenu() {
           className="absolute right-0 top-12 w-56 overflow-hidden rounded-md border border-border bg-bg shadow-2xl"
         >
           <ul>
-            {LINKS.map((l) => (
+            {links.map((l) => (
               <li key={l.href}>
                 <Link
                   href={l.href}

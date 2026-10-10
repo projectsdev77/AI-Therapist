@@ -11,6 +11,7 @@ import { useStore } from "@/lib/data/StoreProvider";
 import type { Message, Reflection, Session } from "@/lib/data/types";
 import { saveCardImage } from "@/lib/reflection/cardImage";
 import { finalizeSession } from "@/lib/reflection/finalize";
+import { accountsEnabled } from "@/lib/supabase/config";
 import { ReflectionCard } from "./ReflectionCard";
 
 type State =
@@ -23,7 +24,7 @@ type State =
 export function SessionDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { store, profile, refreshProfile } = useStore();
+  const { store, profile, refreshProfile, user } = useStore();
   const [state, setState] = useState<State>({ kind: "loading" });
   const [showTranscript, setShowTranscript] = useState(false);
 
@@ -84,6 +85,18 @@ export function SessionDetail() {
               <ReflectionCard reflection={state.reflection} id="reflection-card" />
             ) : (
               <p className="text-muted">This conversation was too short for a reflection.</p>
+            )}
+
+            {accountsEnabled && !user && state.reflection && (
+              <div className="flex flex-col gap-3 rounded-lg border border-accent bg-surface p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-display text-lg">Want to keep this?</p>
+                  <p className="text-sm text-muted">Right now it&apos;s only on this device. A free account keeps it safe everywhere.</p>
+                </div>
+                <LinkButton href={`/signin?next=/history/${id}`} variant="primary" className="shrink-0">
+                  Create a free account
+                </LinkButton>
+              </div>
             )}
 
             <div className="flex flex-wrap gap-2">
