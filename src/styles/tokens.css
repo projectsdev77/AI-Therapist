@@ -31,6 +31,14 @@
   --ease-breath: cubic-bezier(0.45, 0, 0.55, 1);
   /* Idle breathing of the Presence: seconds per breath (6 breaths/min). */
   --breath-idle-seconds: 10;
+
+  /* Constellation ("Your patterns") is always a night sky, in both themes. */
+  --night-top: #1a1d44;
+  --night-bottom: #070816;
+  --night-star: #f4f1ff;
+  --night-glow: #b8a6ff;
+  --night-line: #d7ccff;
+  --night-label: #d9dcf5;
 }
 
 /* ---------- Twilight (dark) — default ---------- */

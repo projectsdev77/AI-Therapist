@@ -6,9 +6,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Presence } from "@/components/presence/Presence";
 import { TopBar } from "@/components/shell/TopBar";
 import { Button, LinkButton } from "@/components/ui/Button";
-import { ArrowLeftIcon, TrashIcon } from "@/components/ui/icons";
+import { ArrowLeftIcon, DownloadIcon, TrashIcon } from "@/components/ui/icons";
 import { useStore } from "@/lib/data/StoreProvider";
 import type { Message, Reflection, Session } from "@/lib/data/types";
+import { saveCardImage } from "@/lib/reflection/cardImage";
 import { finalizeSession } from "@/lib/reflection/finalize";
 import { ReflectionCard } from "./ReflectionCard";
 
@@ -89,6 +90,11 @@ export function SessionDetail() {
               <LinkButton href="/talk?mode=voice" variant="primary">
                 Talk again
               </LinkButton>
+              {state.reflection && (
+                <Button onClick={() => void saveCardImage(state.reflection!)}>
+                  <DownloadIcon size={18} /> Save image
+                </Button>
+              )}
               <Button onClick={() => setShowTranscript((s) => !s)} aria-expanded={showTranscript}>
                 {showTranscript ? "Hide conversation" : "Read the conversation"}
               </Button>
