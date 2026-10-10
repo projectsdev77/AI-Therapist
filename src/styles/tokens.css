@@ -1,0 +1,168 @@
+/*
+ * Design tokens — the single source of truth for the visual system.
+ *
+ * Every color, font, radius, and motion value used by the app lives here.
+ * Components read these through Tailwind utilities (see globals.css) or,
+ * for canvas/WebGL visuals, through getComputedStyle (see lib/design/tokens.ts).
+ *
+ * Redesign handoff: replace values in this file; keep the variable names.
+ *
+ * Themes: "twilight" (dark, default) and "dawn" (light).
+ * Selection: OS preference, overridden by <html data-theme="dark|light">.
+ */
+
+:root {
+  /* ---------- Typography ---------- */
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --font-body: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* ---------- Radius ---------- */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  /* ---------- Motion ---------- */
+  --motion-fast: 160ms;
+  --motion-base: 420ms;
+  --motion-slow: 900ms;
+  --motion-tone-shift: 4000ms;
+  --ease-calm: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-breath: cubic-bezier(0.45, 0, 0.55, 1);
+  /* Idle breathing of the Presence: seconds per breath (6 breaths/min). */
+  --breath-idle-seconds: 10;
+}
+
+/* ---------- Twilight (dark) — default ---------- */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg: #0e1024;
+  --color-bg-deep: #070816;
+  --color-surface: rgba(255, 255, 255, 0.06);
+  --color-surface-strong: rgba(255, 255, 255, 0.11);
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-text: #eef0ff;
+  --color-text-muted: #a9adcf;
+  --color-text-faint: #6d7199;
+  --color-accent: #b8a6ff;
+  --color-accent-strong: #d7ccff;
+  --color-on-accent: #160f33;
+  --color-focus: #ffd9a8;
+  /* Safety UI: warm and calm, never alarm red. */
+  --color-care: #ffb98a;
+  --color-care-surface: rgba(255, 185, 138, 0.12);
+
+  /* Presence tone palette (orb tint per conversation tone). */
+  --tone-neutral: #9d9ce8;
+  --tone-calm: #7fc8e8;
+  --tone-heavy: #6f6fb8;
+  --tone-anxious: #c79be8;
+  --tone-warm: #ffb38a;
+  --tone-hopeful: #9fe0b5;
+  --tone-frustrated: #e88f8f;
+  --tone-concerned: #ffc59e;
+
+  /* Inner Weather skies: top → bottom gradient stops. */
+  --sky-clear-top: #1d2b5e;
+  --sky-clear-bottom: #4a5fa8;
+  --sky-haze-top: #23243f;
+  --sky-haze-bottom: #4d4a6b;
+  --sky-drizzle-top: #161a30;
+  --sky-drizzle-bottom: #2f3a5c;
+  --sky-storm-top: #0b0c18;
+  --sky-storm-bottom: #2a2440;
+  --sky-breaking-top: #26224d;
+  --sky-breaking-bottom: #b8746a;
+  --sky-unknown-top: #0e1024;
+  --sky-unknown-bottom: #1b1d3a;
+  --sky-glow: rgba(255, 220, 180, 0.35);
+}
+
+/* ---------- Dawn (light) ---------- */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+
+    --color-bg: #fbf5ef;
+    --color-bg-deep: #f3e9e1;
+    --color-surface: rgba(60, 40, 90, 0.05);
+    --color-surface-strong: rgba(60, 40, 90, 0.1);
+    --color-border: rgba(60, 40, 90, 0.14);
+    --color-text: #2a2140;
+    --color-text-muted: #5e5577;
+    --color-text-faint: #958cab;
+    --color-accent: #6d55c9;
+    --color-accent-strong: #4f3aa3;
+    --color-on-accent: #ffffff;
+    --color-focus: #c86a2a;
+    --color-care: #b5582a;
+    --color-care-surface: rgba(200, 106, 42, 0.1);
+
+    --tone-neutral: #8a86d8;
+    --tone-calm: #6ab4d8;
+    --tone-heavy: #7b78b5;
+    --tone-anxious: #b98ad8;
+    --tone-warm: #f2a275;
+    --tone-hopeful: #7fcf9c;
+    --tone-frustrated: #df8282;
+    --tone-concerned: #f4b089;
+
+    --sky-clear-top: #9fc4ef;
+    --sky-clear-bottom: #fde7d6;
+    --sky-haze-top: #d7cfe3;
+    --sky-haze-bottom: #f6eadf;
+    --sky-drizzle-top: #a9b3c8;
+    --sky-drizzle-bottom: #dfe2ea;
+    --sky-storm-top: #6d6a86;
+    --sky-storm-bottom: #b6b0c4;
+    --sky-breaking-top: #b9b3e3;
+    --sky-breaking-bottom: #ffc9a3;
+    --sky-unknown-top: #f3e9e1;
+    --sky-unknown-bottom: #fbf5ef;
+    --sky-glow: rgba(255, 200, 150, 0.45);
+  }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --color-bg: #fbf5ef;
+  --color-bg-deep: #f3e9e1;
+  --color-surface: rgba(60, 40, 90, 0.05);
+  --color-surface-strong: rgba(60, 40, 90, 0.1);
+  --color-border: rgba(60, 40, 90, 0.14);
+  --color-text: #2a2140;
+  --color-text-muted: #5e5577;
+  --color-text-faint: #958cab;
+  --color-accent: #6d55c9;
+  --color-accent-strong: #4f3aa3;
+  --color-on-accent: #ffffff;
+  --color-focus: #c86a2a;
+  --color-care: #b5582a;
+  --color-care-surface: rgba(200, 106, 42, 0.1);
+
+  --tone-neutral: #8a86d8;
+  --tone-calm: #6ab4d8;
+  --tone-heavy: #7b78b5;
+  --tone-anxious: #b98ad8;
+  --tone-warm: #f2a275;
+  --tone-hopeful: #7fcf9c;
+  --tone-frustrated: #df8282;
+  --tone-concerned: #f4b089;
+
+  --sky-clear-top: #9fc4ef;
+  --sky-clear-bottom: #fde7d6;
+  --sky-haze-top: #d7cfe3;
+  --sky-haze-bottom: #f6eadf;
+  --sky-drizzle-top: #a9b3c8;
+  --sky-drizzle-bottom: #dfe2ea;
+  --sky-storm-top: #6d6a86;
+  --sky-storm-bottom: #b6b0c4;
+  --sky-breaking-top: #b9b3e3;
+  --sky-breaking-bottom: #ffc9a3;
+  --sky-unknown-top: #f3e9e1;
+  --sky-unknown-bottom: #fbf5ef;
+  --sky-glow: rgba(255, 200, 150, 0.45);
+}
