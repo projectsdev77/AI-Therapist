@@ -74,18 +74,18 @@ At any point, the user (or the companion, by suggestion) can switch to Breathe. 
 ## 3. Core user flows
 
 ### 3.1 First visit (no account)
-1. The landing page shows the Presence breathing. Copy: *"Hello. I'm here to listen."* Primary button: **Talk**. Secondary: **Write instead**.
-2. A one-time consent sheet explains in plain language that this is not therapy, shows crisis resources, confirms the user is 18+, and states the privacy summary. The user taps "I understand".
+1. The landing page shows the Presence breathing. Copy: *"Hello. I'm here to listen."* Two equal buttons: **Talk** and **Write**. Users can switch between them at any time, even mid-session.
+2. A one-time consent sheet explains in plain language that this is not therapy, shows crisis resources, confirms the user is 18+, and states the privacy summary, including that **conversations are saved so the companion can remember you** (with a link to turn it off). The user taps "I understand".
 3. The browser asks for mic permission. The companion opens: *"What's on your mind today?"*
 4. The conversation runs. Push-to-talk and hands-free (VAD) modes are both available, with hands-free as the default.
 5. The user taps **End**. The reflection card is generated and the sky updates.
 6. A soft prompt says *"Want to keep this? Create a free account."* Guest data lives on the device only until the user signs up.
 
 ### 3.2 Returning user
-The home screen shows today's sky, a "Talk" button, the last reflection card, and an entry into **Your patterns**. The companion may open with context: *"Last time you mentioned the presentation. How did it go?"* This only happens if the user has memory turned on (§7).
+The home screen shows today's sky, a "Talk" button, the last reflection card, and an entry into **Your patterns**. The companion opens with context by default: *"Last time you mentioned the presentation. How did it go?"* Like a therapist reviewing notes before a session, it draws on past sessions, reflection cards, and remembered facts (§5.1, §7).
 
 ### 3.3 Write mode
-Text input for situations where speaking isn't possible. It keeps the same visual system: the orb stays, replies appear as captions, and there are still no bubbles. Typed messages appear briefly as a caption and then fade.
+A full text option, equal to voice, for anyone who prefers typing or can't speak out loud right now. Users can switch between Talk and Write mid-session. It keeps the same visual system: the orb stays, replies appear as captions, and there are still no bubbles. Typed messages appear briefly as a caption and then fade.
 
 ### 3.4 Crisis flow
 See §8.
@@ -103,7 +103,7 @@ See §8.
 - Inner Weather (today and history strip)
 - Breathe mode
 - Guest mode (local only) and accounts (email magic link + Google)
-- Opt-in memory across sessions
+- Memory across sessions, **on by default** (visible and editable)
 - Safety layer: crisis detection, resources, disclaimers, 18+ gate
 - Data controls: export all, delete all
 - Responsive web (mobile-first) and an installable PWA
@@ -129,14 +129,26 @@ See §8.
 
 **Techniques it may use:** reflective listening, open questions, light CBT-style reframing ("what's another way to look at that?"), grounding, values clarification, and suggesting tiny next steps.
 
-**It must not:** diagnose, give medical or medication advice, encourage dependence ("you only need me"), or claim to remember things when memory is off.
+**It must not:** diagnose, give medical or medication advice, encourage dependence ("you only need me"), or claim to remember things it doesn't have (for example, when the user turned memory off).
 
 **Structured side outputs**, produced alongside each reply (via structured output, not shown to the user):
 - `tone`: one of the fixed palette values (drives orb color)
 - `risk_level`: `none | low | elevated | acute` (drives the safety layer)
 - `themes`: short tags (feeds reflection cards and constellations)
 
-**End-of-session pass:** a separate call over the transcript produces the reflection card JSON and the weather state.
+**End-of-session pass:** a separate call over the transcript produces the reflection card JSON, the weather state, and memory updates (new/changed facts plus a refreshed profile summary, §5.1).
+
+
+### 5.1 Memory (on by default)
+A therapist remembers their clients, so the companion does too. Every session is saved, and memory is built in three layers:
+
+1. **Session record:** the full transcript and its reflection card (stored in `sessions`, `messages`, `reflections`).
+2. **Remembered facts:** after each session, the end-of-session pass extracts durable facts and updates existing ones. Examples: people in the user's life ("sister: Maya, close but tense lately"), ongoing situations ("big presentation on the 14th"), goals, what helped before ("box breathing works for them"), and preferences ("prefers direct feedback").
+3. **Client profile summary:** a short running summary, like a therapist's case notes, rewritten after each session from the facts and recent reflections.
+
+At the start of each session the companion receives the profile summary, the relevant facts, and the last 2–3 reflection cards. It uses them naturally ("How did the talk with Maya go?") and never recites them back like a database.
+
+**Guests:** memory works on the device (IndexedDB). On signup, guests can move it into their account.
 
 ---
 
@@ -176,12 +188,12 @@ mic → VAD (client) → STT stream ─┐
 
 ### Data model (Postgres)
 ```
-profiles        (id, display_name, memory_enabled, voice_id, created_at)
+profiles        (id, display_name, memory_enabled default true, voice_id, created_at)
 sessions        (id, user_id, mode[voice|text], started_at, ended_at,
                  weather, tone_start, tone_end)
 messages        (id, session_id, role, content, tone, risk_level, created_at)
 reflections     (id, session_id, title, quotes jsonb, insight, next_step, themes text[])
-memories        (id, user_id, fact, source_session_id, created_at)   -- only if memory_enabled
+memories        (id, user_id, fact, category, source_session_id, created_at, updated_at)
 safety_events   (id, session_id, risk_level, action_taken, created_at)
 ```
 RLS applies to every table: `user_id = auth.uid()`. Guest sessions are stored in IndexedDB and uploaded on signup if the user chooses to keep them.
@@ -202,7 +214,7 @@ RLS applies to every table: `user_id = auth.uid()`. Guest sessions are stored in
 ## 7. Privacy & data
 
 - Data is encrypted in transit (TLS) and at rest (Supabase default).
-- **Memory is opt-in** and visible. Users can see every remembered fact in Settings and delete any of them.
+- **Memory is on by default** and fully visible. A "What I remember about you" page lists every remembered fact. Users can edit or delete any fact, delete individual sessions, or turn memory off entirely (which stops new memories and stops using old ones).
 - **Export all** (JSON + card images) and **Delete everything** (hard delete, within 30 days from backups) are available in Settings.
 - Conversation content never goes to analytics or error tracking.
 - We do not use conversation data to train models. We'll confirm vendor data-retention terms (Anthropic, ElevenLabs) and document them in the privacy policy.
@@ -243,7 +255,7 @@ RLS applies to every table: `user_id = auth.uid()`. Guest sessions are stored in
 | M2 | Text conversation | Claude streaming in Write mode, tone → orb color, safety layer v1 |
 | M3 | Voice | STT/TTS pipeline, VAD, barge-in, orb reacting to real audio |
 | M4 | Reflection | Reflection cards, Inner Weather, history strip |
-| M5 | Accounts & memory | Auth, guest → account migration, opt-in memory, export/delete |
+| M5 | Accounts & memory | Auth, guest → account migration, default-on memory + "What I remember" page, export/delete |
 | M6 | Launch hardening | Evals passing, a11y audit, privacy/legal copy, landing page polish |
 | — | v1.1 | Constellations, card export, reminders, voice choice |
 
