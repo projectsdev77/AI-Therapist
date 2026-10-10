@@ -6,14 +6,16 @@ import { BreatheMode } from "@/components/breathe/BreatheMode";
 import { Captions } from "@/components/captions/Captions";
 import { ConsentSheet } from "@/components/consent/ConsentSheet";
 import { Presence } from "@/components/presence/Presence";
+import { CrisisPanel } from "@/components/safety/CrisisPanel";
 import { HelpSheet } from "@/components/safety/HelpSheet";
 import { Sky } from "@/components/sky/Sky";
 import { Button } from "@/components/ui/Button";
 import { HeartHandIcon, KeyboardIcon, MicIcon, TranscriptIcon, WindIcon } from "@/components/ui/icons";
-import type { PresenceState } from "@/lib/conversation/types";
+import type { PresenceState, RiskLevel } from "@/lib/conversation/types";
 import { useConversation } from "@/lib/conversation/useConversation";
 import { toneToWeather } from "@/lib/conversation/weather";
 import { useStore } from "@/lib/data/StoreProvider";
+import { riskAtLeast } from "@/lib/safety/keywords";
 import type { SessionMode } from "@/lib/data/types";
 import { TextComposer } from "./TextComposer";
 import { TranscriptSheet } from "./TranscriptSheet";
@@ -28,7 +30,16 @@ export function TalkScreen({ initialMode }: { initialMode: SessionMode }) {
   const [breathing, setBreathing] = useState(false);
   const [ending, setEnding] = useState(false);
 
-  const convo = useConversation(mode);
+  // Safety: the panel opens itself on acute risk and offers itself on elevated risk.
+  const [panelRisk, setPanelRisk] = useState<RiskLevel | null>(null);
+  const [panelExpanded, setPanelExpanded] = useState(false);
+
+  const convo = useConversation(mode, {
+    onRisk: (risk) => {
+      setPanelRisk((prev) => (prev === "acute" ? prev : risk));
+      if (risk === "acute") setPanelExpanded(true);
+    },
+  });
   const consented = Boolean(profile?.consentedAt);
 
   const { start } = convo;
@@ -36,8 +47,17 @@ export function TalkScreen({ initialMode }: { initialMode: SessionMode }) {
     if (consented) void start();
   }, [consented, start]);
 
+  const concerned = riskAtLeast(convo.latestRisk, "elevated") || panelRisk === "acute";
   const presence: PresenceState =
-    convo.phase === "waiting" ? "thinking" : convo.phase === "streaming" ? "speaking" : typing ? "listening" : "idle";
+    convo.phase === "waiting"
+      ? "thinking"
+      : convo.phase === "streaming"
+        ? "speaking"
+        : concerned
+          ? "concerned"
+          : typing
+            ? "listening"
+            : "idle";
 
   async function endSession() {
     setEnding(true);
@@ -47,7 +67,8 @@ export function TalkScreen({ initialMode }: { initialMode: SessionMode }) {
 
   return (
     <div className="relative flex h-dvh flex-col overflow-hidden">
-      <Sky weather={toneToWeather(convo.tone)} />
+      {/* In a hard moment the sky goes quiet rather than stormy. */}
+      <Sky weather={concerned ? null : toneToWeather(convo.tone)} />
 
       <header className="relative z-10 flex items-center justify-between gap-2 px-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <Button variant="secondary" onClick={endSession} disabled={ending} className="backdrop-blur">
@@ -74,15 +95,29 @@ export function TalkScreen({ initialMode }: { initialMode: SessionMode }) {
         </p>
       )}
 
-      <main className="relative z-10 flex flex-1 flex-col items-center justify-center gap-4 overflow-hidden px-4">
+      <main className="relative z-10 flex flex-1 flex-col items-center justify-center-safe gap-4 overflow-y-auto px-4 py-2">
         {breathing ? (
           <div className="w-full max-w-md">
             <BreatheMode tone={convo.tone} onClose={() => setBreathing(false)} />
           </div>
         ) : (
           <>
-            <Presence state={presence} tone={convo.tone} className="w-[min(70vw,38dvh,22rem)]" />
+            <Presence
+              state={presence}
+              tone={convo.tone}
+              className={panelRisk && panelExpanded ? "w-[min(40vw,18dvh)]" : "w-[min(70vw,38dvh,22rem)]"}
+            />
             <Captions lines={convo.lines} />
+            {panelRisk && (
+              <div className="w-full max-w-xl">
+                <CrisisPanel
+                  risk={panelRisk}
+                  expanded={panelExpanded}
+                  onExpand={() => setPanelExpanded(true)}
+                  onCollapse={() => setPanelExpanded(false)}
+                />
+              </div>
+            )}
             {convo.error && (
               <p role="alert" className="text-center text-sm text-care">
                 {convo.error}

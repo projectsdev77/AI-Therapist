@@ -28,6 +28,7 @@
   --ease-calm: var(--ease-calm);
 }
 
+@layer base {
 html,
 body {
   background: var(--color-bg);
@@ -50,6 +51,7 @@ body {
   background: var(--color-accent);
   color: var(--color-on-accent);
 }
+}
 
 /* Calm by default: honor reduced-motion everywhere. */
 @media (prefers-reduced-motion: reduce) {
@@ -61,17 +63,4 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-/* Screen-reader-only text. */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
