@@ -42,7 +42,7 @@ export function sessionWeather(tones: Tone[]): Weather {
   const late = lateTones.reduce((s, t) => s + HEAVINESS[t], 0) / lateTones.length;
   const frustrated = tones.filter((t) => t === "frustrated").length / tones.length;
 
-  if (tones.length >= 2 && early >= 1.5 && late <= early - 1) return "breaking";
+  if (tones.length >= 2 && early >= 1.5 && late <= 0.5) return "breaking";
   if (avg >= 2.4 || frustrated >= 0.5) return "storm";
   if (avg >= 1.8) return "drizzle";
   if (avg >= 1.0) return "haze";

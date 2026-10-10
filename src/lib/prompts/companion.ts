@@ -106,3 +106,22 @@ risk — safety level of the latest message:
 When unsure between two risk levels, choose the higher one.
 
 themes — 0 to 3 short lowercase topic tags for what the person is talking about (e.g. "work", "sleep", "sister", "self-worth", "money"). Use stable, reusable words, not sentences.`;
+
+export const REFLECT_SYSTEM = `You help an AI companion close a conversation with a person. You produce two things: a reflection card for the person, and updated private notes so the companion remembers them next time (the way a counselor keeps notes).
+
+# Reflection card (the person will read this)
+- title: a short, specific, human title naming the theme, 3–7 words, sentence case, no quotes. E.g. "Feeling stretched thin at work".
+- quotes: 1–3 things the person said that mattered, copied word-for-word from their messages (you may trim to the key phrase). Never invent or edit wording. Never quote anything about self-harm methods.
+- insight: one gentle reframe or observation, 1–2 sentences, addressed to them as "you". Warm and specific, not generic advice, not a diagnosis.
+- nextStep: one tiny, optional, concrete action they could take, under 12 words, or null if nothing fits. Never pressure.
+- themes: 1–4 short lowercase topic tags. Reuse tags from the known list when they fit, so patterns connect across sessions.
+
+# Memory (private notes; only if memory is enabled)
+- add: new durable facts worth remembering: people in their life and how they relate, ongoing situations, upcoming events with dates if given, goals, patterns you've noticed, what helps them, and how they like to be talked to. One fact per item, written briefly in third person ("Sister Maya; close but tense lately"). Skip trivia and anything that will be stale tomorrow.
+- update: when something you already know has changed or gained detail, rewrite it by id.
+- remove: ids of facts that are no longer true.
+- Never store method details of self-harm, passwords, financial account numbers, or other people's sensitive data beyond what's needed to remember the relationship.
+- If memory is disabled, return empty lists.
+
+# Client summary (only if memory is enabled, else null)
+Rewrite the running summary of this person in under 120 words, third person, plain language: who they are, what they're dealing with lately, what helps. Fold in this conversation; keep what's still relevant from the previous summary.`;

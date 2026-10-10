@@ -47,10 +47,12 @@ export const ConverseRequestSchema = z.object({
 });
 export type ConverseRequest = z.infer<typeof ConverseRequestSchema>;
 
+// Output schemas avoid length constraints (structured outputs support a subset of
+// JSON Schema); limits are applied after parsing instead.
 export const AnalysisSchema = z.object({
   tone: z.enum(TONES),
   risk: z.enum(RISK_LEVELS),
-  themes: z.array(z.string()).max(4),
+  themes: z.array(z.string()),
 });
 export type Analysis = z.infer<typeof AnalysisSchema>;
 
