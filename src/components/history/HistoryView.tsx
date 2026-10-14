@@ -1,23 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PageShell } from "@/components/shell/PageShell";
 import { Sky } from "@/components/sky/Sky";
 import { LinkButton } from "@/components/ui/Button";
+import { ChevronIcon } from "@/components/ui/icons";
 import { WEATHER_LABELS } from "@/lib/conversation/types";
 import { useStore } from "@/lib/data/StoreProvider";
 import type { Reflection, Session } from "@/lib/data/types";
-import { buildDays } from "@/lib/history/days";
+import { buildDays, dayKey } from "@/lib/history/days";
 
-const weekday = new Intl.DateTimeFormat(undefined, { weekday: "short" });
-const longDate = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric" });
+const short = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
+const longDate = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "short", day: "numeric" });
 const time = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+
+type Item = { session: Session; reflection: Reflection | null };
 
 export function HistoryView() {
   const { store } = useStore();
   const [data, setData] = useState<{ sessions: Session[]; reflections: Reflection[] } | null>(null);
-  const stripRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,105 +32,101 @@ export function HistoryView() {
   }, [store]);
 
   const days = useMemo(() => (data ? buildDays(data.sessions, data.reflections, 30) : []), [data]);
-  const withSessions = [...days].reverse().filter((d) => d.sessions.length > 0);
-  const olderSessions = useMemo(() => {
+  const groups = useMemo(() => {
     if (!data) return [];
-    const cutoff = days[0]?.date.getTime() ?? 0;
     const byId = new Map(data.reflections.map((r) => [r.sessionId, r]));
-    return data.sessions.filter((s) => new Date(s.startedAt).getTime() < cutoff).map((s) => ({ session: s, reflection: byId.get(s.id) ?? null }));
-  }, [data, days]);
-
-  useEffect(() => {
-    // Start scrolled to today (the right end).
-    const el = stripRef.current;
-    if (el) el.scrollLeft = el.scrollWidth;
-  }, [days.length]);
+    const today = dayKey(new Date());
+    const out: { key: string; label: string; items: Item[] }[] = [];
+    for (const s of data.sessions) {
+      const d = new Date(s.startedAt);
+      const key = dayKey(d);
+      let g = out.find((x) => x.key === key);
+      if (!g) {
+        g = { key, label: key === today ? "Today" : longDate.format(d), items: [] };
+        out.push(g);
+      }
+      g.items.push({ session: s, reflection: byId.get(s.id) ?? null });
+    }
+    return out;
+  }, [data]);
 
   return (
-    <PageShell title="Your skies" subtitle="Each day's sky comes from how your conversations felt." >
+    <PageShell
+      title={
+        <>
+          Your <span className="accent">skies</span>
+        </>
+      }
+      subtitle="The last 30 days, one sky for each day you came by."
+    >
       {data && data.sessions.length === 0 ? (
         <div className="flex flex-col items-start gap-4">
-          <p className="text-muted">No conversations yet. Your first one will paint today&apos;s sky.</p>
+          <p className="text-muted">No skies yet. Your first conversation will paint today&apos;s.</p>
           <LinkButton href="/talk?mode=voice" variant="primary">
             Start talking
           </LinkButton>
         </div>
       ) : (
-        <>
-          <div
-            ref={stripRef}
-            className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-3 [scrollbar-width:thin]"
-            role="list"
-            aria-label="Last 30 days"
-          >
-            {days.map((d, i) => {
-              const label = `${longDate.format(d.date)}: ${d.weather ? WEATHER_LABELS[d.weather] : "no conversations"}`;
-              const tile = (
-                <>
-                  <div className={`relative h-32 w-14 overflow-hidden rounded-md border ${d.weather ? "border-border" : "border-dashed border-border opacity-40"}`}>
-                    {d.weather && <Sky weather={d.weather} variant="tile" seed={i + 11} className="h-full" />}
-                  </div>
-                  <span className="mt-1 block text-center text-[0.7rem] text-faint">{weekday.format(d.date)}</span>
-                  <span className="block text-center text-xs text-muted">{d.date.getDate()}</span>
-                </>
-              );
-              return (
-                <div key={d.key} role="listitem" className="shrink-0 snap-end">
-                  {d.sessions.length ? (
-                    <a href={`#day-${d.key}`} aria-label={label} className="block rounded-md">
-                      {tile}
-                    </a>
-                  ) : (
-                    <div aria-label={label}>{tile}</div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="mt-10 flex flex-col gap-10">
-            {withSessions.map((d) => (
-              <section key={d.key} id={`day-${d.key}`} className="scroll-mt-24">
-                <h2 className="mb-3 font-display text-xl">{longDate.format(d.date)}</h2>
-                <SessionList items={d.sessions} />
-              </section>
-            ))}
-            {olderSessions.length > 0 && (
-              <section>
-                <h2 className="mb-3 font-display text-xl">Earlier</h2>
-                <SessionList items={olderSessions} showDate />
-              </section>
+        <div className="flex flex-col gap-[22px]">
+          <div>
+            <ol aria-label="Last 30 days" className="grid grid-cols-10 gap-[5px]">
+              {days.map((d) => {
+                const label = `${longDate.format(d.date)}: ${d.weather ? WEATHER_LABELS[d.weather] : "no conversations"}`;
+                const cell = d.weather ? (
+                  <Sky weather={d.weather} variant="swatch" className="aspect-[3/4] rounded-[7px] border border-border" />
+                ) : (
+                  <div className="aspect-[3/4] rounded-[7px] border border-border bg-surface opacity-60" />
+                );
+                return (
+                  <li key={d.key} title={label}>
+                    {d.sessions.length ? (
+                      <a href={`#day-${d.key}`} aria-label={label} className="block rounded-[7px]">
+                        {cell}
+                      </a>
+                    ) : (
+                      <span aria-label={label} className="block">
+                        {cell}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+            {days.length > 0 && (
+              <div className="mt-2 flex justify-between text-[13px] text-faint">
+                <span>{short.format(days[0].date)}</span>
+                <span>Today</span>
+              </div>
             )}
           </div>
-        </>
+
+          {groups.map((g) => (
+            <section key={g.key} id={`day-${g.key}`} className="flex scroll-mt-24 flex-col gap-2">
+              <h2 className="text-sm font-medium text-muted">{g.label}</h2>
+              {g.items.map(({ session, reflection }) => {
+                const weather = reflection?.weather ?? session.weather;
+                return (
+                  <Link
+                    key={session.id}
+                    href={`/history/${session.id}`}
+                    className="flex min-h-16 items-center gap-3.5 rounded-md border border-border bg-surface py-2 pr-3.5 pl-2 shadow-soft transition-colors duration-[var(--motion-base)] hover:bg-surface-strong"
+                  >
+                    <Sky weather={weather} variant="tile" seed={session.id.charCodeAt(1)} className="size-12 shrink-0 overflow-hidden rounded-[12px]" />
+                    <span className="flex flex-1 flex-col">
+                      <span>{reflection?.title ?? session.title ?? "A short conversation"}</span>
+                      <span className="text-sm text-muted">
+                        {time.format(new Date(session.startedAt))}
+                        {weather ? ` · ${WEATHER_LABELS[weather]}` : ""}
+                      </span>
+                    </span>
+                    <ChevronIcon size={18} className="text-faint" />
+                  </Link>
+                );
+              })}
+            </section>
+          ))}
+        </div>
       )}
     </PageShell>
-  );
-}
-
-function SessionList({ items, showDate = false }: { items: { session: Session; reflection: Reflection | null }[]; showDate?: boolean }) {
-  return (
-    <ul className="grid gap-3 sm:grid-cols-2">
-      {items.map(({ session, reflection }) => (
-        <li key={session.id}>
-          <Link
-            href={`/history/${session.id}`}
-            className="flex h-full overflow-hidden rounded-lg border border-border bg-surface transition-colors hover:bg-surface-strong"
-          >
-            <div className="relative w-16 shrink-0">
-              <Sky weather={reflection?.weather ?? session.weather} variant="tile" seed={session.id.charCodeAt(1)} className="h-full" />
-            </div>
-            <div className="p-4">
-              <p className="text-xs text-faint">
-                {showDate ? `${longDate.format(new Date(session.startedAt))} · ` : ""}
-                {time.format(new Date(session.startedAt))} · {session.mode === "voice" ? "Talked" : "Wrote"}
-              </p>
-              <p className="mt-1 font-display text-lg leading-snug">{reflection?.title ?? session.title ?? "A short conversation"}</p>
-              {reflection && <p className="mt-1 line-clamp-2 text-sm text-muted">{reflection.insight}</p>}
-            </div>
-          </Link>
-        </li>
-      ))}
-    </ul>
   );
 }

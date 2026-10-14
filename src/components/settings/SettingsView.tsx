@@ -1,32 +1,79 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { PageShell } from "@/components/shell/PageShell";
-import { Button, LinkButton } from "@/components/ui/Button";
-import { DownloadIcon, TrashIcon } from "@/components/ui/icons";
+import { Button } from "@/components/ui/Button";
+import { ChevronIcon } from "@/components/ui/icons";
+import { Sheet } from "@/components/ui/Sheet";
+import { Switch } from "@/components/ui/Switch";
 import { useStore } from "@/lib/data/StoreProvider";
-import { INTERNATIONAL, REGIONS } from "@/lib/safety/resources";
+import { INTERNATIONAL, REGIONS, resourcesFor } from "@/lib/safety/resources";
 import { useRegion } from "@/lib/safety/useRegion";
 import { accountsEnabled } from "@/lib/supabase/config";
 import { getThemePref, setThemePref, type ThemePref } from "@/lib/theme";
+import Link from "next/link";
 
-function Section({ title, description, children }: { title: string; description?: ReactNode; children: ReactNode }) {
+function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="border-t border-border py-7 first:border-t-0 first:pt-0">
-      <h2 className="font-display text-xl">{title}</h2>
-      {description && <p className="mt-1 text-sm text-muted">{description}</p>}
-      <div className="mt-4">{children}</div>
+    <section className="flex flex-col gap-1.5">
+      <h2 className="ml-1 text-sm font-medium text-muted">{title}</h2>
+      <div className="overflow-hidden rounded-md border border-border bg-surface shadow-soft [&>*+*]:border-t [&>*+*]:border-border">{children}</div>
     </section>
+  );
+}
+
+function RowText({ label, hint, color }: { label: string; hint?: string; color?: string }) {
+  return (
+    <span className="flex flex-1 flex-col text-left">
+      <span className={color}>{label}</span>
+      {hint && <span className="text-sm text-muted">{hint}</span>}
+    </span>
+  );
+}
+
+const rowClass = "flex min-h-14 w-full items-center gap-3 py-1 pr-2 pl-4";
+
+/** A row that opens something, showing its current value. */
+function ValueRow({ label, hint, value, onClick, color }: { label: string; hint?: string; value?: string; onClick: () => void; color?: string }) {
+  return (
+    <button type="button" onClick={onClick} className={`${rowClass} transition-colors duration-[var(--motion-base)] hover:bg-surface-strong`}>
+      <RowText label={label} hint={hint} color={color} />
+      <span className="flex min-h-11 items-center gap-1.5 px-2 text-[15px] text-muted">
+        {value}
+        <ChevronIcon size={16} />
+      </span>
+    </button>
+  );
+}
+
+/** A value row backed by a native select (accessible, platform picker). */
+function SelectRow({ label, hint, value, options, onChange }: { label: string; hint?: string; value: string; options: { value: string; label: string }[]; onChange: (v: string) => void }) {
+  const current = options.find((o) => o.value === value)?.label ?? "";
+  return (
+    <label className={`${rowClass} relative cursor-pointer hover:bg-surface-strong`}>
+      <RowText label={label} hint={hint} />
+      <span className="flex min-h-11 items-center gap-1.5 px-2 text-[15px] text-muted">
+        {current}
+        <ChevronIcon size={16} />
+      </span>
+      <select value={value} onChange={(e) => onChange(e.target.value)} aria-label={label} className="absolute inset-0 cursor-pointer opacity-0">
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
 export function SettingsView() {
   const { store, profile, updateProfile, user, signOut } = useStore();
   const region = useRegion();
-  const [name, setName] = useState("");
   const [theme, setTheme] = useState<ThemePref>("system");
   const [voices, setVoices] = useState<{ id: string; name: string }[]>([]);
+  const [sheet, setSheet] = useState<null | "name" | "account" | "delete">(null);
+  const [nameDraft, setNameDraft] = useState("");
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
   // Optimistic so the switch responds instantly while the save happens.
@@ -40,11 +87,6 @@ export function SettingsView() {
       .then((d: { voices: { id: string; name: string }[] }) => setVoices(d.voices))
       .catch(() => undefined);
   }, []);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync the field once the profile loads
-    if (profile) setName(profile.displayName ?? "");
-  }, [profile]);
 
   async function exportData() {
     const bundle = await store.exportAll();
@@ -66,176 +108,184 @@ export function SettingsView() {
   }
 
   if (!profile) return <PageShell title="Settings">{null}</PageShell>;
+  const remembering = memoryOn ?? profile.memoryEnabled;
 
   return (
     <PageShell title="Settings">
-      <Section title="What should I call you?">
+      <div className="flex flex-col gap-[18px]">
+        <Group title="You">
+          <ValueRow
+            label="Name"
+            value={profile.displayName ?? "Add"}
+            onClick={() => {
+              setNameDraft(profile.displayName ?? "");
+              setSheet("name");
+            }}
+          />
+          <SelectRow
+            label="Region"
+            hint="Used for crisis lines"
+            value={resourcesFor(region).code}
+            options={[...REGIONS, INTERNATIONAL].map((r) => ({ value: r.code, label: r.name }))}
+            onChange={(code) => void updateProfile({ region: code })}
+          />
+        </Group>
+
+        <Group title="Conversations">
+          <div className={rowClass}>
+            <RowText label="Remember between conversations" hint="See everything in What I remember" />
+            <Switch
+              checked={remembering}
+              label="Remember between conversations"
+              onChange={(on) => {
+                setMemoryOn(on);
+                void updateProfile({ memoryEnabled: on }).catch(() => setMemoryOn(null));
+              }}
+            />
+          </div>
+          {voices.length > 0 && (
+            <SelectRow
+              label="Voice"
+              value={profile.voiceId ?? ""}
+              options={[{ value: "", label: "Default" }, ...voices.map((v) => ({ value: v.id, label: v.name }))]}
+              onChange={(v) => void updateProfile({ voiceId: v || null })}
+            />
+          )}
+        </Group>
+
+        <Group title="Look">
+          <div className={rowClass}>
+            <RowText label="Theme" />
+            <div role="radiogroup" aria-label="Theme" className="flex gap-0.5 rounded-pill bg-surface-strong p-[3px]">
+              {(
+                [
+                  ["dark", "Twilight"],
+                  ["light", "Dawn"],
+                  ["system", "Auto"],
+                ] as const
+              ).map(([t, label]) => (
+                <button
+                  key={t}
+                  type="button"
+                  role="radio"
+                  aria-checked={theme === t}
+                  onClick={() => {
+                    setTheme(t);
+                    setThemePref(t);
+                  }}
+                  className={`min-h-11 rounded-pill px-3 text-sm ${theme === t ? "bg-accent font-medium text-on-accent" : "text-text"}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </Group>
+
+        <Group title="Your data">
+          {accountsEnabled && (
+            <ValueRow label="Account" value={user ? (user.email ?? "Signed in") : "Sign in"} onClick={() => setSheet("account")} />
+          )}
+          <ValueRow label="Export everything" value="JSON" onClick={() => void exportData()} />
+          <ValueRow
+            label="Delete everything"
+            hint="Conversations, skies, notes. This can't be undone."
+            color="text-care"
+            onClick={() => {
+              setConfirmText("");
+              setSheet("delete");
+            }}
+          />
+        </Group>
+
+        <p className="text-sm text-faint">
+          {store.kind === "local" ? "Everything is stored in this browser on this device." : "Everything is stored in your account."}{" "}
+          <Link href="/privacy" className="underline underline-offset-2">
+            Privacy
+          </Link>{" "}
+          ·{" "}
+          <Link href="/terms" className="underline underline-offset-2">
+            Terms
+          </Link>
+        </p>
+      </div>
+
+      <Sheet open={sheet === "name"} onClose={() => setSheet(null)} label="Your name">
         <form
-          className="flex gap-2"
+          className="flex flex-col gap-4"
           onSubmit={(e) => {
             e.preventDefault();
-            void updateProfile({ displayName: name.trim() || null });
+            void updateProfile({ displayName: nameDraft.trim() || null }).then(() => setSheet(null));
           }}
         >
+          <h2 className="heading heading-sheet">
+            What should I <span className="accent">call you?</span>
+          </h2>
           <label htmlFor="name" className="sr-only">
             Name
           </label>
           <input
             id="name"
-            value={name}
+            value={nameDraft}
             maxLength={80}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => setNameDraft(e.target.value)}
             placeholder="Your first name or a nickname"
-            className="h-11 flex-1 rounded-md border border-border bg-surface px-3 text-text placeholder:text-faint focus:border-accent focus:outline-none"
+            className="min-h-[52px] rounded-md border border-border bg-surface px-4 text-text placeholder:text-faint focus:border-accent-strong focus:outline-none"
           />
-          <Button type="submit" disabled={(profile.displayName ?? "") === name.trim()}>
+          <Button type="submit" variant="primary" size="lg">
             Save
           </Button>
         </form>
-      </Section>
+      </Sheet>
 
-      <Section
-        title="Memory"
-        description={
-          <>
-            When memory is on, I remember what matters to you between conversations. You can see and edit everything in{" "}
-            <Link href="/memory" className="underline">
-              What I remember
-            </Link>
-            . Turning it off stops me from using or adding to my notes; your conversations stay in your history.
-          </>
-        }
-      >
-        <label className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            role="switch"
-            checked={memoryOn ?? profile.memoryEnabled}
-            onChange={(e) => {
-              const on = e.target.checked;
-              setMemoryOn(on);
-              void updateProfile({ memoryEnabled: on }).catch(() => setMemoryOn(null));
-            }}
-            className="size-5 accent-[var(--color-accent)]"
-          />
-          <span>{(memoryOn ?? profile.memoryEnabled) ? "Memory is on" : "Memory is off"}</span>
-        </label>
-      </Section>
-
-      {voices.length > 0 && (
-        <Section title="Voice">
-          <label htmlFor="voice" className="sr-only">
-            Companion voice
-          </label>
-          <select
-            id="voice"
-            value={profile.voiceId ?? ""}
-            onChange={(e) => void updateProfile({ voiceId: e.target.value || null })}
-            className="h-11 rounded-md border border-border bg-surface px-3 text-text"
-          >
-            <option value="">Default voice</option>
-            {voices.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}
-              </option>
-            ))}
-          </select>
-        </Section>
-      )}
-
-      <Section title="Appearance">
-        <div role="radiogroup" aria-label="Theme" className="flex flex-wrap gap-2">
-          {(["system", "dark", "light"] as const).map((t) => (
-            <button
-              key={t}
-              role="radio"
-              aria-checked={theme === t}
-              onClick={() => {
-                setTheme(t);
-                setThemePref(t);
-              }}
-              className={`rounded-pill border px-4 py-2 text-sm ${theme === t ? "border-accent bg-surface-strong" : "border-border text-muted"}`}
-            >
-              {t === "system" ? "Match my device" : t === "dark" ? "Twilight" : "Dawn"}
-            </button>
-          ))}
-        </div>
-      </Section>
-
-      <Section title="Where you are" description="So the Get help button shows the right crisis lines.">
-        <label htmlFor="region" className="sr-only">
-          Region
-        </label>
-        <select
-          id="region"
-          value={region ?? "INTL"}
-          onChange={(e) => void updateProfile({ region: e.target.value })}
-          className="h-11 rounded-md border border-border bg-surface px-3 text-text"
-        >
-          {[...REGIONS, INTERNATIONAL].map((r) => (
-            <option key={r.code} value={r.code}>
-              {r.name}
-            </option>
-          ))}
-        </select>
-      </Section>
-
-      {accountsEnabled && (
-        <Section
-          title="Account"
-          description={user ? `Signed in as ${user.email ?? "you"}.` : "You're using this device only. Sign in to keep everything across devices."}
-        >
+      <Sheet open={sheet === "account"} onClose={() => setSheet(null)} label="Account">
+        <div className="flex flex-col gap-4">
+          <h2 className="heading heading-sheet">{user ? "Your account" : "Keep your skies"}</h2>
+          <p className="text-muted">
+            {user ? `Signed in as ${user.email ?? "you"}.` : "You're using this device only. Sign in to keep everything across devices."}
+          </p>
           {user ? (
-            <Button onClick={() => void signOut()}>Sign out</Button>
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={() => {
+                setSheet(null);
+                void signOut();
+              }}
+            >
+              Sign out
+            </Button>
           ) : (
-            <LinkButton href="/signin" variant="primary">
-              Sign in or create an account
-            </LinkButton>
+            <Link href="/signin" className="inline-flex min-h-14 items-center justify-center rounded-pill bg-accent text-[17px] font-medium text-on-accent">
+              Sign in
+            </Link>
           )}
-        </Section>
-      )}
-
-      <Section
-        title="Your data"
-        description={store.kind === "local" ? "Everything is stored in this browser on this device." : "Everything is stored in your account."}
-      >
-        <div className="flex flex-col gap-6">
-          <Button onClick={exportData} className="self-start">
-            <DownloadIcon size={18} /> Export everything
-          </Button>
-          <div className="rounded-lg border border-care p-4">
-            <p className="font-medium">Delete everything</p>
-            <p className="mt-1 text-sm text-muted">
-              Permanently deletes every conversation, reflection, and memory{user ? ", and your account" : ""}. This can&apos;t be
-              undone.
-            </p>
-            <label htmlFor="confirm-delete" className="mt-3 block text-sm text-muted">
-              Type DELETE to confirm
-            </label>
-            <div className="mt-1 flex flex-col gap-2 sm:flex-row">
-              <input
-                id="confirm-delete"
-                value={confirmText}
-                onChange={(e) => setConfirmText(e.target.value)}
-                className="h-11 w-full rounded-md border border-border bg-surface px-3 text-text focus:border-care focus:outline-none sm:w-40"
-              />
-              <Button variant="care" disabled={confirmText !== "DELETE" || deleting} onClick={deleteEverything} className="justify-center">
-                <TrashIcon size={18} /> {deleting ? "Deleting…" : "Delete everything"}
-              </Button>
-            </div>
-          </div>
         </div>
-      </Section>
+      </Sheet>
 
-      <p className="pt-4 text-sm text-faint">
-        <Link href="/privacy" className="underline">
-          Privacy summary
-        </Link>{" "}
-        ·{" "}
-        <Link href="/terms" className="underline">
-          Terms
-        </Link>
-      </p>
+      <Sheet open={sheet === "delete"} onClose={() => setSheet(null)} label="Delete everything">
+        <div className="flex flex-col gap-4">
+          <h2 className="heading heading-sheet">
+            Delete <span className="accent">everything?</span>
+          </h2>
+          <p className="text-muted">
+            Every conversation, reflection, sky, and note{user ? ", and your account" : ""} will be permanently deleted. This can&apos;t be undone.
+          </p>
+          <label htmlFor="confirm-delete" className="text-sm text-muted">
+            Type DELETE to confirm
+          </label>
+          <input
+            id="confirm-delete"
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            autoComplete="off"
+            className="min-h-[52px] rounded-md border border-border bg-surface px-4 text-text focus:border-care focus:outline-none"
+          />
+          <Button variant="care" size="lg" disabled={confirmText !== "DELETE" || deleting} onClick={deleteEverything}>
+            {deleting ? "Deleting…" : "Delete everything"}
+          </Button>
+        </div>
+      </Sheet>
     </PageShell>
   );
 }

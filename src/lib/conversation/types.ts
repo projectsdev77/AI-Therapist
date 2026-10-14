@@ -38,5 +38,5 @@ export const WEATHER_LABELS: Record<Weather, string> = {
   haze: "Haze",
   drizzle: "Drizzle",
   storm: "Storm",
-  breaking: "Sun breaking through",
+  breaking: "Rain, then clearing",
 };

@@ -2,14 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { PageShell } from "@/components/shell/PageShell";
+import { Backdrop } from "@/components/shell/Backdrop";
+import { TopBar } from "@/components/shell/TopBar";
 import { LinkButton } from "@/components/ui/Button";
 import { useStore } from "@/lib/data/StoreProvider";
 import type { Reflection } from "@/lib/data/types";
 import { buildConstellation } from "@/lib/patterns/constellation";
 
 const dateFmt = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+/** A night garden in both themes. Brighter means more often. */
 export function PatternsView() {
   const { store } = useStore();
   const [reflections, setReflections] = useState<Reflection[] | null>(null);
@@ -23,35 +26,43 @@ export function PatternsView() {
     };
   }, [store]);
 
-  const constellation = useMemo(
+  const { stars, links } = useMemo(
     () => buildConstellation((reflections ?? []).map((r) => ({ themes: r.themes, sessionId: r.sessionId, createdAt: r.createdAt }))),
     [reflections],
   );
-  const pos = new Map(constellation.stars.map((s) => [s.id, s]));
-  const maxCount = Math.max(1, ...constellation.stars.map((s) => s.count));
-  const selectedStar = selected ? pos.get(selected) : undefined;
-  const selectedReflections = (reflections ?? []).filter((r) => selectedStar?.sessionIds.includes(r.sessionId));
+  const pos = new Map(stars.map((s) => [s.id, s]));
+  const maxCount = Math.max(1, ...stars.map((s) => s.count));
+  // Default to the theme that comes up most.
+  const current = selected ?? [...stars].sort((a, b) => b.count - a.count)[0]?.id ?? null;
+  const currentStar = current ? pos.get(current) : undefined;
+  const items = (reflections ?? []).filter((r) => currentStar?.sessionIds.includes(r.sessionId));
 
   return (
-    <PageShell title="Your patterns" subtitle="Things you keep coming back to, and how they connect." >
+    <div className="relative flex min-h-dvh flex-col text-night-label" data-theme="dark">
+      <Backdrop weather={null} night />
+      <TopBar back />
+      <div className="relative mx-auto w-full max-w-[640px] px-4 pt-3">
+        <h1 className="heading text-night-star">
+          Your <span className="accent">patterns</span>
+        </h1>
+        <p className="mt-1 text-night-label">Things that keep coming up. Brighter means more often.</p>
+      </div>
+
       {reflections && reflections.length < 2 ? (
-        <div className="flex flex-col items-start gap-4">
-          <p className="text-muted">Patterns appear after a couple of conversations. Each one adds stars to your sky.</p>
+        <div className="relative mx-auto flex w-full max-w-[640px] flex-col items-start gap-4 px-4 pt-8">
+          <p>Patterns appear after a couple of conversations. Each one adds stars to your sky.</p>
           <LinkButton href="/talk?mode=voice" variant="primary">
             Start talking
           </LinkButton>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-[1fr_18rem]">
-          <div
-            className="relative aspect-square overflow-hidden rounded-lg border border-border"
-            style={{ background: "radial-gradient(circle at 50% 35%, var(--night-top), var(--night-bottom) 80%)" }}
-          >
-            <svg viewBox="0 0 100 100" className="absolute inset-0 size-full" role="group" aria-label="Theme constellation">
-              {constellation.links.map((l) => {
+        <>
+          <div className="relative mx-auto min-h-[300px] w-full max-w-[640px] flex-1">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden className="absolute inset-0 size-full">
+              {links.map((l) => {
                 const a = pos.get(l.a)!;
                 const b = pos.get(l.b)!;
-                const active = selected === l.a || selected === l.b;
+                const active = current === l.a || current === l.b;
                 return (
                   <line
                     key={`${l.a}-${l.b}`}
@@ -60,74 +71,73 @@ export function PatternsView() {
                     x2={b.x * 100}
                     y2={b.y * 100}
                     stroke="var(--night-line)"
-                    strokeOpacity={active ? 0.6 : 0.12 + Math.min(l.weight, 4) * 0.06}
-                    strokeWidth={active ? 0.35 : 0.2}
+                    strokeWidth={1}
+                    vectorEffect="non-scaling-stroke"
+                    opacity={active ? 0.7 : 0.3}
                   />
                 );
               })}
-              {constellation.stars.map((s) => {
-                const r = 0.9 + (s.count / maxCount) * 1.8;
-                const isSel = selected === s.id;
-                return (
-                  <g
-                    key={s.id}
-                    role="button"
-                    tabIndex={0}
-                    aria-pressed={isSel}
-                    aria-label={`${s.id}: ${s.count} conversation${s.count === 1 ? "" : "s"}`}
-                    onClick={() => setSelected(isSel ? null : s.id)}
-                    onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setSelected(isSel ? null : s.id))}
-                    className="cursor-pointer focus:outline-none"
-                  >
-                    <circle cx={s.x * 100} cy={s.y * 100} r={r * 3} fill="var(--night-glow)" opacity={0.1 + s.recency * 0.15} pointerEvents="none" />
-                    <circle cx={s.x * 100} cy={s.y * 100} r={Math.max(r + 1.5, 3.5)} fill="transparent" />
-                    <circle cx={s.x * 100} cy={s.y * 100} r={r} fill="var(--night-star)" opacity={0.55 + s.recency * 0.45} />
-                    {isSel && <circle cx={s.x * 100} cy={s.y * 100} r={r + 1.2} fill="none" stroke="var(--color-focus)" strokeWidth={0.3} />}
-                    <text
-                      x={s.x * 100}
-                      y={s.y * 100 + r + 3.2}
-                      textAnchor="middle"
-                      fontSize={2.6}
-                      fill="var(--night-label)"
-                      opacity={isSel ? 1 : 0.75}
-                      pointerEvents="none"
-                      style={{ fontFamily: "var(--font-body)" }}
-                    >
-                      {s.id}
-                    </text>
-                  </g>
-                );
-              })}
             </svg>
+            {stars.map((s) => {
+              const f = s.count / maxCount;
+              const size = 5 + 5 * f;
+              const isSel = current === s.id;
+              // Stars near the right edge put their label on the left so it never clips.
+              const labelLeft = s.x > 0.68;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  aria-pressed={isSel}
+                  aria-label={`${capitalize(s.id)}, ${s.count} conversation${s.count === 1 ? "" : "s"}`}
+                  onClick={() => setSelected(s.id)}
+                  className={`absolute flex min-h-11 min-w-11 -translate-y-[22px] flex-col ${labelLeft ? "translate-x-[22px] items-end" : "-translate-x-[22px] items-start"}`}
+                  style={labelLeft ? { right: `${(1 - s.x) * 100}%`, top: `${s.y * 100}%` } : { left: `${s.x * 100}%`, top: `${s.y * 100}%` }}
+                >
+                  <span className="flex size-11 items-center justify-center">
+                    <span
+                      className="block rounded-full bg-night-star"
+                      style={{
+                        width: size,
+                        height: size,
+                        opacity: 0.6 + 0.4 * s.recency,
+                        boxShadow: `0 0 ${8 + 16 * f}px ${1 + 5 * f}px var(--night-glow)`,
+                      }}
+                    />
+                  </span>
+                  <span className={`-mt-2 text-sm whitespace-nowrap ${labelLeft ? "mr-3" : "ml-3"} ${isSel ? "font-medium text-night-star" : ""}`}>{capitalize(s.id)}</span>
+                </button>
+              );
+            })}
           </div>
 
-          <aside aria-live="polite">
-            {selectedStar ? (
-              <>
-                <h2 className="font-display text-2xl">{selectedStar.id}</h2>
-                <p className="mt-1 text-sm text-muted">
-                  Came up in {selectedStar.count} conversation{selectedStar.count === 1 ? "" : "s"}.
-                </p>
-                <ul className="mt-4 flex flex-col gap-2">
-                  {selectedReflections.map((r) => (
-                    <li key={r.id}>
-                      <Link href={`/history/${r.sessionId}`} className="block rounded-md border border-border p-3 hover:bg-surface">
-                        <p className="text-xs text-faint">{dateFmt.format(new Date(r.createdAt))}</p>
-                        <p className="font-display">{r.title}</p>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            ) : (
-              <p className="text-muted">
-                Each star is something you&apos;ve talked about. Bigger stars come up more often, brighter ones more recently, and lines
-                connect things you talked about together. Tap a star to see those conversations.
-              </p>
-            )}
-          </aside>
-        </div>
+          {currentStar && (
+            <section
+              aria-live="polite"
+              className="relative mx-auto flex w-full max-w-[640px] flex-col gap-1.5 rounded-t-lg bg-[rgba(244,246,232,0.07)] px-4 pt-[18px] pb-[30px]"
+            >
+              <h2 className="text-sm">
+                {capitalize(currentStar.id)} · {currentStar.count} conversation{currentStar.count === 1 ? "" : "s"}
+              </h2>
+              <ul>
+                {items.map((r, i) => (
+                  <li key={r.id}>
+                    <Link
+                      href={`/history/${r.sessionId}`}
+                      className={`flex min-h-11 items-center justify-between gap-3 text-night-star ${
+                        i < items.length - 1 ? "border-b border-[rgba(244,246,232,0.12)]" : ""
+                      }`}
+                    >
+                      {r.title}
+                      <span className="shrink-0 text-sm text-night-label">{dateFmt.format(new Date(r.createdAt))}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </>
       )}
-    </PageShell>
+    </div>
   );
 }
