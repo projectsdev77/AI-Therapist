@@ -72,7 +72,7 @@ export function LabClient() {
         <div className="grid gap-8 md:grid-cols-[1fr_18rem]">
           <section className="flex flex-col items-center gap-6">
             {breathe ? (
-              <BreatheMode tone={tone} onClose={() => setBreathe(false)} />
+              <BreatheMode tone={tone} onDone={() => setBreathe(false)} />
             ) : (
               <>
                 <Presence state={state} tone={tone} getLevel={getLevel} className="w-[min(80vw,24rem)]" />

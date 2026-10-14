@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { CheckIcon } from "@/components/ui/icons";
 import { Sheet } from "@/components/ui/Sheet";
-import { BRAND } from "@/lib/brand";
+import { Switch } from "@/components/ui/Switch";
 import { useStore } from "@/lib/data/StoreProvider";
-import { resourcesFor } from "@/lib/safety/resources";
+import { callLabel, resourcesFor } from "@/lib/safety/resources";
 import { useRegion } from "@/lib/safety/useRegion";
 
 export interface ConsentSheetProps {
@@ -17,81 +18,87 @@ export interface ConsentSheetProps {
 
 /** One-time consent before the first conversation (docs/SPEC.md §3.1, §8). */
 export function ConsentSheet({ open, onAccept, onCancel }: ConsentSheetProps) {
-  const { updateProfile } = useStore();
+  const { profile, updateProfile } = useStore();
   const [adult, setAdult] = useState(false);
+  const [remember, setRemember] = useState(profile?.memoryEnabled ?? true);
   const [saving, setSaving] = useState(false);
   const region = useRegion();
   const resources = resourcesFor(region);
-  const primaryLine = resources.lines[0];
+  const primary = resources.lines[0];
 
   async function accept() {
     setSaving(true);
-    await updateProfile({ consentedAt: new Date().toISOString(), region });
+    await updateProfile({ consentedAt: new Date().toISOString(), region, memoryEnabled: remember });
     setSaving(false);
     onAccept();
   }
 
   return (
-    <Sheet open={open} onClose={onCancel} label="Before we talk">
-      <h2 className="font-display text-2xl">Before we talk</h2>
-      <ul className="mt-4 flex flex-col gap-4 text-[0.97rem] leading-relaxed">
-        <li>
-          <strong className="font-medium">I&apos;m an AI companion, not a therapist.</strong>{" "}
-          <span className="text-muted">
-            I can listen, help you reflect, and suggest small steps. I can&apos;t diagnose or treat anything, and I&apos;m not a
-            replacement for professional care.
-          </span>
-        </li>
-        <li>
-          <strong className="font-medium">I&apos;m not for emergencies.</strong>{" "}
-          <span className="text-muted">
-            If you&apos;re in danger, call {resources.emergency}
-            {primaryLine ? (
-              <>
-                {" "}or reach {primaryLine.name} ({primaryLine.display})
-              </>
-            ) : null}
-            . The <span className="text-care">Get help</span> button is always at the top of the screen.
-          </span>
-        </li>
-        <li>
-          <strong className="font-medium">I remember our conversations.</strong>{" "}
-          <span className="text-muted">
-            Your conversations are saved so I can remember what matters to you, the way a counselor keeps notes. You can see,
-            edit, or delete anything I remember, or turn memory off, in Settings.
-          </span>
-        </li>
-        <li>
-          <strong className="font-medium">Your privacy.</strong>{" "}
-          <span className="text-muted">
-            Conversations are never used for advertising or to train AI models. Read the{" "}
-            <Link href="/privacy" className="underline underline-offset-2">
-              privacy summary
-            </Link>
-            .
-          </span>
-        </li>
-      </ul>
+    <Sheet open={open} onClose={onCancel} label="Before we begin">
+      <div className="flex flex-col gap-4">
+        <h2 className="heading heading-sheet">
+          Before we <span className="accent">begin</span>
+        </h2>
+        <ul className="flex flex-col gap-3.5">
+          <li className="flex flex-col">
+            <strong className="font-medium">I&apos;m an AI companion, not a clinician.</strong>
+            <span className="text-[15px] text-muted">I&apos;m here to listen and help you reflect. I can&apos;t diagnose or give medical advice.</span>
+          </li>
+          <li className="flex flex-col">
+            <strong className="font-medium">I&apos;m not for emergencies.</strong>
+            <span className="text-[15px] text-muted">
+              If you might be in danger,{" "}
+              {primary?.call ? (
+                <>
+                  {primary.text ? "call or text" : "call"} <span className="font-medium text-care">{primary.callDisplay ?? primary.call}</span>, or{" "}
+                  {resources.emergency}.
+                </>
+              ) : (
+                <>
+                  call {resources.emergency} or visit <span className="font-medium text-care">{primary?.display}</span>.
+                </>
+              )}
+            </span>
+          </li>
+          <li className="flex items-center gap-2.5">
+            <span className="flex flex-1 flex-col">
+              <strong className="font-medium">I&apos;ll remember our conversations.</strong>
+              <span className="text-[15px] text-muted">So you don&apos;t have to start over. See or change it anytime in What I remember.</span>
+            </span>
+            <Switch checked={remember} onChange={setRemember} label="Remember between conversations" />
+          </li>
+          <li className="flex flex-col">
+            <strong className="font-medium">Your words stay private.</strong>
+            <span className="text-[15px] text-muted">
+              Never sold, never used for ads.{" "}
+              <Link href="/privacy" className="text-accent-strong underline underline-offset-2">
+                How I handle your data
+              </Link>
+            </span>
+          </li>
+        </ul>
 
-      <label className="mt-6 flex items-center gap-3 rounded-md border border-border bg-surface p-3">
-        <input
-          type="checkbox"
-          checked={adult}
-          onChange={(e) => setAdult(e.target.checked)}
-          className="size-5 accent-[var(--color-accent)]"
-        />
-        <span>I&apos;m 18 or older</span>
-      </label>
+        <label className="flex min-h-11 cursor-pointer items-center gap-3">
+          <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} className="peer sr-only" />
+          <span
+            aria-hidden
+            className={`flex size-6 shrink-0 items-center justify-center rounded-[7px] border peer-focus-visible:outline-2 peer-focus-visible:outline-offset-3 peer-focus-visible:outline-focus ${
+              adult ? "border-transparent bg-accent text-on-accent" : "border-border bg-surface"
+            }`}
+          >
+            {adult && <CheckIcon size={16} strokeWidth={2.2} />}
+          </span>
+          I&apos;m 18 or older
+        </label>
 
-      <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button variant="ghost" onClick={onCancel}>
+        <Button variant="primary" size="lg" disabled={!adult || saving} onClick={accept} className="w-full">
+          Let&apos;s begin
+        </Button>
+        <Button variant="ghost" onClick={onCancel} className="-mt-2 w-full">
           Not now
         </Button>
-        <Button variant="primary" disabled={!adult || saving} onClick={accept}>
-          I understand
-        </Button>
+        {primary?.call && <span className="sr-only">{callLabel(primary)}</span>}
       </div>
-      <p className="mt-3 text-center text-xs text-faint sm:text-right">{BRAND.name} is for adults 18 and over.</p>
     </Sheet>
   );
 }

@@ -2,74 +2,51 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { LinkButton } from "@/components/ui/Button";
+import { BreatheIcon, HomeIcon, MemoryIcon, PatternsIcon, SettingsIcon, SkiesIcon } from "@/components/ui/icons";
+import { Sheet } from "@/components/ui/Sheet";
 import { useStore } from "@/lib/data/StoreProvider";
 import { accountsEnabled } from "@/lib/supabase/config";
 
 const LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/history", label: "Your skies" },
-  { href: "/patterns", label: "Your patterns" },
-  { href: "/memory", label: "What I remember" },
-  { href: "/breathe", label: "Breathe" },
-  { href: "/settings", label: "Settings" },
+  { href: "/", label: "Home", Icon: HomeIcon },
+  { href: "/history", label: "Your skies", Icon: SkiesIcon },
+  { href: "/patterns", label: "Your patterns", Icon: PatternsIcon },
+  { href: "/memory", label: "What I remember", Icon: MemoryIcon },
+  { href: "/breathe", label: "Breathe", Icon: BreatheIcon },
+  { href: "/settings", label: "Settings", Icon: SettingsIcon },
 ];
 
-export function NavMenu() {
-  const [open, setOpen] = useState(false);
+/** Bottom sheet on mobile, a 396px panel at the top right on desktop. */
+export function NavMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
-  const ref = useRef<HTMLDivElement>(null);
   const { user } = useStore();
-  const links = accountsEnabled && !user ? [...LINKS, { href: "/signin", label: "Sign in" }] : LINKS;
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: PointerEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("pointerdown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
   return (
-    <div ref={ref} className="relative">
-      <button
-        aria-expanded={open}
-        aria-controls="nav-menu"
-        aria-label="Menu"
-        onClick={() => setOpen((o) => !o)}
-        className="inline-flex h-11 w-11 items-center justify-center rounded-pill text-muted transition-colors hover:bg-surface hover:text-text"
-      >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
-          <path d={open ? "M6 6l12 12M18 6L6 18" : "M4 8h16M4 16h16"} />
-        </svg>
-      </button>
-      {open && (
-        <nav
-          id="nav-menu"
-          className="absolute right-0 top-12 w-56 overflow-hidden rounded-md border border-border bg-bg shadow-2xl"
-        >
-          <ul>
-            {links.map((l) => (
-              <li key={l.href}>
-                <Link
-                  href={l.href}
-                  onClick={() => setOpen(false)}
-                  aria-current={pathname === l.href ? "page" : undefined}
-                  className="block px-4 py-3 text-[0.95rem] transition-colors hover:bg-surface aria-[current=page]:text-accent"
-                >
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+    <Sheet open={open} onClose={onClose} label="Menu" placement="side">
+      <nav aria-label="Menu" className="flex flex-col">
+        {LINKS.map(({ href, label, Icon }) => {
+          const current = pathname === href;
+          return (
+            <Link
+              key={href}
+              href={href}
+              onClick={onClose}
+              aria-current={current ? "page" : undefined}
+              className={`flex min-h-14 items-center gap-3.5 rounded-md px-3 text-lg font-light transition-colors duration-[var(--motion-base)] hover:bg-surface ${
+                current ? "bg-surface-strong" : ""
+              }`}
+            >
+              <Icon size={20} className="text-accent-strong" />
+              {label}
+            </Link>
+          );
+        })}
+      </nav>
+      {accountsEnabled && !user && (
+        <LinkButton href="/signin" onClick={onClose} variant="secondary" size="lg" className="mt-4 w-full font-normal">
+          Sign in
+        </LinkButton>
       )}
-    </div>
+    </Sheet>
   );
 }

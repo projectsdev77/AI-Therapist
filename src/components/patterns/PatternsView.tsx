@@ -33,7 +33,7 @@ export function PatternsView() {
   const selectedReflections = (reflections ?? []).filter((r) => selectedStar?.sessionIds.includes(r.sessionId));
 
   return (
-    <PageShell title="Your patterns" subtitle="Things you keep coming back to, and how they connect." wide>
+    <PageShell title="Your patterns" subtitle="Things you keep coming back to, and how they connect." >
       {reflections && reflections.length < 2 ? (
         <div className="flex flex-col items-start gap-4">
           <p className="text-muted">Patterns appear after a couple of conversations. Each one adds stars to your sky.</p>

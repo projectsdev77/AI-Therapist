@@ -3,65 +3,63 @@
 import { useState } from "react";
 import { Presence } from "@/components/presence/Presence";
 import { Button } from "@/components/ui/Button";
-import { CloseIcon } from "@/components/ui/icons";
+import { Switch } from "@/components/ui/Switch";
 import { BREATH_PATTERNS, PHASE_LABELS } from "@/lib/breath/patterns";
 import { useBreathCycle } from "@/lib/breath/useBreathCycle";
 import type { Tone } from "@/lib/conversation/types";
 
 export interface BreatheModeProps {
   tone?: Tone;
-  onClose?: () => void;
+  onDone?: () => void;
   initialPatternId?: string;
 }
 
-/** The orb becomes a breath pacer. */
-export function BreatheMode({ tone = "calm", onClose, initialPatternId = "box" }: BreatheModeProps) {
+/** The orb paces the breath. */
+export function BreatheMode({ tone = "calm", onDone, initialPatternId = "calm" }: BreatheModeProps) {
   const [patternId, setPatternId] = useState(initialPatternId);
-  const [haptics, setHaptics] = useState(false);
+  const [haptics, setHaptics] = useState(true);
   const pattern = BREATH_PATTERNS.find((p) => p.id === patternId) ?? BREATH_PATTERNS[0];
   const sample = useBreathCycle(pattern, true, haptics);
 
   return (
-    <section aria-label="Breathing exercise" className="flex flex-col items-center gap-6 text-center">
-      <div className="flex w-full items-center justify-between">
-        <h2 className="font-display text-xl">Breathe</h2>
-        {onClose && (
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close breathing exercise">
-            <CloseIcon />
-          </Button>
-        )}
+    <section aria-label="Breathing exercise" className="flex h-full min-h-0 w-full flex-col items-center gap-3">
+      <div className="flex min-h-0 flex-1 items-center justify-center">
+        <Presence state="idle" tone={tone} breath={sample.fullness} className="h-full max-h-[340px] w-auto max-w-[min(86vw,340px)]" />
       </div>
 
-      <Presence state="idle" tone={tone} breath={sample.fullness} className="w-[min(78vw,22rem)]" />
-
-      <div aria-live="polite" className="min-h-16">
-        <p className="font-display text-3xl">{PHASE_LABELS[sample.phase]}</p>
-        <p className="mt-1 text-muted tabular-nums" aria-hidden>
+      <div role="status" aria-live="polite" className="flex flex-col items-center gap-0.5">
+        <span className="voice-person text-[40px] leading-[1.1]">{PHASE_LABELS[sample.phase]}</span>
+        <span className="text-[17px] text-muted tabular-nums" aria-hidden>
           {sample.remaining}
-        </p>
+        </span>
       </div>
 
-      <div role="radiogroup" aria-label="Breathing pattern" className="flex flex-wrap justify-center gap-2">
+      <div role="radiogroup" aria-label="Pattern" className="mt-3 flex gap-1 rounded-pill border border-border bg-surface p-1 shadow-soft">
         {BREATH_PATTERNS.map((p) => (
           <button
             key={p.id}
+            type="button"
             role="radio"
             aria-checked={p.id === patternId}
+            aria-label={`${p.name}: ${p.description}`}
             onClick={() => setPatternId(p.id)}
-            className={`rounded-pill border px-4 py-2 text-sm transition-colors duration-300 ${
-              p.id === patternId ? "border-accent bg-surface-strong text-text" : "border-border text-muted hover:text-text"
+            className={`min-h-11 rounded-pill px-4 text-[15px] transition-colors duration-[var(--motion-base)] ${
+              p.id === patternId ? "bg-accent font-medium text-on-accent" : "text-text"
             }`}
           >
-            <span className="block font-medium">{p.name}</span>
-            <span className="block text-xs text-faint">{p.description}</span>
+            {p.name}
           </button>
         ))}
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-muted">
-        <input type="checkbox" checked={haptics} onChange={(e) => setHaptics(e.target.checked)} className="accent-[var(--color-accent)]" />
-        Gentle vibration on each phase
-      </label>
+      <div className="flex items-center gap-2">
+        <Switch checked={haptics} onChange={setHaptics} label="Haptics" hideLabel={false} />
+        {onDone && (
+          <Button variant="secondary" onClick={onDone} className="!shadow-none">
+            Done
+          </Button>
+        )}
+      </div>
     </section>
   );
 }

@@ -108,8 +108,98 @@
   }
 }
 
+/* Sheets: rise 24px and fade in; close over 420ms. (Tailwind's translate utilities use the
+   separate `translate` property, so this transform composes with centering.) */
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+@keyframes sheet-out {
+  to {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+.sheet-panel {
+  animation: sheet-in var(--motion-sheet) var(--ease-settle) both;
+}
+.sheet-scrim {
+  animation: fade-in var(--motion-base) var(--ease-calm) both;
+}
+[data-state="closing"] .sheet-panel {
+  animation: sheet-out 420ms var(--ease-calm) both;
+}
+[data-state="closing"] .sheet-scrim {
+  animation: fade-out 420ms var(--ease-calm) both;
+}
+
+/* Crisis panel expands over 1s with the settle easing. */
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.panel-in {
+  animation: panel-in var(--motion-slow) var(--ease-settle) both;
+}
+
+/* New caption: from 0 opacity, +8px, over 1s with the settle easing. */
+@keyframes caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.caption-line {
+  animation: caption-in var(--motion-slow) var(--ease-settle) both;
+  transition: color var(--motion-slow) var(--ease-calm);
+}
+@keyframes caption-leave {
+  from {
+    opacity: 0.6;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+.caption-leaving {
+  animation: caption-leave var(--motion-slow) var(--ease-calm) both;
+}
+
+/* Streaming / pending dots: opacity .3↔1, scale .8↔1 over 1.6s. */
+@keyframes hv-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.pulse-dot {
+  animation: hv-pulse 1.6s var(--ease-breath) infinite;
+}
+
 /* Calm by default: honor reduced-motion everywhere. */
 @media (prefers-reduced-motion: reduce) {
+  /* Dots are hidden; the status text carries the state. */
+  .pulse-dot {
+    display: none;
+  }
   *,
   *::before,
   *::after {

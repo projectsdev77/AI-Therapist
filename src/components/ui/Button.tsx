@@ -1,26 +1,30 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
-type Variant = "primary" | "secondary" | "ghost" | "care";
-type Size = "md" | "lg" | "icon";
+type Variant = "primary" | "secondary" | "ghost" | "care" | "careOutline" | "link";
+type Size = "md" | "lg" | "xl" | "icon";
 
 const VARIANTS: Record<Variant, string> = {
-  primary: "bg-accent text-on-accent hover:bg-accent-strong",
-  secondary: "bg-surface-strong text-text hover:bg-surface border border-border",
-  ghost: "text-muted hover:text-text hover:bg-surface",
-  care: "bg-care text-bg hover:opacity-90",
+  primary: "bg-accent text-on-accent font-medium",
+  secondary: "bg-surface text-text border border-border shadow-soft hover:bg-surface-strong",
+  ghost: "bg-transparent text-muted hover:text-text",
+  care: "bg-care-strong text-on-care font-medium",
+  careOutline: "bg-transparent text-care border border-care font-medium",
+  link: "bg-transparent text-text underline underline-offset-4 decoration-border hover:decoration-current",
 };
 
 const SIZES: Record<Size, string> = {
-  md: "h-11 px-5 text-[0.95rem]",
-  lg: "h-14 px-8 text-lg",
-  icon: "h-11 w-11 justify-center",
+  md: "min-h-11 px-5 text-[15px]",
+  lg: "min-h-14 px-6 text-[17px]",
+  xl: "min-h-16 px-8 text-lg",
+  icon: "size-11 justify-center",
 };
 
 export function buttonClass(variant: Variant = "secondary", size: Size = "md", extra = "") {
   return [
-    "inline-flex items-center gap-2 rounded-pill font-medium select-none",
-    "transition-[background-color,color,opacity,transform] duration-300 ease-calm active:scale-[0.98]",
+    "inline-flex items-center justify-center gap-2 rounded-pill select-none",
+    "transition-[background-color,color,border-color,transform] duration-[var(--motion-base)] ease-calm",
+    "active:scale-[0.98] active:duration-[var(--motion-fast)]",
     "disabled:opacity-40 disabled:pointer-events-none",
     VARIANTS[variant],
     SIZES[size],

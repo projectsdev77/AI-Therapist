@@ -10,22 +10,22 @@ export interface BreathPattern {
 
 export const BREATH_PATTERNS: BreathPattern[] = [
   {
+    id: "calm",
+    name: "Calm 4·6",
+    description: "In 4 · out 6",
+    phases: { in: 4, "hold-in": 0, out: 6, "hold-out": 0 },
+  },
+  {
     id: "box",
-    name: "Box breathing",
+    name: "Box 4·4",
     description: "In 4 · hold 4 · out 4 · hold 4",
     phases: { in: 4, "hold-in": 4, out: 4, "hold-out": 4 },
   },
   {
     id: "478",
-    name: "4-7-8",
+    name: "4·7·8",
     description: "In 4 · hold 7 · out 8",
     phases: { in: 4, "hold-in": 7, out: 8, "hold-out": 0 },
-  },
-  {
-    id: "calm",
-    name: "Slow exhale",
-    description: "In 4 · out 6",
-    phases: { in: 4, "hold-in": 0, out: 6, "hold-out": 0 },
   },
 ];
 

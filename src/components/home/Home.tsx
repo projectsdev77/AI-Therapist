@@ -4,18 +4,26 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ConsentSheet } from "@/components/consent/ConsentSheet";
 import { Presence } from "@/components/presence/Presence";
+import { Backdrop } from "@/components/shell/Backdrop";
 import { TopBar } from "@/components/shell/TopBar";
-import { Sky } from "@/components/sky/Sky";
 import { Button } from "@/components/ui/Button";
-import { KeyboardIcon, MicIcon } from "@/components/ui/icons";
+import { MicIcon, WriteIcon } from "@/components/ui/icons";
 import { BRAND } from "@/lib/brand";
 import { useStartConversation } from "@/lib/conversation/startConversation";
-import type { Tone, Weather } from "@/lib/conversation/types";
+import { WEATHER_LABELS, type Tone, type Weather } from "@/lib/conversation/types";
+import { WEATHER_PHRASES } from "@/lib/conversation/weatherCopy";
 import { useStore } from "@/lib/data/StoreProvider";
 import type { Reflection, Session } from "@/lib/data/types";
 import { timeOfDayGreeting } from "@/lib/greeting";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const weekday = new Intl.DateTimeFormat(undefined, { weekday: "long" });
+
+const VALUES = [
+  { t: "It remembers you", d: "And shows you exactly what. Edit or erase anything." },
+  { t: "Every talk, a sky", d: "Each conversation leaves a small sky and a card to keep." },
+  { t: "Yours alone", d: "Private by default. Never sold, never used for ads." },
+];
 
 export function Home() {
   const { store, profile } = useStore();
@@ -47,87 +55,109 @@ export function Home() {
   const name = profile?.displayName;
 
   return (
-    <div className="relative min-h-dvh overflow-hidden">
-      <Sky weather={weather} />
-      <div className="relative flex min-h-dvh flex-col">
-        <TopBar transparent />
+    <div className="relative flex min-h-dvh flex-col">
+      <Backdrop weather={weather} />
+      <TopBar />
 
-        <main className="flex flex-1 flex-col items-center px-4 pb-16">
-          <section className="flex w-full max-w-xl flex-1 flex-col items-center justify-center gap-6 py-6 text-center">
-            <Presence state="idle" tone={tone} className="w-[min(72vw,20rem)]" />
-            <div className="min-h-[5.5rem]">
-              {returning ? (
+      {returning ? (
+        <main className="relative mx-auto flex w-full max-w-[640px] flex-1 flex-col gap-6 px-4 pb-8">
+          <div className="mt-5 flex flex-col gap-2">
+            {weather && (
+              <p className="flex items-center gap-2 text-sm text-muted">
+                {/* eslint-disable-next-line @next/next/no-img-element -- tiny decorative SVG glyph */}
+                <img src={`/weather/${weather}.svg`} alt="" width={18} height={18} className="opacity-80 dark:invert-0" />
+                Today feels like {WEATHER_PHRASES[weather]}
+              </p>
+            )}
+            <h1 className="heading heading-lg">
+              {name ? (
                 <>
-                  <h1 className="font-display text-3xl sm:text-4xl">
-                    {timeOfDayGreeting()}
-                    {name ? `, ${name}` : ""}.
-                  </h1>
-                  <p className="mt-2 text-lg text-muted">How are you, really?</p>
+                  {timeOfDayGreeting()}, <span className="accent">{name}.</span>
                 </>
               ) : (
                 <>
-                  <h1 className="font-display text-3xl sm:text-4xl">Hello. I&apos;m here to listen.</h1>
-                  <p className="mt-2 text-lg text-muted">Talk through your day, untangle a thought, or just breathe.</p>
+                  {timeOfDayGreeting()}. <span className="accent">How are you?</span>
                 </>
               )}
-            </div>
-            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-              <Button variant="primary" size="lg" onClick={() => start("voice")} className="justify-center">
-                <MicIcon /> Talk
-              </Button>
-              <Button variant="secondary" size="lg" onClick={() => start("text")} className="justify-center">
-                <KeyboardIcon /> Write
-              </Button>
-            </div>
-          </section>
-
-          {returning && reflection && (
-            <section aria-labelledby="last-reflection" className="w-full max-w-xl">
-              <h2 id="last-reflection" className="mb-2 text-xs uppercase tracking-widest text-faint">
-                Last time
-              </h2>
-              <Link
-                href={`/history/${reflection.sessionId}`}
-                className="block rounded-lg border border-border bg-surface p-5 backdrop-blur transition-colors hover:bg-surface-strong"
-              >
-                <p className="font-display text-xl">{reflection.title}</p>
-                <p className="mt-2 text-muted">{reflection.insight}</p>
-                {reflection.nextStep && <p className="mt-3 text-sm text-accent">Next step: {reflection.nextStep}</p>}
-              </Link>
-              <div className="mt-4 flex justify-center gap-6 text-sm text-muted">
-                <Link href="/history" className="hover:text-text">Your skies</Link>
-                <Link href="/patterns" className="hover:text-text">Your patterns</Link>
-                <Link href="/breathe" className="hover:text-text">Breathe</Link>
-              </div>
-            </section>
-          )}
-
-          {loaded && !returning && (
-            <section className="grid w-full max-w-3xl gap-4 sm:grid-cols-3">
-              {[
-                ["Talk or write", "Say what's on your mind out loud, or type it. Either way, no chat bubbles — just a calm presence that listens."],
-                ["See how you've been", "Every conversation becomes a sky and a reflection card, so you can see your weeks at a glance."],
-                ["Remembers you", "Like a counselor's notes, I remember what matters to you. You can see and edit all of it."],
-              ].map(([title, body]) => (
-                <div key={title} className="rounded-lg border border-border bg-surface p-5 backdrop-blur">
-                  <h2 className="font-display text-lg">{title}</h2>
-                  <p className="mt-1 text-sm leading-relaxed text-muted">{body}</p>
-                </div>
-              ))}
-            </section>
+            </h1>
+          </div>
+          <div className="flex justify-center">
+            <Presence state="idle" tone={tone} className="w-[min(60vw,220px)]" />
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <Button variant="primary" size="lg" onClick={() => start("voice")}>
+              <MicIcon size={20} /> Talk
+            </Button>
+            <Button variant="primary" size="lg" onClick={() => start("text")}>
+              <WriteIcon size={20} /> Write
+            </Button>
+          </div>
+          {reflection && (
+            <Link
+              href={`/history/${reflection.sessionId}`}
+              className="flex flex-col gap-1.5 rounded-lg border border-border bg-surface px-5 py-[18px] shadow-soft transition-colors duration-[var(--motion-base)] hover:bg-surface-strong"
+            >
+              <span className="text-sm text-muted">
+                Last time · {weekday.format(new Date(reflection.createdAt))} · {WEATHER_LABELS[reflection.weather]}
+              </span>
+              <span className="text-xl font-light tracking-[-0.01em]">{reflection.title}</span>
+              {reflection.quotes[0] && <span className="voice-person text-lg text-muted">&ldquo;{reflection.quotes[0]}&rdquo;</span>}
+              <span className="mt-1 text-[15px] font-medium text-accent-strong">See this reflection</span>
+            </Link>
           )}
         </main>
-
-        <footer className="relative px-4 pb-6 text-center text-xs text-faint">
-          <p>
-            {BRAND.name} is an AI companion, not a therapist, and not for emergencies.
+      ) : (
+        <main className="relative mx-auto flex w-full max-w-[640px] flex-1 flex-col items-center gap-7 px-4 pb-8">
+          <Presence state="idle" tone="neutral" className="mt-2 w-[240px] shrink-0" />
+          <div className="-mt-3 flex flex-col gap-3 text-center">
+            <h1 className="heading heading-lg">
+              Hello. I&apos;m here to <span className="accent">listen.</span>
+            </h1>
+            <p className="text-[17px] text-muted text-pretty">
+              Talk it through out loud, or write it down. Either way, I&apos;m here as long as you need.
+            </p>
+          </div>
+          <div className="grid w-full grid-cols-2 gap-2.5">
+            {(
+              [
+                ["voice", "Talk", "Out loud", MicIcon],
+                ["text", "Write", "In your own words", WriteIcon],
+              ] as const
+            ).map(([mode, title, sub, Icon]) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => start(mode)}
+                className="flex min-h-24 flex-col items-start justify-between rounded-lg bg-accent px-[18px] py-4 text-left text-on-accent transition-transform duration-[var(--motion-fast)] active:scale-[0.98]"
+              >
+                <Icon size={22} />
+                <span className="flex flex-col">
+                  <span className="text-lg font-medium">{title}</span>
+                  <span className="text-sm opacity-85">{sub}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+          {loaded && (
+            <div className="grid w-full grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-2.5">
+              {VALUES.map((v) => (
+                <div key={v.t} className="flex flex-col gap-1 rounded-md border border-border bg-surface px-[18px] py-4 shadow-soft">
+                  <span className="voice-person text-[21px] leading-tight">{v.t}</span>
+                  <span className="text-[15px] text-muted text-pretty">{v.d}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="max-w-[460px] text-center text-sm text-faint text-pretty">
+            {BRAND.name} is an AI companion for everyday reflection. It isn&apos;t a clinician or an emergency service. If you&apos;re in danger,
+            call your local emergency number.
           </p>
-          <p className="mt-2 flex justify-center gap-4">
+          <p className="-mt-4 flex gap-4 text-sm text-faint">
             <Link href="/privacy" className="hover:text-text">Privacy</Link>
             <Link href="/terms" className="hover:text-text">Terms</Link>
           </p>
-        </footer>
-      </div>
+        </main>
+      )}
       <ConsentSheet {...consentProps} />
     </div>
   );

@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { SendIcon } from "@/components/ui/icons";
+import { MicIcon, SendIcon } from "@/components/ui/icons";
 
 export interface TextComposerProps {
   onSend: (text: string) => void;
   onTypingChange?: (typing: boolean) => void;
+  onSwitchToVoice?: () => void;
   disabled?: boolean;
   autoFocus?: boolean;
 }
 
-export function TextComposer({ onSend, onTypingChange, disabled = false, autoFocus = true }: TextComposerProps) {
+/** Composer pill on the sage band: switch to talking, text that grows to 6 lines, send. */
+export function TextComposer({ onSend, onTypingChange, onSwitchToVoice, disabled = false, autoFocus = true }: TextComposerProps) {
   const [value, setValue] = useState("");
   const ref = useRef<HTMLTextAreaElement>(null);
 
@@ -18,7 +20,7 @@ export function TextComposer({ onSend, onTypingChange, disabled = false, autoFoc
     const el = ref.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 6 * 24 + 20)}px`;
   }, [value]);
 
   useEffect(() => {
@@ -38,8 +40,18 @@ export function TextComposer({ onSend, onTypingChange, disabled = false, autoFoc
         e.preventDefault();
         submit();
       }}
-      className="flex w-full items-end gap-2 rounded-lg border border-border bg-surface p-2 backdrop-blur focus-within:border-accent"
+      className="flex min-h-14 items-end gap-1 rounded-[28px] border border-border bg-surface px-1.5 py-1.5 shadow-soft focus-within:border-accent-strong"
     >
+      {onSwitchToVoice && (
+        <button
+          type="button"
+          onClick={onSwitchToVoice}
+          aria-label="Switch to talking"
+          className="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-text"
+        >
+          <MicIcon size={20} />
+        </button>
+      )}
       <label htmlFor="composer" className="sr-only">
         Write to your companion
       </label>
@@ -50,7 +62,7 @@ export function TextComposer({ onSend, onTypingChange, disabled = false, autoFoc
         value={value}
         autoFocus={autoFocus}
         maxLength={4000}
-        placeholder="Write what's on your mind…"
+        placeholder="Write what's on your mind"
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -58,15 +70,15 @@ export function TextComposer({ onSend, onTypingChange, disabled = false, autoFoc
             submit();
           }
         }}
-        className="max-h-40 min-h-11 flex-1 resize-none bg-transparent px-3 py-2.5 text-[1rem] leading-relaxed text-text placeholder:text-faint focus:outline-none focus-visible:outline-none"
+        className="max-h-[164px] min-h-11 flex-1 resize-none bg-transparent px-2 py-2.5 text-base leading-6 text-text placeholder:text-faint focus:outline-none focus-visible:outline-none"
       />
       <button
         type="submit"
         disabled={disabled || !value.trim()}
         aria-label="Send"
-        className="inline-flex size-11 shrink-0 items-center justify-center rounded-pill bg-accent text-on-accent transition-opacity disabled:opacity-30"
+        className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-accent text-on-accent transition-opacity duration-[var(--motion-base)] disabled:opacity-40"
       >
-        <SendIcon size={20} />
+        <SendIcon size={20} strokeWidth={1.8} />
       </button>
     </form>
   );

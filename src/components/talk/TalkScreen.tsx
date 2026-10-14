@@ -8,9 +8,10 @@ import { ConsentSheet } from "@/components/consent/ConsentSheet";
 import { Presence } from "@/components/presence/Presence";
 import { CrisisPanel } from "@/components/safety/CrisisPanel";
 import { HelpSheet } from "@/components/safety/HelpSheet";
-import { Sky } from "@/components/sky/Sky";
+import { Backdrop } from "@/components/shell/Backdrop";
+import { TopBar } from "@/components/shell/TopBar";
 import { Button } from "@/components/ui/Button";
-import { HeartHandIcon, MicIcon, TranscriptIcon, WindIcon } from "@/components/ui/icons";
+import { BreatheIcon, TranscriptIcon } from "@/components/ui/icons";
 import type { PresenceState, RiskLevel } from "@/lib/conversation/types";
 import { useConversation, type ConversationCallbacks } from "@/lib/conversation/useConversation";
 import { toneToWeather } from "@/lib/conversation/weather";
@@ -21,7 +22,7 @@ import { useVoice, type Voice } from "@/lib/voice/useVoice";
 import type { SessionMode } from "@/lib/data/types";
 import { TextComposer } from "./TextComposer";
 import { TranscriptSheet } from "./TranscriptSheet";
-import { VoiceControls } from "./VoiceControls";
+import { VoiceBand, VoiceStart } from "./VoiceControls";
 
 export function TalkScreen({ initialMode }: { initialMode: SessionMode }) {
   const router = useRouter();
@@ -110,81 +111,86 @@ export function TalkScreen({ initialMode }: { initialMode: SessionMode }) {
     router.push(session && convo.userTurns > 0 ? `/history/${session.id}?new=1` : "/");
   }
 
+  const voiceOff = mode === "voice" && !voiceActive;
+  const thinking = convo.phase === "waiting" && convo.lines.length > 0;
+
   return (
     <div className="relative flex h-dvh flex-col overflow-hidden">
       {/* In a hard moment the sky goes quiet rather than stormy. */}
-      <Sky weather={concerned ? null : toneToWeather(convo.tone)} />
-
-      <header className="relative z-10 flex items-center justify-between gap-2 px-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <Button variant="secondary" onClick={endSession} disabled={ending} className="backdrop-blur">
-          {ending ? "Ending…" : "End"}
-        </Button>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" onClick={() => setHelpOpen(true)} className="!text-care" aria-haspopup="dialog">
-            <HeartHandIcon size={20} />
-            <span className="hidden sm:inline">Get help</span>
-            <span className="sr-only sm:hidden">Get help</span>
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setBreathing((b) => !b)} aria-pressed={breathing} aria-label="Breathe">
-            <WindIcon />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setTranscriptOpen(true)} aria-label="Show conversation" aria-haspopup="dialog">
-            <TranscriptIcon />
-          </Button>
-        </div>
-      </header>
+      <Backdrop weather={concerned ? null : toneToWeather(convo.tone)} />
+      <TopBar />
 
       {convo.demo && (
-        <p className="relative z-10 mx-auto mt-2 rounded-pill border border-border bg-surface px-3 py-1 text-xs text-muted backdrop-blur">
+        <p className="relative mx-auto -mt-1 rounded-pill border border-border bg-surface px-3 py-0.5 text-xs text-muted">
           Demo mode · replies are scripted
         </p>
       )}
 
-      <main className="relative z-10 flex flex-1 flex-col items-center justify-center-safe gap-4 overflow-y-auto px-4 py-2">
+      <main className="relative flex min-h-0 flex-1 flex-col">
         {breathing ? (
-          <div className="w-full max-w-md">
-            <BreatheMode tone={convo.tone} onClose={() => setBreathing(false)} />
+          <div className="mx-auto flex min-h-0 w-full max-w-[600px] flex-1 flex-col px-4 pb-8">
+            <BreatheMode tone={convo.tone} onDone={() => setBreathing(false)} />
           </div>
         ) : (
           <>
-            <Presence
-              state={presence}
-              tone={convo.tone}
-              getLevel={voiceActive ? voice.getLevel : undefined}
-              className={panelRisk && panelExpanded ? "w-[min(40vw,18dvh)]" : "w-[min(70vw,38dvh,22rem)]"}
-            />
-            <Captions lines={lines} />
-            {panelRisk && (
-              <div className="w-full max-w-xl">
-                <CrisisPanel
-                  risk={panelRisk}
-                  expanded={panelExpanded}
-                  onExpand={() => setPanelExpanded(true)}
-                  onCollapse={() => setPanelExpanded(false)}
-                />
-              </div>
-            )}
-            {convo.error && (
-              <p role="alert" className="text-center text-sm text-care">
-                {convo.error}
-              </p>
+            <div className="flex min-h-0 flex-1 items-center justify-center py-1">
+              <Presence
+                state={presence}
+                tone={convo.tone}
+                getLevel={voiceActive ? voice.getLevel : undefined}
+                className={`h-full w-auto ${panelRisk === "acute" && panelExpanded ? "max-h-[120px]" : "max-h-[300px]"} max-w-[86vw]`}
+              />
+            </div>
+
+            {voiceOff ? (
+              <VoiceStart voice={voice} onStart={startVoice} onSwitchToText={() => switchMode("text")} />
+            ) : (
+              <>
+                <Captions lines={lines} thinking={thinking} />
+                <div className="mx-auto flex w-full max-w-[600px] flex-col px-4">
+                  {panelRisk && (
+                    <div className={`mt-3 flex flex-col ${panelExpanded ? "" : "px-3"}`}>
+                      <CrisisPanel
+                        risk={panelRisk}
+                        expanded={panelExpanded}
+                        onExpand={() => setPanelExpanded(true)}
+                        onCollapse={() => setPanelExpanded(false)}
+                        onMoreOptions={() => setHelpOpen(true)}
+                      />
+                    </div>
+                  )}
+                  {convo.error && (
+                    <p role="alert" className="mt-3 px-3 text-[15px] text-care">
+                      {convo.error}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mx-auto mt-4 flex w-full max-w-[640px] flex-col gap-2.5 rounded-t-lg bg-band px-4 pt-3.5 pb-[max(26px,env(safe-area-inset-bottom))]">
+                  {mode === "text" ? (
+                    <>
+                      <TextComposer onSend={convo.send} onTypingChange={setTyping} onSwitchToVoice={() => switchMode("voice")} />
+                      <div className="flex justify-center gap-2">
+                        <Button variant="ghost" onClick={() => setBreathing(true)} className="px-3.5">
+                          <BreatheIcon size={18} /> Breathe
+                        </Button>
+                        <Button variant="ghost" onClick={() => setTranscriptOpen(true)} aria-haspopup="dialog" className="px-3.5">
+                          <TranscriptIcon size={18} /> Transcript
+                        </Button>
+                        <Button variant="ghost" onClick={endSession} disabled={ending} className="px-3.5">
+                          {ending ? "Ending…" : "End"}
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <VoiceBand voice={voice} onSwitchToText={() => switchMode("text")} onEnd={endSession} ending={ending} />
+                  )}
+                </div>
+              </>
             )}
           </>
         )}
       </main>
-
-      <footer className="relative z-10 mx-auto flex w-full max-w-2xl items-end gap-2 px-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        {mode === "text" ? (
-          <>
-            <TextComposer onSend={convo.send} onTypingChange={setTyping} />
-            <Button variant="ghost" size="icon" onClick={() => switchMode("voice")} aria-label="Switch to talking">
-              <MicIcon />
-            </Button>
-          </>
-        ) : (
-          <VoiceControls voice={voice} onStart={startVoice} onSwitchToText={() => switchMode("text")} />
-        )}
-      </footer>
 
       <TranscriptSheet open={transcriptOpen} onClose={() => setTranscriptOpen(false)} lines={convo.lines} />
       <HelpSheet open={helpOpen} onClose={() => setHelpOpen(false)} />

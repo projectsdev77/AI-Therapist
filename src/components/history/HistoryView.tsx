@@ -45,7 +45,7 @@ export function HistoryView() {
   }, [days.length]);
 
   return (
-    <PageShell title="Your skies" subtitle="Each day's sky comes from how your conversations felt." wide>
+    <PageShell title="Your skies" subtitle="Each day's sky comes from how your conversations felt." >
       {data && data.sessions.length === 0 ? (
         <div className="flex flex-col items-start gap-4">
           <p className="text-muted">No conversations yet. Your first one will paint today&apos;s sky.</p>

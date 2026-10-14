@@ -57,8 +57,8 @@ export const MEMORY_CATEGORIES = ["person", "situation", "goal", "pattern", "hel
 export type MemoryCategory = (typeof MEMORY_CATEGORIES)[number];
 
 export const MEMORY_CATEGORY_LABELS: Record<MemoryCategory, string> = {
-  person: "People in your life",
-  situation: "What's going on",
+  person: "People",
+  situation: "Your days",
   goal: "Hopes and goals",
   pattern: "Patterns",
   helps: "What helps",
