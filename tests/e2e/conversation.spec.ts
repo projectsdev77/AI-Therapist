@@ -9,7 +9,7 @@ test("a written conversation becomes a reflection, a sky, and memories", async (
   await say(page, "Work has been so stressful, my boss keeps adding deadlines.");
   await say(page, "I can't sleep, I keep replaying meetings at night.");
 
-  await page.getByRole("button", { name: "Show conversation" }).click();
+  await page.getByRole("button", { name: "Transcript" }).click();
   await expect(page.getByRole("dialog", { name: "Conversation transcript" }).getByText("my boss keeps adding deadlines")).toBeVisible();
   await page.keyboard.press("Escape");
 
@@ -29,7 +29,7 @@ test("a written conversation becomes a reflection, a sky, and memories", async (
   await expect(page.getByText("Has been talking about work")).toHaveCount(0);
 
   await page.goto("/");
-  await expect(page.getByText("How are you, really?")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /How are you\?/ })).toBeVisible();
   await expect(page.getByText("Last time")).toBeVisible();
 });
 
@@ -45,9 +45,9 @@ test("the companion remembers you next time", async ({ page }) => {
 
 test("sending right away, or twice quickly, never duplicates replies", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Write", exact: true }).click();
+  await page.getByRole("button", { name: /^Write/ }).click();
   await page.getByLabel("I'm 18 or older").check();
-  await page.getByRole("button", { name: "I understand" }).click();
+  await page.getByRole("button", { name: "Let's begin" }).click();
   await page.waitForURL("**/talk?mode=text");
   const box = page.getByLabel("Write to your companion");
   await box.fill("Work has been so stressful.");
@@ -56,7 +56,8 @@ test("sending right away, or twice quickly, never duplicates replies", async ({ 
   await box.press("Enter");
   await page.waitForTimeout(4000);
 
-  const lines = await page.getByRole("dialog", { name: "Conversation transcript", includeHidden: true }).locator("li").allInnerTexts();
+  await page.getByRole("button", { name: "Transcript" }).click();
+  const lines = await page.getByRole("dialog", { name: "Conversation transcript" }).locator("li").allInnerTexts();
   const user = lines.filter((l) => l.startsWith("You"));
   const companion = lines.filter((l) => l.startsWith("Companion"));
   expect(user).toHaveLength(2);

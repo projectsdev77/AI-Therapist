@@ -76,9 +76,16 @@ export function StoreProvider({ store: injected, children }: { store?: DataStore
 
   const updateProfile = useCallback(
     async (patch: Partial<Omit<Profile, "id" | "createdAt">>) => {
-      const next = await store.updateProfile(patch);
-      setProfile(next);
-      return next;
+      // Optimistic: controls respond instantly; the saved profile replaces it after.
+      setProfile((prev) => (prev ? { ...prev, ...patch } : prev));
+      try {
+        const next = await store.updateProfile(patch);
+        setProfile(next);
+        return next;
+      } catch (err) {
+        setProfile(await store.getProfile().catch(() => null));
+        throw err;
+      }
     },
     [store],
   );

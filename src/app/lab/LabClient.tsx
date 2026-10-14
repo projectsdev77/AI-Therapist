@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { BreatheMode } from "@/components/breathe/BreatheMode";
 import { Captions, type CaptionLine } from "@/components/captions/Captions";
 import { Presence } from "@/components/presence/Presence";
+import { Backdrop } from "@/components/shell/Backdrop";
 import { Sky } from "@/components/sky/Sky";
 import { Button } from "@/components/ui/Button";
 import { TONES, WEATHERS, type PresenceState, type Tone, type Weather } from "@/lib/conversation/types";
@@ -61,7 +62,7 @@ export function LabClient() {
 
   return (
     <div className="relative min-h-dvh">
-      <Sky weather={weather} />
+      <Backdrop weather={weather} />
       <main className="relative mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
         <header>
           <p className="text-xs uppercase tracking-widest text-faint">Design system</p>

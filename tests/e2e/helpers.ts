@@ -4,9 +4,9 @@ import { expect, type Page } from "@playwright/test";
 /** Accepts the consent sheet after choosing Talk or Write on the home page. */
 export async function startConversation(page: Page, mode: "Talk" | "Write") {
   await page.goto("/");
-  await page.getByRole("button", { name: mode, exact: true }).click();
+  await page.getByRole("button", { name: new RegExp(`^${mode}`) }).first().click();
   await page.getByLabel("I'm 18 or older").check();
-  await page.getByRole("button", { name: "I understand" }).click();
+  await page.getByRole("button", { name: "Let's begin" }).click();
   await page.waitForURL(`**/talk?mode=${mode === "Talk" ? "voice" : "text"}`);
 }
 
@@ -16,7 +16,11 @@ export async function say(page: Page, text: string) {
   await box.press("Enter");
   // Wait for the companion's reply to finish streaming.
   await expect(page.getByRole("button", { name: "Send" })).toBeDisabled();
-  await page.waitForFunction(() => !document.querySelector("[class*=cursor]"), undefined, { timeout: 15_000 });
+  await page.waitForFunction(
+    () => !document.querySelector(".caption-line .pulse-dot") && !document.querySelector('[role="status"][aria-label="Thinking"]'),
+    undefined,
+    { timeout: 15_000 },
+  );
 }
 
 /** No serious or critical accessibility violations (WCAG 2.2 AA rules). */

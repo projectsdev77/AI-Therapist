@@ -79,14 +79,14 @@ export function ConsentSheet({ open, onAccept, onCancel }: ConsentSheetProps) {
         </ul>
 
         <label className="flex min-h-11 cursor-pointer items-center gap-3">
-          <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} className="peer sr-only" />
-          <span
-            aria-hidden
-            className={`flex size-6 shrink-0 items-center justify-center rounded-[7px] border peer-focus-visible:outline-2 peer-focus-visible:outline-offset-3 peer-focus-visible:outline-focus ${
-              adult ? "border-transparent bg-accent text-on-accent" : "border-border bg-surface"
-            }`}
-          >
-            {adult && <CheckIcon size={16} strokeWidth={2.2} />}
+          <span className="relative flex size-6 shrink-0 items-center justify-center">
+            <input
+              type="checkbox"
+              checked={adult}
+              onChange={(e) => setAdult(e.target.checked)}
+              className="peer absolute inset-0 m-0 size-6 cursor-pointer appearance-none rounded-[7px] border border-border bg-surface checked:border-transparent checked:bg-accent"
+            />
+            <CheckIcon size={16} strokeWidth={2.2} className="pointer-events-none relative hidden text-on-accent peer-checked:block" />
           </span>
           I&apos;m 18 or older
         </label>

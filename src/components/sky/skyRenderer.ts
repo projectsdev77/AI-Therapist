@@ -111,9 +111,10 @@ export function drawSky(ctx: CanvasRenderingContext2D, w: number, h: number, pal
       }
     } else if (W === "breaking") {
       const rise = 0.5 + 0.5 * Math.sin(t * 0.15);
-      // Capped at .06 / .025 so captions keep AA contrast.
-      glow(ctx, w * 0.5, h * (1.02 - rise * 0.06), L * 0.8, "rgba(240,190,120,.06)", w, h);
-      rays(ctx, w * 0.5, h * 1.02, h * 1.1, 7, 0.22, "240,200,140", 0.025);
+      // Capped so captions keep AA contrast. Full skies sit under the mesh washes too,
+      // which add warmth of their own, so they get a lower cap (measured: faint text ≥ 4.5).
+      glow(ctx, w * 0.5, h * (1.02 - rise * 0.06), L * 0.8, `rgba(240,190,120,${full ? 0.03 : 0.06})`, w, h);
+      rays(ctx, w * 0.5, h * 1.02, h * 1.1, 7, 0.22, "240,200,140", full ? 0.012 : 0.025);
     }
   } else {
     if (W === "clear") {

@@ -147,10 +147,3 @@ export const WriteIcon = (p: IconProps) => (
   </Svg>
 );
 
-// Older names still used in a few places.
-export const KeyboardIcon = WriteIcon;
-export const PencilIcon = WriteIcon;
-export const HeartHandIcon = HelpIcon;
-export const WindIcon = BreatheIcon;
-export const StopIcon = EndIcon;
-export const ArrowLeftIcon = BackIcon;
