@@ -12,6 +12,8 @@ import { Backdrop } from "@/components/shell/Backdrop";
 import { TopBar } from "@/components/shell/TopBar";
 import { Button } from "@/components/ui/Button";
 import { BreatheIcon, TranscriptIcon } from "@/components/ui/icons";
+import { weatherToAmbient, useAmbientSettings } from "@/lib/ambient/settings";
+import { useAmbient } from "@/lib/ambient/useAmbient";
 import type { PresenceState, RiskLevel } from "@/lib/conversation/types";
 import { useConversation, type ConversationCallbacks } from "@/lib/conversation/useConversation";
 import { toneToWeather } from "@/lib/conversation/weather";
@@ -104,6 +106,18 @@ export function TalkScreen({ initialMode }: { initialMode: SessionMode }) {
             ? "listening"
             : "idle";
 
+  // Ambient sound: quiet under every word, silent while breathing or when the help panel is open.
+  const ambient = useAmbientSettings();
+  const weather = concerned ? null : toneToWeather(convo.tone);
+  useAmbient(ambient.matchSky ? weatherToAmbient(weather) : ambient.kind, {
+    enabled: ambient.enabled,
+    inConversation: consented && !ending && (mode === "voice" ? voiceActive : Boolean(convo.session)),
+    breathing,
+    crisisPanelOpen: panelRisk !== null && panelExpanded,
+    someoneSpeaking: voice.status === "hearing" || voice.status === "speaking",
+    micListening: voiceActive,
+  });
+
   async function endSession() {
     setEnding(true);
     voice.stop();
@@ -117,7 +131,7 @@ export function TalkScreen({ initialMode }: { initialMode: SessionMode }) {
   return (
     <div className="relative flex h-dvh flex-col overflow-hidden">
       {/* In a hard moment the sky goes quiet rather than stormy. */}
-      <Backdrop weather={concerned ? null : toneToWeather(convo.tone)} />
+      <Backdrop weather={weather} />
       <TopBar />
 
       {convo.demo && (

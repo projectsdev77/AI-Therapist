@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/Button";
 import { ChevronIcon } from "@/components/ui/icons";
 import { Sheet } from "@/components/ui/Sheet";
 import { Switch } from "@/components/ui/Switch";
+import { useAmbientSettings, writeAmbient } from "@/lib/ambient/settings";
+import { AMBIENT_LABELS, type AmbientKind } from "@/lib/ambient/sources";
 import { useStore } from "@/lib/data/StoreProvider";
 import { INTERNATIONAL, REGIONS, resourcesFor } from "@/lib/safety/resources";
 import { useRegion } from "@/lib/safety/useRegion";
@@ -78,6 +80,7 @@ export function SettingsView() {
   const [deleting, setDeleting] = useState(false);
   // Optimistic so the switch responds instantly while the save happens.
   const [memoryOn, setMemoryOn] = useState<boolean | null>(null);
+  const ambient = useAmbientSettings();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reads browser-only preferences
@@ -150,6 +153,26 @@ export function SettingsView() {
               options={[{ value: "", label: "Default" }, ...voices.map((v) => ({ value: v.id, label: v.name }))]}
               onChange={(v) => void updateProfile({ voiceId: v || null })}
             />
+          )}
+          <div className={rowClass}>
+            <RowText label="Ambient sound" hint="Soft sound while we talk, on this device" />
+            <Switch checked={ambient.enabled} label="Ambient sound" onChange={(on) => writeAmbient({ enabled: on })} />
+          </div>
+          {ambient.enabled && (
+            <>
+              <div className={rowClass}>
+                <RowText label="Match my sky" hint="Rain for heavy skies, a hum when it's breaking" />
+                <Switch checked={ambient.matchSky} label="Match my sky" onChange={(on) => writeAmbient({ matchSky: on })} />
+              </div>
+              {!ambient.matchSky && (
+                <SelectRow
+                  label="Sound"
+                  value={ambient.kind}
+                  options={(Object.keys(AMBIENT_LABELS) as AmbientKind[]).map((k) => ({ value: k, label: AMBIENT_LABELS[k] }))}
+                  onChange={(v) => writeAmbient({ kind: v as AmbientKind })}
+                />
+              )}
+            </>
           )}
         </Group>
 

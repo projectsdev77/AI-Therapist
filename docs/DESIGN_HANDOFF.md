@@ -206,7 +206,7 @@ The designer's handoff ([`from-designer/HANDOFF.md`](design-handoff/from-designe
 
 **Proposals (§6 of their handoff)**
 - **#6, the filled "Talk to someone now" pill after "I'm safe right now":** implemented.
-- **#8, ambient sound:** *not built.* It needs audio loops, which weren't supplied, plus your approval. The Settings row is omitted until then.
+- **#8, ambient sound:** *built*, off by default (Settings → Conversations → Ambient sound; per device). Soft rain, room tone, or a low hum, or "Match my sky". The sounds are generated placeholders until real recordings go in `public/audio/` (see `public/audio/README.md`). It ducks 18 dB whenever either side speaks, sits lower while the mic listens, goes silent during Breathe and when the help panel is open, and runs on its own audio context. The mic's voice detection now tracks a background-noise floor so steady sound never counts as speech.
 - **#9, the 1080×1920 Stories card:** implemented, with the quote off by default. The 1080×1350 feed card remains as an option.
 
 **Deviations, and why**

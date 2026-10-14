@@ -22,6 +22,7 @@ A voice-first AI companion for everyday conversations, emotional support, and se
 | **Your patterns** | A constellation of recurring themes and how they connect. |
 | **Memory (on by default)** | It remembers what matters across sessions, the way a counselor keeps notes. *What I remember* lets you see, edit, add, or delete any of it, or turn memory off. |
 | **Accounts** | Guests keep everything on-device (IndexedDB). Signing in (email link or Google, via Supabase) moves it to the cloud with Row-Level Security. |
+| **Ambient sound** | Optional (off by default): soft rain, room tone, or a low hum under the conversation, or matched to the sky. It ducks whenever anyone speaks and never feeds the voice detection. Swap in your own recordings in `public/audio/` (see its README). |
 | **Breathe** | The orb becomes a breath pacer (box, 4-7-8, slow exhale), with optional haptics. |
 | **Your data** | Export everything as JSON, or delete everything with a typed confirmation. |
 
@@ -69,6 +70,7 @@ src/lib/
   llm/              Claude calls: reply streaming, analysis, reflection, demo mode
   prompts/          companion persona and system prompts (versioned)
   voice/            mic + VAD, recognizers, speakers, sentence chunker, useVoice
+  ambient/          ambient sound: engine, generated loops, mixing rules, sources (your audio files)
   data/             DataStore interface, LocalStore (IndexedDB), SupabaseStore
   safety/           crisis resources, keyword backstop
 src/styles/tokens.css   design tokens: the single source for every color, font, and motion

@@ -12,6 +12,21 @@ export interface MicOptions {
   onSpeechEnd?: () => void;
 }
 
+/**
+ * Background-noise floor: drops at once to quieter levels and creeps up slowly, so it
+ * settles on steady noise (a fan, ambient sound, a busy room) but not on speech, whose
+ * pauses keep pulling it back down.
+ */
+export function nextNoiseFloor(floor: number, level: number): number {
+  if (level < floor) return level;
+  return Math.min(0.3, floor + Math.min(0.0005, level - floor));
+}
+
+/** Speech must clear both the base threshold and the noise floor with some margin. */
+export function vadThreshold(base: number, boost: number, floor: number): number {
+  return Math.max(base * boost, floor * 2.5 + 0.03);
+}
+
 export class MicInput {
   private stream: MediaStream | null = null;
   private ctx: AudioContext | null = null;
@@ -19,6 +34,7 @@ export class MicInput {
   private data: Float32Array<ArrayBuffer> | null = null;
   private timer: ReturnType<typeof setInterval> | null = null;
   private level = 0;
+  private floor = 0;
   private speaking = false;
   private aboveSince = 0;
   private belowSince = 0;
@@ -63,6 +79,7 @@ export class MicInput {
     this.ctx = null;
     this.analyser = null;
     this.level = 0;
+    this.floor = 0;
     this.speaking = false;
   }
 
@@ -111,7 +128,8 @@ export class MicInput {
     this.level = this.level * 0.6 + instant * 0.4;
 
     const now = performance.now();
-    const threshold = (this.opts.threshold ?? 0.12) * this.thresholdBoost;
+    this.floor = nextNoiseFloor(this.floor, this.level);
+    const threshold = vadThreshold(this.opts.threshold ?? 0.12, this.thresholdBoost, this.floor);
     const above = this.level > threshold;
     if (above) {
       this.belowSince = 0;
