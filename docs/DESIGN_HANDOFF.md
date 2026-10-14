@@ -1,5 +1,10 @@
 # Design handoff: Haven (AI companion)
 
+> **Status (2026-10-14):** the designer's answer, direction 3a "Sage & lamplight", is in
+> [`design-handoff/from-designer/`](design-handoff/from-designer/HANDOFF.md) and is **implemented**.
+> See [§10](#10-implementation-notes) for deviations and open proposals. The screenshots in
+> `design-handoff/screens/` show the build *before* the redesign.
+
 **For:** Claude Design (or any designer) redesigning the visual layer.
 **From:** the engineering build. Everything described here works today in both themes, on mobile and desktop.
 **Goal:** redesign how it **looks and moves**, not how it works. When you return the formats in [§9](#9-what-i-need-back), I can implement them directly.
@@ -184,3 +189,30 @@ Return these, and I'll implement them without guessing:
 4. **Motion spec.** Durations and easings per transition, and for the orb, a new `PRESENCE_STATES` table or a precise description: size, wobble amount, wobble speed, swirl, glow, and how strongly it reacts to audio.
 5. **Assets.** Logo, wordmark, app icon (with a maskable variant), any icons, and weather glyphs, all as **SVG**.
 6. **Behavior changes.** Anything that changes behavior, not just looks (e.g. moving the transcript, a new navigation pattern, new screens), listed separately so I don't miss it.
+
+---
+
+## 10. Implementation notes
+
+The designer's handoff ([`from-designer/HANDOFF.md`](design-handoff/from-designer/HANDOFF.md)) is implemented in full, with these notes.
+
+**Ported as specified**
+- `tokens.css` dropped in unchanged, except that the font tokens point at the `next/font` variables.
+- Geist and Instrument Serif replace Fraunces and Inter.
+- Orb: three membranes, new `PRESENCE_STATES`, plus `spread`, `levelGain` and a breath state. The designer's canvas reference is ported to the WebGL shader, which reads `--orb-*` at runtime.
+- Skies: the canvas renderer is ported, including the rain fade and the caps on the Twilight breaking glow.
+- Every §4 screen, the §5 component states and the motion spec. Sheets rise and settle; captions age with the specified timings; reduced motion is honored everywhere.
+- Assets: the 27 icons, logo mark, weather glyphs and app icons. The provenance metadata is stripped from the app copies; the originals are unchanged in `from-designer/`.
+
+**Proposals (§6 of their handoff)**
+- **#6, the filled "Talk to someone now" pill after "I'm safe right now":** implemented.
+- **#8, ambient sound:** *not built.* It needs audio loops, which weren't supplied, plus your approval. The Settings row is omitted until then.
+- **#9, the 1080×1920 Stories card:** implemented, with the quote off by default. The 1080×1350 feed card remains as an option.
+
+**Deviations, and why**
+- **Routes:** these stay `/history` and `/history/[id]`. Their screen table says `/skies` and `/reflection/[id]`, but their §6 says routes don't change.
+- **Twilight "breaking" on full skies:** the glow and rays are capped lower (0.03 and 0.012). With the mesh on top, faint text measured 3.9:1. After the change, every text token is at least 4.5:1 in the caption column for every sky in both themes. The tightest case is faint text on Twilight breaking, at 4.5.
+- **Sign in:** the copy says "The link works once" without "expires in 15 minutes". Supabase's default expiry is different, so I didn't want to promise 15.
+- **Home "Last time" card:** it opens the reflection ("See this reflection"), not "Pick up from here". The companion already picks up from memory in the next conversation.
+- **What I remember, Add:** a new item goes under *Other*, because their design has no category picker.
+- **Wordmark:** the app renders it as live text in the loaded font. Outline the SVG wordmark before using it as a static file.

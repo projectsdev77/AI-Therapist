@@ -6,6 +6,7 @@ A voice-first AI companion for everyday conversations, emotional support, and se
 
 - **Spec:** [docs/SPEC.md](docs/SPEC.md)
 - **Deploying:** [docs/DEPLOY.md](docs/DEPLOY.md)
+- **Visual design:** direction 3a "Sage & lamplight" by the designer, in [docs/design-handoff/from-designer/](docs/design-handoff/from-designer/HANDOFF.md). Open the `.dc.html` files there for every screen and state.
 - **Design handoff (for the redesign):** [docs/DESIGN_HANDOFF.md](docs/DESIGN_HANDOFF.md), with the prompt for Claude Design in [docs/design-handoff/PROMPT.md](docs/design-handoff/PROMPT.md)
 - **Client reference mock:** https://ai-therapist-1.lovable.app
 

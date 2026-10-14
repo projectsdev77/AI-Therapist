@@ -286,3 +286,5 @@ Where the build differs from the plan above, and why:
 | Thought Constellations, card export (v1.1) | **Built** | — |
 | Daily reminders, multi-language, PostHog, Sentry | **Not built yet** | They need client decisions and keys. See docs/DEPLOY.md. |
 | — | **Demo mode** when keys are missing | So the whole experience can be reviewed before any accounts or keys exist. |
+| Fraunces + Inter, twilight indigo | **Redesign 3a "Sage & lamplight"**: Geist + Instrument Serif, sage and cream, three-membrane orb, canvas skies | The designer's handoff. See docs/DESIGN_HANDOFF.md §10. |
+| CSS particle skies | A canvas renderer (`src/components/sky/skyRenderer.ts`) | It ports the designer's reference and keeps captions at AA over every sky. |
