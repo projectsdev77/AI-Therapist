@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./tokens.css">
+<style>body{margin:0;background:#fbf9f2;-webkit-font-smoothing:antialiased}a{color:#2f6b3e}a:hover{color:#1d1f1a}code{font-family:'Geist Mono',monospace;font-size:.88em}</style>
+</helmet>
+<div data-theme="light" style="background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-size:16px;line-height:1.55">
+<div style="max-width:1120px;margin:0 auto;padding:64px 40px 120px;display:flex;flex-direction:column;gap:64px">
+
+<header style="display:flex;flex-direction:column;gap:12px">
+<span style="font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-text-muted)">Haven · 3a Sage &amp; lamplight · §9 items 4–6 and §8</span>
+<h1 style="margin:0;font-weight:300;font-size:52px;line-height:1.05;letter-spacing:-.03em">Motion, assets &amp; <span style="font-family:var(--font-accent);font-style:italic;font-weight:400;font-size:58px">open questions</span></h1>
+<p style="margin:0;max-width:720px;color:var(--color-text-muted);text-wrap:pretty">This is the companion to <a href="Haven Screens.dc.html">Haven Screens</a> and <a href="Haven Components.dc.html">Haven Components</a>. Every value here is in <a href="tokens.css">tokens.css</a>, the orb reference in <a href="Orb.dc.html">Orb.dc.html</a>, or the SVGs in <code>assets/</code>.</p>
+</header>
+
+<section style="display:flex;flex-direction:column;gap:18px">
+<h2 style="margin:0;font-weight:300;font-size:32px;letter-spacing:-.02em">1 · Motion spec</h2>
+<p style="margin:0;max-width:760px;color:var(--color-text-muted)">The rule is that nothing arrives faster than it would in a dim room. Only direct feedback uses <code>--motion-fast</code>. Everything that appears uses <code>--ease-settle</code>, which ends in a long tail, so elements land rather than stop.</p>
+<div style="border:1px solid var(--color-border);border-radius:var(--radius-md);overflow:hidden">
+<div style="display:grid;grid-template-columns:1.3fr 1fr 1fr 1.6fr;gap:0;font-size:15px">
+<sc-for list="{{ motion }}" as="m" hint-placeholder-count="12">
+<div style="padding:10px 16px;border-top:1px solid var(--color-border);font-weight:{{ m.w }};background:{{ m.bg }}">{{ m.a }}</div>
+<div style="padding:10px 16px;border-top:1px solid var(--color-border);background:{{ m.bg }}"><code>{{ m.b }}</code></div>
+<div style="padding:10px 16px;border-top:1px solid var(--color-border);background:{{ m.bg }}"><code>{{ m.c }}</code></div>
+<div style="padding:10px 16px;border-top:1px solid var(--color-border);color:var(--color-text-muted);background:{{ m.bg }}">{{ m.d }}</div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:18px">
+<h2 style="margin:0;font-weight:300;font-size:32px;letter-spacing:-.02em">2 · PRESENCE_STATES, new values</h2>
+<p style="margin:0;max-width:760px;color:var(--color-text-muted);text-wrap:pretty">The shape is now three translucent membranes (outer, middle, inner) around a lit core. Each membrane's edge is noise-displaced at its own phase, so the layers slide past each other like lamplight through linen. The keys match the current table. <code>spread</code> (how far the outer two membranes sit from the core) and <code>levelGain</code> (audio sensitivity) are new.</p>
+<div style="border:1px solid var(--color-border);border-radius:var(--radius-md);overflow:auto">
+<div style="display:grid;grid-template-columns:110px repeat(9,minmax(72px,1fr));font-size:14px;min-width:900px">
+<sc-for list="{{ presenceHead }}" as="h" hint-placeholder-count="10"><div style="padding:10px 12px;font-weight:500;background:var(--color-band)"><code>{{ h }}</code></div></sc-for>
+<sc-for list="{{ presence }}" as="c" hint-placeholder-count="60"><div style="padding:10px 12px;border-top:1px solid var(--color-border);font-weight:{{ c.w }}"><code>{{ c.v }}</code></div></sc-for>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+<sc-for list="{{ orbNotes }}" as="n" hint-placeholder-count="4">
+<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px 18px;display:flex;flex-direction:column;gap:4px"><strong style="font-weight:500">{{ n.t }}</strong><span style="font-size:15px;color:var(--color-text-muted);text-wrap:pretty">{{ n.d }}</span></div>
+</sc-for>
+</div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:18px">
+<h2 style="margin:0;font-weight:300;font-size:32px;letter-spacing:-.02em">3 · Behavior changes <span style="font-size:18px;color:var(--color-text-muted)">(kept to a minimum, per your "visual only")</span></h2>
+<ol style="margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px;max-width:860px">
+<sc-for list="{{ behavior }}" as="b" hint-placeholder-count="8">
+<li style="padding-left:6px"><strong style="font-weight:500">{{ b.t }}</strong> <span style="color:var(--color-text-muted)">{{ b.d }}</span> <span style="font-size:13px;font-weight:500;padding:2px 8px;border-radius:999px;background:var(--color-band);color:var(--color-accent-strong);white-space:nowrap">{{ b.tag }}</span></li>
+</sc-for>
+</ol>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:18px">
+<h2 style="margin:0;font-weight:300;font-size:32px;letter-spacing:-.02em">4 · Assets <span style="font-size:18px;color:var(--color-text-muted)">(SVG, in assets/)</span></h2>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+<div style="background:#181a16;border-radius:var(--radius-md);padding:24px;display:flex;flex-direction:column;align-items:center;gap:12px"><img src="assets/wordmark-twilight.svg" alt="haven wordmark, Twilight" style="width:180px"><code style="color:#b6bbad;font-size:12px">wordmark-twilight.svg</code></div>
+<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:24px;display:flex;flex-direction:column;align-items:center;gap:12px"><img src="assets/wordmark-dawn.svg" alt="haven wordmark, Dawn" style="width:180px"><code style="color:var(--color-text-muted);font-size:12px">wordmark-dawn.svg</code></div>
+<div style="background:var(--color-band);border-radius:var(--radius-md);padding:24px;display:flex;flex-direction:column;align-items:center;gap:12px"><img src="assets/app-icon.svg" alt="App icon" style="width:120px;height:120px"><code style="color:var(--color-text-muted);font-size:12px">app-icon.svg</code></div>
+<div style="background:var(--color-band);border-radius:var(--radius-md);padding:24px;display:flex;flex-direction:column;align-items:center;gap:12px"><span style="width:120px;height:120px;border-radius:50%;overflow:hidden;display:block;outline:1px dashed var(--color-text-faint);outline-offset:4px"><img src="assets/app-icon-maskable.svg" alt="Maskable app icon in a circle mask" style="width:120px;height:120px;display:block"></span><code style="color:var(--color-text-muted);font-size:12px">app-icon-maskable.svg</code></div>
+</div>
+<p style="margin:0;font-size:15px;color:var(--color-text-muted);max-width:820px">The mark (<code>logo-mark.svg</code> and <code>logo-mark-dawn.svg</code>) is a still frame of the orb. The wordmark is live text in Instrument Serif Italic, so swapping the name means editing one string. Outline it before you ship it as a static file. The maskable icon keeps the mark inside the 80% safe zone. Icons (27) and weather glyphs (6) are in <code>assets/icons/</code> and <code>assets/weather/</code>, use <code>currentColor</code>, and are drawn at a 1.6px stroke on a 24px grid. They're shown in <a href="Haven Components.dc.html">Components</a>.</p>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:24px">
+<h2 style="margin:0;font-weight:300;font-size:32px;letter-spacing:-.02em">5 · Open questions (§8)</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+<h3 style="margin:0;font-size:19px;font-weight:500">8.1 Name and wordmark</h3>
+<p style="margin:0;color:var(--color-text-muted);font-size:15px">Keep the lowercase serif-italic wordmark with the orb mark, whatever the name. Five candidates, all short, warm, and not clinical. None have been checked for trademarks or domains.</p>
+<div style="display:flex;flex-wrap:wrap;gap:8px 18px">
+<sc-for list="{{ names }}" as="nm" hint-placeholder-count="5"><span style="display:flex;flex-direction:column"><span style="font-family:var(--font-accent);font-style:italic;font-size:28px;line-height:1.1">{{ nm.n }}</span><span style="font-size:13px;color:var(--color-text-muted)">{{ nm.d }}</span></span></sc-for>
+</div>
+</div>
+<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+<h3 style="margin:0;font-size:19px;font-weight:500">8.2 Orb character</h3>
+<p style="margin:0;color:var(--color-text-muted);font-size:15px;text-wrap:pretty">More character, but quiet: three layered membranes and an inner light. No particles, eyes, or faces. The layers are what read as "alive", because they drift out of phase like breathing. The inner core tells you the state at a glance: it dims and tightens while thinking, and warms and stills when concerned. In Dawn the layers are drawn normally rather than added as light, so the orb reads like sunlight on paper instead of a glowing ball.</p>
+</div>
+<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+<h3 style="margin:0;font-size:19px;font-weight:500">8.3 Weather illustration</h3>
+<p style="margin:0;color:var(--color-text-muted);font-size:15px;text-wrap:pretty">Atmosphere, not illustration. Low-contrast gradient fields with fine particles: a few slow stars, haze blobs that drift sideways, hairline rain, and a horizon glow with faint rays for breaking. Sky colors stay close to the surface tones, so captions keep AA on every sky, and the ambient mesh sits on top. Tiles reuse the same renderer as a single static frame. Glyphs carry the label wherever the sky itself is too small to read.</p>
+</div>
+<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+<h3 style="margin:0;font-size:19px;font-weight:500">8.4 Ambient sound</h3>
+<p style="margin:0;color:var(--color-text-muted);font-size:15px;text-wrap:pretty">Yes, off by default, in Settings → Conversations (shown in screen 15). There are three beds that loop with no audible seams: soft rain, room tone, and a low hum. Sound ducks −18 dB while either of you is speaking and fades in over 4s. It follows the weather only if the person chooses "Match my sky". It never plays during Breathe (that's the breath's space) or while the crisis panel is open.</p>
+</div>
+</div>
+<div style="display:flex;gap:40px;align-items:flex-start;background:var(--color-band);border-radius:var(--radius-lg);padding:28px">
+<div style="width:324px;height:576px;flex:none;overflow:hidden;border-radius:14px;box-shadow:var(--shadow-raised)">
+<div data-theme="dark" style="width:1080px;height:1920px;transform:scale(.3);transform-origin:0 0;position:relative;overflow:hidden;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);display:flex;flex-direction:column">
+<div style="position:relative;height:820px;flex:none"><dc-import name="Sky" weather="breaking" variant="tile" hint-size="1080px,820px" style="position:absolute;inset:0"></dc-import><div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,var(--color-bg))"></div>
+<div style="position:absolute;left:96px;right:96px;top:150px;display:flex;justify-content:space-between;font-size:34px;color:var(--color-text-muted)"><span>Tuesday, October 13</span><span>Rain, then clearing</span></div>
+<dc-import name="Orb" state="idle" tone="hopeful" hint-size="420px,420px" style="position:absolute;left:330px;top:330px;width:420px;height:420px"></dc-import></div>
+<div style="padding:0 96px;display:flex;flex-direction:column;gap:56px;flex:1">
+<h1 style="margin:0;font-weight:300;font-size:92px;line-height:1.06;letter-spacing:-.03em">The dinner that keeps replaying</h1>
+<p style="margin:0;font-family:var(--font-accent);font-style:italic;font-size:70px;line-height:1.2">"Maybe I never actually told her."</p>
+<div style="display:flex;flex-direction:column;gap:10px;padding:40px 44px;border-radius:44px;background:var(--color-band)"><span style="font-size:32px;font-weight:500;color:var(--color-accent-strong)">A small next step</span><span style="font-size:44px;font-weight:300">Send one line: "Can we talk about Sunday?"</span></div>
+</div>
+<div style="padding:0 96px 120px;display:flex;justify-content:space-between;align-items:center"><img src="assets/wordmark-twilight.svg" alt="" style="width:330px"><span style="font-size:30px;color:var(--color-text-muted)">a sky from one conversation</span></div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;max-width:560px">
+<h3 style="margin:0;font-size:19px;font-weight:500">8.5 Share card, 1080×1920</h3>
+<p style="margin:0;color:var(--color-text-muted);font-size:15px;text-wrap:pretty">No. The current 1080×1350 layout is too dense for Stories, so this is a separate layout. Stories crop about 250px top and bottom for UI, and the date line and wordmark sit inside that safe area. The sky and orb fill the top 40%, rendered from the person's actual weather and last tone. After that come the title, one quote, and the small next step. There's nothing else.</p>
+<ul style="margin:0;padding-left:20px;color:var(--color-text-muted);font-size:15px;display:flex;flex-direction:column;gap:6px">
+<li>Privacy first. The share sheet starts with the quote <em>off</em> (title only), with a one-tap "Include a quote". Theme chips and anything from memory never appear.</li>
+<li>It follows the current theme, and Dawn uses the same layout.</li>
+<li>It's drawn from tokens by <code>cardImage.ts</code>, with the orb as one static frame from the shader.</li>
+<li>The 1080×1350 feed card keeps its layout, restyled with the new tokens.</li>
+</ul>
+</div>
+</div>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const M = [
+      ['Transition', 'Duration', 'Easing', 'Notes', true],
+      ['Button press / toggle thumb', '--motion-fast 180ms', '--ease-calm', 'Scale .98 on press. Color fades over 480ms.'],
+      ['Hover, focus, color changes', '--motion-base 480ms', '--ease-calm', 'The focus ring appears instantly, for accessibility.'],
+      ['Caption ages (0→1→2→gone)', '--motion-slow 1000ms', '--ease-calm', 'Age 2 moves up 6px and blurs 1.2px, then fades out over 1600ms.'],
+      ['New caption arrives', '--motion-slow 1000ms', '--ease-settle', 'Fades from 0 and rises 8px. Streaming text appears with no per-word effects.'],
+      ['Streaming dot', '1600ms loop', '--ease-breath', 'Opacity .3↔1, scale .8↔1. Hidden in reduced motion.'],
+      ['Orb state change', '≈1200ms to 95%', 'exp. 2.5/s', 'Each parameter eases toward its target every frame, so states never pop.'],
+      ['Orb tone cross-fade', '--motion-tone-shift 4000ms', '--ease-calm', 'Unchanged.'],
+      ['Sky weather cross-fade', '--motion-sky 2400ms', '--ease-calm', 'Particles fade at the midpoint. Rain fades in last.'],
+      ['Sheets (consent, help, menu)', '--motion-sheet 560ms', '--ease-settle', 'Rises 24px and fades in. The scrim fades over 480ms. Closing takes 420ms with --ease-calm.'],
+      ['Crisis panel expand', '--motion-slow 1000ms', '--ease-settle', 'Grows its height and fades in. Captions shift up gently. Nothing covers the composer.'],
+      ['Route change', '--motion-base 480ms', '--ease-calm', 'The page cross-fades and the sky persists across routes.'],
+      ['Breath pacer', 'per pattern', '--ease-breath', 'Calm 4·6 and Box 4·4·4·4 (holds are flat). The haptic pulse lands at the start of each phase.'],
+      ['Reduced motion', '—', '—', 'No ambient motion. The orb is a static gradient and skies are one still frame. Captions cross-fade over 480ms with no movement. Breathe shows the phase label and countdown only.'],
+    ];
+    const keys = ['scale', 'wobble', 'swirl', 'ripple', 'glow', 'breathAmp', 'breathPeriod', 'spread', 'levelGain'];
+    const P = {
+      idle: [1.00, 0.050, 0.60, 0.0, 1.00, 0.035, 10, 1.00, 0.0],
+      listening: [1.04, 0.060, 0.70, 0.8, 1.10, 0.015, 10, 1.08, 0.9],
+      thinking: [0.92, 0.035, 1.60, 0.0, 0.90, 0.020, 6, 0.90, 0.0],
+      speaking: [1.02, 0.055, 0.80, 0.6, 1.15, 0.010, 10, 1.10, 1.0],
+      concerned: [0.97, 0.020, 0.30, 0.0, 1.20, 0.030, 12, 1.15, 0.3],
+      breath: [1.00, 0.025, 0.40, 0.0, 1.05, 0.000, 'pattern', 1.05, 0.0],
+    };
+    const presence = [];
+    Object.entries(P).forEach(([k, row]) => { presence.push({ v: k, w: 500 }); row.forEach((v) => presence.push({ v: String(v), w: 400 })); });
+    return {
+      motion: M.map(([a, b, c, d, head]) => ({ a, b, c, d, w: head ? 500 : 400, bg: head ? 'var(--color-band)' : 'transparent' })),
+      presenceHead: ['state', ...keys], presence,
+      orbNotes: [
+        { t: 'Audio reaction', d: 'The level is smoothed with an 18/s attack and a 4/s release, so it swells fast and settles slowly. It adds wobble (+0.04 × level), size (+5% × level), glow (+50% × level), and a fine ripple on the outer two membranes. levelGain scales all of this per state.' },
+        { t: 'Wobble speed', d: 'The three membranes run at 1.00×, 1.17×, and 1.34× of swirl, with noise at frequencies 3, 5, and 8 around the edge. Thinking raises swirl to 1.6, so the layers turn faster while the edges stay calm.' },
+        { t: 'Color per theme', d: 'Membranes use --tone-* and --orb-membrane, and the core uses --orb-core. Twilight blends with screen at a 0.10 glow, and Dawn uses source-over at 0.40. All of these are read from CSS at runtime.' },
+        { t: 'Concerned', d: 'It moves closer: wider spread (1.15), almost no wobble, a 12s breath, and a warm --tone-concerned. It never flashes or turns red.' },
+      ],
+      behavior: [
+        { t: 'Previous caption (age 1) at full opacity.', d: "It was 40%, which fails AA. It now uses --color-text-muted at full strength. Age 2 is now aria-hidden; it's decorative, and the transcript keeps the text.", tag: 'a11y' },
+        { t: 'Toggle becomes a designed switch.', d: 'Native checkbox → button role="switch" with aria-checked, at 52×44 hit area.', tag: 'component' },
+        { t: 'Home footer copy.', d: '"Not a therapist" broke the §1 rule on public copy. It now says: "an AI companion… isn\'t a clinician or an emergency service."', tag: 'copy' },
+        { t: 'Pending caption = three dots.', d: 'While the reply hasn\'t started, a status line shows three pulsing dots labeled "Thinking". The single streaming dot stays.', tag: 'small state' },
+        { t: 'Menu on desktop is a right-hand panel.', d: "It's a bottom sheet on mobile, as now. On desktop it opens as a 396px panel at the top right, under Get help.", tag: 'layout' },
+        { t: 'Acute panel, collapsed after "I\'m safe right now".', d: 'It becomes a filled "Talk to someone now" pill, not the outlined elevated pill, so the way back stays obvious.', tag: 'proposal' },
+        { t: 'Ambient sound setting.', d: 'New, off by default. See 8.4.', tag: 'proposal · new' },
+        { t: 'Stories share card (1080×1920).', d: 'This is a new export size, starting with the quote off. See 8.5.', tag: 'proposal · new' },
+      ],
+      names: [
+        { n: 'haven', d: 'keep it: safe, plain' },
+        { n: 'lull', d: 'a quiet pause' },
+        { n: 'nook', d: 'small, private, yours' },
+        { n: 'stillwater', d: 'calm, a little poetic' },
+        { n: 'ember', d: 'warm, small light' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

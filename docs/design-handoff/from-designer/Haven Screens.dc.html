@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./tokens.css">
+<style>body{margin:0;background:#dcdcd4;-webkit-font-smoothing:antialiased}a{color:#2f6b3e}a:hover{color:#1d1f1a}</style>
+</helmet>
+<div style="padding:64px;display:flex;flex-direction:column;gap:72px;font-family:'Geist',sans-serif;color:#1d1f1a">
+<header style="max-width:900px;display:flex;flex-direction:column;gap:10px">
+<span style="font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#53584c">Haven · 3a Sage &amp; lamplight · every screen in §4</span>
+<h1 style="margin:0;font-weight:300;font-size:48px;letter-spacing:-.03em">Screens, <span style="font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;font-size:54px">both themes</span></h1>
+<p style="margin:0;font-size:17px;line-height:1.55;color:#53584c;text-wrap:pretty">Each row shows 390 Twilight, 390 Dawn, 1280 Twilight, and 1280 Dawn. Every frame is the same component (<code>Haven App.dc.html</code>, with props <code>screen</code> and <code>desktop</code>), styled only through <code>tokens.css</code>. Long pages scroll inside their frame. The style guide for §5 is in <a href="Haven Components.dc.html">Haven Components</a>, and the motion, assets, and §8 answers are in <a href="Haven Spec.dc.html">Haven Spec</a>.</p>
+</header>
+<sc-for list="{{ screens }}" as="s" hint-placeholder-count="4">
+<section id="{{ s.id }}" style="display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;align-items:baseline;gap:14px"><span style="font-size:13px;font-weight:500;background:#1d1f1a;color:#fbf9f2;padding:4px 10px;border-radius:999px">{{ s.n }}</span><span style="font-size:26px;font-weight:300;letter-spacing:-.015em">{{ s.name }}</span><span style="font-size:15px;color:#53584c">{{ s.note }}</span></div>
+<div style="display:flex;gap:28px;align-items:flex-start">
+<div data-theme="dark" style="width:390px;height:844px;flex:none;border-radius:40px;overflow:hidden;box-shadow:0 24px 60px rgba(20,30,15,.28)"><dc-import name="Haven App" screen="{{ s.id }}" hint-size="390px,844px" style="width:100%;height:100%"></dc-import></div>
+<div data-theme="light" style="width:390px;height:844px;flex:none;border-radius:40px;overflow:hidden;box-shadow:0 24px 60px rgba(20,30,15,.16)"><dc-import name="Haven App" screen="{{ s.id }}" hint-size="390px,844px" style="width:100%;height:100%"></dc-import></div>
+<div data-theme="dark" style="width:1280px;height:800px;flex:none;border-radius:18px;overflow:hidden;box-shadow:0 24px 60px rgba(20,30,15,.28)"><dc-import name="Haven App" screen="{{ s.id }}" desktop="{{ true }}" hint-size="1280px,800px" style="width:100%;height:100%"></dc-import></div>
+<div data-theme="light" style="width:1280px;height:800px;flex:none;border-radius:18px;overflow:hidden;box-shadow:0 24px 60px rgba(20,30,15,.16)"><dc-import name="Haven App" screen="{{ s.id }}" desktop="{{ true }}" hint-size="1280px,800px" style="width:100%;height:100%"></dc-import></div>
+</div>
+</section>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const S = [
+      ['01', 'home-first', 'Home, first visit', 'Talk and Write are equal, both filled with the accent'],
+      ['02', 'consent', 'Consent sheet', 'A bottom sheet that becomes a centered panel on desktop. Get help stays above the scrim'],
+      ['03', 'home-return', 'Home, returning', 'Drizzle sky, with the orb tinted warm from last time'],
+      ['04', 'talk-text', 'Talk, writing', 'The core screen'],
+      ['05', 'talk-voice', 'Talk, voice off', 'Tap to start, so iOS lets the greeting play'],
+      ['06', 'talk-listening', 'Voice, listening', 'Live status, Mute, and Write'],
+      ['07', 'safety-acute', 'Safety, acute', 'Concerned orb, quiet sky. The panel sits between the captions and the composer'],
+      ['08', 'safety-elevated', 'Safety, elevated', 'A Support options pill under the captions, over a storm sky'],
+      ['09', 'help', 'Get help sheet', 'Crisis lines for the selected region'],
+      ['10', 'breathe', 'Breathe', 'The orb paces the breath'],
+      ['11', 'reflection', 'Reflection card', 'Includes the guest "Want to keep this?" prompt'],
+      ['12', 'skies', 'Your skies', 'A 30-day strip, with conversations by day'],
+      ['13', 'patterns', 'Your patterns', 'A night garden in both themes'],
+      ['14', 'memory', 'What I remember', 'View mode, edit mode, and add'],
+      ['15', 'settings', 'Settings', 'Ambient sound is a proposal (§8.4)'],
+      ['16', 'menu', 'Menu', 'Bottom sheet on mobile, right-hand panel on desktop'],
+      ['—', 'signin', 'Sign in', 'Google and a magic link'],
+    ];
+    return { screens: S.map(([n, id, name, note]) => ({ n, id, name, note })) };
+  }
+}
+</script>
+</body>
+</html>

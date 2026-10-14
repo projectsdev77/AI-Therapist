@@ -1,0 +1,221 @@
+/*
+ * Haven design tokens: direction 3a "Sage & lamplight".
+ * Same variable names as the current src/styles/tokens.css. New tokens are marked NEW.
+ * Themes: Twilight (dark, default) and Dawn (light).
+ * Selection: OS preference, overridden by data-theme="dark|light" (on <html>, or any wrapper in these mockups).
+ */
+
+:root {
+  /* ---------- Typography ---------- */
+  /* Geist 300 (companion lines, headings), 400 (UI), 500 (buttons, labels). */
+  --font-display: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* NEW: Instrument Serif 400 italic, used for the person's own words, wordmark accents, and quotes on cards. */
+  --font-accent: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --weight-display: 300; /* NEW */
+  --weight-body: 400;    /* NEW */
+  --weight-strong: 500;  /* NEW */
+
+  /* ---------- Radius ---------- */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 28px;
+  --radius-pill: 999px;
+
+  /* ---------- Motion ---------- */
+  --motion-fast: 180ms;        /* direct feedback only: press, toggle thumb */
+  --motion-base: 480ms;        /* most UI transitions */
+  --motion-slow: 1000ms;       /* captions aging, panel expand */
+  --motion-tone-shift: 4000ms; /* orb tint cross-fade */
+  --motion-sky: 2400ms;        /* NEW: weather cross-fade */
+  --motion-sheet: 560ms;       /* NEW: sheets and menu */
+  --ease-calm: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-breath: cubic-bezier(0.45, 0, 0.55, 1);
+  --ease-settle: cubic-bezier(0.16, 1, 0.3, 1); /* NEW: sheets arriving, slow tail */
+  --breath-idle-seconds: 10;
+
+  /* Constellation ("Your patterns"): always a night garden, in both themes. */
+  --night-top: #1c2219;
+  --night-bottom: #0f120e;
+  --night-star: #f4f6e8;
+  --night-glow: #b5d98a;
+  --night-line: #cfe6b8;
+  --night-label: #dfe3d4;
+}
+
+/* ---------- Twilight (dark) — default ---------- */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg: #181a16;
+  --color-bg-deep: #121410;
+  --color-band: #1e221b;               /* NEW: sage band behind composer and controls */
+  --color-surface: rgba(255, 255, 255, 0.06);
+  --color-surface-strong: rgba(255, 255, 255, 0.10);
+  --color-border: rgba(255, 255, 255, 0.10);
+  --color-text: #f1f3ec;               /* 15.9:1 on bg */
+  --color-text-muted: #b6bbad;         /* 9.0:1 */
+  --color-text-faint: #a2a799;         /* 7.0:1 */
+  --color-accent: #9fe0ad;             /* primary button fill */
+  --color-accent-strong: #c4eccb;      /* accent as text/lines; orb swirl */
+  --color-on-accent: #10200f;          /* 11.6:1 on accent */
+  --color-focus: #f3d39a;
+  --color-care: #f0b48c;               /* 9.6:1 on bg */
+  --color-care-surface: rgba(240, 180, 140, 0.14);
+  --color-care-strong: #f0b48c;        /* NEW: filled Call button bg */
+  --color-on-care: #2a160a;            /* NEW */
+
+  /* NEW: orb rendering (read by Presence at runtime) */
+  --orb-core: #cfe6b8;
+  --orb-membrane: #a9c98a;
+  --orb-glow-alpha: 0.10;
+  --orb-blend: screen;
+
+  --shadow-soft: none;                                /* NEW */
+  --shadow-raised: 0 12px 40px rgba(0, 0, 0, 0.35);   /* NEW: sheets, menu */
+
+  --tone-neutral: #86c793;
+  --tone-calm: #7fbdb4;
+  --tone-heavy: #8d9585;
+  --tone-anxious: #ad9fcc;
+  --tone-warm: #d9a979;
+  --tone-hopeful: #a6d77d;
+  --tone-frustrated: #c98f7d;
+  --tone-concerned: #e5b089;
+
+  --sky-clear-top: #1f2a20;
+  --sky-clear-bottom: #181a16;
+  --sky-haze-top: #26261f;
+  --sky-haze-bottom: #1b1c18;
+  --sky-drizzle-top: #1a2223;
+  --sky-drizzle-bottom: #161917;
+  --sky-storm-top: #121411;
+  --sky-storm-bottom: #20221e;
+  --sky-breaking-top: #22251b;
+  --sky-breaking-bottom: #2e2a1f;
+  --sky-unknown-top: #181a16;
+  --sky-unknown-bottom: #1b1e18;
+  --sky-glow: rgba(200, 230, 160, 0.16);
+
+  /* NEW: ambient mesh washes layered over --color-bg (sage lower-left, apricot right, mint top) */
+  --mesh-a: rgba(150, 200, 120, 0.12);
+  --mesh-b: rgba(220, 180, 130, 0.09);
+  --mesh-c: rgba(120, 190, 170, 0.06);
+}
+
+/* ---------- Dawn (light) ---------- */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --color-bg: #fbf9f2;
+    --color-bg-deep: #f1efe6;
+    --color-band: #eef1e6;
+    --color-surface: #ffffff;
+    --color-surface-strong: #f1efe6;
+    --color-border: rgba(30, 40, 20, 0.12);
+    --color-text: #1d1f1a;
+    --color-text-muted: #53584c;
+    --color-text-faint: #5a5e52;
+    --color-accent: #8fdba3;
+    --color-accent-strong: #2f6b3e;
+    --color-on-accent: #10240f;
+    --color-focus: #a8561f;
+    --color-care: #93441f;
+    --color-care-surface: rgba(214, 122, 74, 0.12);
+    --color-care-strong: #93441f;
+    --color-on-care: #ffffff;
+    --orb-core: #fbfde9;
+    --orb-membrane: #d7efb2;
+    --orb-glow-alpha: 0.40;
+    --orb-blend: source-over;
+    --shadow-soft: 0 1px 0 rgba(30, 40, 20, 0.06), 0 8px 24px rgba(30, 40, 20, 0.05);
+    --shadow-raised: 0 16px 48px rgba(30, 40, 20, 0.14);
+    --tone-neutral: #a6dc93;
+    --tone-calm: #a8d8d0;
+    --tone-heavy: #bcc2b3;
+    --tone-anxious: #d4c8ea;
+    --tone-warm: #f4cfa4;
+    --tone-hopeful: #c9ef9c;
+    --tone-frustrated: #eab7a4;
+    --tone-concerned: #f6c9a0;
+    --sky-clear-top: #d4e7e9;
+    --sky-clear-bottom: #fbf9f2;
+    --sky-haze-top: #ece9df;
+    --sky-haze-bottom: #f7f4ec;
+    --sky-drizzle-top: #dfe6e2;
+    --sky-drizzle-bottom: #f1f2ec;
+    --sky-storm-top: #dadfd7;
+    --sky-storm-bottom: #e8e9e3;
+    --sky-breaking-top: #e3e6df;
+    --sky-breaking-bottom: #f8e7d0;
+    --sky-unknown-top: #e9ebe3;
+    --sky-unknown-bottom: #fbf9f2;
+    --sky-glow: rgba(214, 240, 180, 0.50);
+  --mesh-a: rgba(200, 234, 168, 0.60);
+  --mesh-b: rgba(246, 226, 190, 0.65);
+  --mesh-c: rgba(214, 236, 226, 0.70);
+  }
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --color-bg: #fbf9f2;
+  --color-bg-deep: #f1efe6;
+  --color-band: #eef1e6;
+  --color-surface: #ffffff;
+  --color-surface-strong: #f1efe6;
+  --color-border: rgba(30, 40, 20, 0.12);
+  --color-text: #1d1f1a;          /* 15.6:1 on bg */
+  --color-text-muted: #53584c;    /* 6.8:1 */
+  --color-text-faint: #5a5e52;    /* 5.8:1 */
+  --color-accent: #8fdba3;
+  --color-accent-strong: #2f6b3e; /* 6.3:1, text-safe green */
+  --color-on-accent: #10240f;
+  --color-focus: #a8561f;
+  --color-care: #93441f;          /* 6.9:1 */
+  --color-care-surface: rgba(214, 122, 74, 0.12);
+  --color-care-strong: #93441f;
+  --color-on-care: #ffffff;
+
+  --orb-core: #fbfde9;
+  --orb-membrane: #d7efb2;
+  --orb-glow-alpha: 0.40;
+  --orb-blend: source-over;
+
+  --shadow-soft: 0 1px 0 rgba(30, 40, 20, 0.06), 0 8px 24px rgba(30, 40, 20, 0.05);
+  --shadow-raised: 0 16px 48px rgba(30, 40, 20, 0.14);
+
+  --tone-neutral: #a6dc93;
+  --tone-calm: #a8d8d0;
+  --tone-heavy: #bcc2b3;
+  --tone-anxious: #d4c8ea;
+  --tone-warm: #f4cfa4;
+  --tone-hopeful: #c9ef9c;
+  --tone-frustrated: #eab7a4;
+  --tone-concerned: #f6c9a0;
+
+  --sky-clear-top: #d4e7e9;
+  --sky-clear-bottom: #fbf9f2;
+  --sky-haze-top: #ece9df;
+  --sky-haze-bottom: #f7f4ec;
+  --sky-drizzle-top: #dfe6e2;
+  --sky-drizzle-bottom: #f1f2ec;
+  --sky-storm-top: #dadfd7;
+  --sky-storm-bottom: #e8e9e3;
+  --sky-breaking-top: #e3e6df;
+  --sky-breaking-bottom: #f8e7d0;
+  --sky-unknown-top: #e9ebe3;
+  --sky-unknown-bottom: #fbf9f2;
+  --sky-glow: rgba(214, 240, 180, 0.50);
+  --mesh-a: rgba(200, 234, 168, 0.60);
+  --mesh-b: rgba(246, 226, 190, 0.65);
+  --mesh-c: rgba(214, 236, 226, 0.70);
+}
+
+/* Composite mesh, declared on every themed element so it resolves per theme. Use as background: var(--mesh-bg). */
+:root,
+[data-theme] {
+  --mesh-bg: radial-gradient(70% 45% at 0% 74%, var(--mesh-a), transparent 70%), radial-gradient(65% 40% at 100% 32%, var(--mesh-b), transparent 70%), radial-gradient(60% 30% at 70% 0%, var(--mesh-c), transparent 70%), var(--color-bg);
+}

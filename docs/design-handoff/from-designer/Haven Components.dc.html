@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./tokens.css">
+<style>body{margin:0;background:#dcdcd4;-webkit-font-smoothing:antialiased}a{color:#2f6b3e}a:hover{color:#1d1f1a}</style>
+</helmet>
+<div style="padding:64px;display:flex;flex-direction:column;gap:32px;font-family:'Geist',sans-serif;color:#1d1f1a">
+<header style="max-width:900px;display:flex;flex-direction:column;gap:10px">
+<span style="font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#53584c">Haven · 3a · §5 component states (the new /lab)</span>
+<h1 style="margin:0;font-weight:300;font-size:48px;letter-spacing:-.03em">Components &amp; <span style="font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;font-size:54px">states</span></h1>
+<p style="margin:0;font-size:17px;color:#53584c">The same component is rendered in both themes. Screens are in <a href="Haven Screens.dc.html">Haven Screens</a>, and motion and assets are in <a href="Haven Spec.dc.html">Haven Spec</a>.</p>
+</header>
+<div style="display:flex;gap:32px;align-items:flex-start">
+<div data-theme="dark" style="width:1040px;flex:none;border-radius:28px;overflow:hidden;box-shadow:0 24px 60px rgba(20,30,15,.28)"><dc-import name="Haven Kit" theme="dark" hint-size="1040px,2600px"></dc-import></div>
+<div data-theme="light" style="width:1040px;flex:none;border-radius:28px;overflow:hidden;box-shadow:0 24px 60px rgba(20,30,15,.16)"><dc-import name="Haven Kit" theme="light" hint-size="1040px,2600px"></dc-import></div>
+</div>
+</div>
+</x-dc>
+</body>
+</html>

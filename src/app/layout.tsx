@@ -1,20 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { Geist, Instrument_Serif } from "next/font/google";
 import { BRAND } from "@/lib/brand";
 import { InlineScript } from "@/components/InlineScript";
 import { THEME_SCRIPT } from "@/lib/theme";
 import { Providers } from "./providers";
 import "./globals.css";
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+const geist = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
+  weight: ["300", "400", "500"],
   display: "swap",
 });
 
-const inter = Inter({
-  variable: "--font-inter",
+const instrument = Instrument_Serif({
+  variable: "--font-instrument",
   subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
   display: "swap",
 });
 
@@ -31,8 +34,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0e1024" },
-    { media: "(prefers-color-scheme: light)", color: "#fbf5ef" },
+    { media: "(prefers-color-scheme: dark)", color: "#181a16" },
+    { media: "(prefers-color-scheme: light)", color: "#fbf9f2" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -43,7 +46,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${fraunces.variable} ${inter.variable} h-full`}
+      className={`${geist.variable} ${instrument.variable} h-full`}
       suppressHydrationWarning
     >
       <head>

@@ -4,6 +4,7 @@
 @theme inline {
   --color-bg: var(--color-bg);
   --color-bg-deep: var(--color-bg-deep);
+  --color-band: var(--color-band);
   --color-surface: var(--color-surface);
   --color-surface-strong: var(--color-surface-strong);
   --color-border: var(--color-border);
@@ -16,41 +17,95 @@
   --color-focus: var(--color-focus);
   --color-care: var(--color-care);
   --color-care-surface: var(--color-care-surface);
+  --color-care-strong: var(--color-care-strong);
+  --color-on-care: var(--color-on-care);
+  --color-night-star: var(--night-star);
+  --color-night-label: var(--night-label);
 
   --font-display: var(--font-display);
   --font-sans: var(--font-body);
+  --font-accent: var(--font-accent);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --radius-pill: var(--radius-pill);
 
+  --shadow-soft: var(--shadow-soft);
+  --shadow-raised: var(--shadow-raised);
+
   --ease-calm: var(--ease-calm);
+  --ease-settle: var(--ease-settle);
+  --ease-breath: var(--ease-breath);
 }
 
 @layer base {
-html,
-body {
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-body);
+  html,
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-weight: var(--weight-body);
+  }
+
+  body {
+    min-height: 100dvh;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  button {
+    cursor: pointer;
+  }
 }
 
-body {
-  min-height: 100dvh;
-  -webkit-font-smoothing: antialiased;
-}
-
-:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 3px;
-  border-radius: var(--radius-sm);
-}
-
-::selection {
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-}
+@layer components {
+  /* Headings: Geist 300 with one word in Instrument Serif italic (wrap it in .accent). */
+  .heading {
+    font-family: var(--font-display);
+    font-weight: var(--weight-display);
+    font-size: 34px;
+    line-height: 1.12;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+  .heading-lg {
+    font-size: 36px;
+  }
+  .heading-sheet {
+    font-size: 28px;
+    letter-spacing: -0.02em;
+  }
+  .accent {
+    font-family: var(--font-accent);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 1.11em;
+    letter-spacing: normal;
+  }
+  /* The person's own words: Instrument Serif italic. */
+  .voice-person {
+    font-family: var(--font-accent);
+    font-style: italic;
+    font-weight: 400;
+  }
+  /* The companion's words: Geist 300. */
+  .voice-companion {
+    font-family: var(--font-display);
+    font-weight: var(--weight-display);
+    letter-spacing: -0.01em;
+  }
 }
 
 /* Calm by default: honor reduced-motion everywhere. */

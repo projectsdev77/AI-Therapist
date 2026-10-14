@@ -27,8 +27,8 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): st
 /** Renders a reflection card to a portrait PNG for saving or sharing. Uses the live design tokens. */
 export async function renderCardImage(reflection: Reflection): Promise<Blob> {
   await document.fonts.ready;
-  const display = readToken("--font-fraunces") || "Georgia";
-  const body = readToken("--font-inter") || "system-ui";
+  const display = readToken("--font-instrument") || "Georgia";
+  const body = readToken("--font-geist") || "system-ui";
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
