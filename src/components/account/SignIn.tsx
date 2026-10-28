@@ -2,58 +2,83 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
-import { Presence } from "@/components/presence/Presence";
+import { useEffect, useState } from "react";
 import { Backdrop } from "@/components/shell/Backdrop";
 import { TopBar } from "@/components/shell/TopBar";
 import { Button, LinkButton } from "@/components/ui/Button";
+import { MailIcon } from "@/components/ui/icons";
 import { useStore } from "@/lib/data/StoreProvider";
+import { HOME } from "@/lib/routes";
 import { getSupabase } from "@/lib/supabase/client";
 import { accountsEnabled } from "@/lib/supabase/config";
 
 function GoogleMark() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
-      <path fill="#4285F4" d="M23 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.5z" />
-      <path fill="#34A853" d="M12 23.5c3.1 0 5.7-1 7.6-2.8l-3.7-2.9c-1 .7-2.3 1.1-3.9 1.1-3 0-5.5-2-6.4-4.7H1.8v3A11.5 11.5 0 0 0 12 23.5z" />
-      <path fill="#FBBC05" d="M5.6 14.2a6.9 6.9 0 0 1 0-4.4v-3H1.8a11.5 11.5 0 0 0 0 10.4z" />
-      <path fill="#EA4335" d="M12 5.1c1.7 0 3.2.6 4.4 1.7l3.3-3.3A11.5 11.5 0 0 0 1.8 6.8l3.8 3C6.5 7.1 9 5.1 12 5.1z" />
+      <path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z" />
+      <path fill="#34A853" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z" />
+      <path fill="#FBBC05" d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1a10 10 0 0 0 0 9.2z" />
+      <path fill="#EA4335" d="M12 6c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.4L6.4 10C7.2 7.7 9.4 6 12 6z" />
     </svg>
   );
 }
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const RESEND_MS = 30_000;
 
 export function SignIn() {
   const params = useSearchParams();
   const { user } = useStore();
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">(params.get("error") ? "error" : "idle");
+  const [invalid, setInvalid] = useState(false);
+  const [resendAt, setResendAt] = useState(0);
+  const [now, setNow] = useState(0);
 
-  const redirectTo = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(params.get("next") ?? "/")}`;
+  // A once-a-second clock while "Send it again" is waiting.
+  useEffect(() => {
+    if (!resendAt) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [resendAt]);
 
-  async function sendLink(e: React.FormEvent) {
-    e.preventDefault();
+  const redirectTo = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(params.get("next") ?? HOME)}`;
+
+  async function send() {
     const sb = getSupabase();
     if (!sb) return;
     setState("sending");
     const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo() } });
     setState(error ? "error" : "sent");
+    const t = Date.now();
+    setNow(t);
+    setResendAt(t + RESEND_MS);
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!EMAIL.test(email.trim())) {
+      setInvalid(true);
+      return;
+    }
+    setInvalid(false);
+    await send();
   }
 
   async function google() {
     await getSupabase()?.auth.signInWithOAuth({ provider: "google", options: { redirectTo: redirectTo() } });
   }
 
+  const h1 = "m-0 mt-[clamp(8px,4vw,48px)] text-[clamp(30px,3vw,38px)] leading-[1.1] font-semibold tracking-[-0.04em]";
+  const wait = Math.max(0, Math.ceil((resendAt - now) / 1000));
+
   let body: React.ReactNode;
   if (!accountsEnabled) {
     body = (
       <>
-        <div className="text-center">
-          <h1 className="heading">
-            Accounts are <span className="accent">coming soon</span>
-          </h1>
-          <p className="mt-1.5 text-muted">For now, everything is saved privately on this device.</p>
-        </div>
-        <LinkButton href="/" variant="primary" size="lg">
+        <h1 className={h1}>Accounts are coming soon</h1>
+        <p className="m-0 text-base text-muted">For now, everything is saved privately on this device. You don&apos;t need an account to talk.</p>
+        <LinkButton href={HOME} variant="primary" size="xl" className="mt-2">
           Back home
         </LinkButton>
       </>
@@ -61,84 +86,93 @@ export function SignIn() {
   } else if (user) {
     body = (
       <>
-        <div className="text-center">
-          <h1 className="heading">
-            You&apos;re <span className="accent">signed in</span>
-          </h1>
-          <p className="mt-1.5 text-muted">{user.email}</p>
-        </div>
-        <LinkButton href="/" variant="primary" size="lg">
+        <h1 className={h1}>You&apos;re signed in</h1>
+        <p className="m-0 text-base text-muted">{user.email}</p>
+        <LinkButton href={HOME} variant="primary" size="xl" className="mt-2">
           Continue
         </LinkButton>
       </>
     );
   } else if (state === "sent") {
     body = (
-      <div role="status" className="text-center">
-        <h1 className="heading">
-          Check your <span className="accent">email</span>
-        </h1>
-        <p className="mt-1.5 text-muted">We sent a sign-in link to {email}. You can close this tab.</p>
+      <div role="status" className="mt-[clamp(16px,6vw,64px)] flex flex-col items-center gap-3 text-center">
+        <span aria-hidden className="flex size-16 items-center justify-center rounded-full bg-glass-strong text-accent-strong">
+          <MailIcon size={28} />
+        </span>
+        <h1 className="m-0 text-[30px] font-semibold tracking-[-0.035em]">Check your email</h1>
+        <p className="m-0 max-w-[340px] text-base text-muted">
+          I sent a sign-in link to <strong className="font-semibold text-text">{email}</strong>. It works once.
+        </p>
+        <Button variant="secondary" size="lg" className="mt-2" disabled={wait > 0} onClick={() => void send()}>
+          {wait > 0 ? `Send it again in ${wait}s` : "Send it again"}
+        </Button>
+        <Button variant="tertiary" onClick={() => setState("idle")}>
+          Use a different email
+        </Button>
       </div>
     );
   } else {
     body = (
       <>
-        <div className="flex flex-col gap-1.5 text-center">
-          <h1 className="heading text-[32px]">
-            Keep your <span className="accent">skies</span>
-          </h1>
-          <p className="text-muted">Sign in so I remember you on any device.</p>
-        </div>
-        <Button variant="secondary" onClick={google} className="min-h-[52px] text-base font-medium">
+        <h1 className={h1}>Keep your conversations safe</h1>
+        <p className="m-0 text-base text-muted">
+          An account keeps your cards, skies and notes private and lets you use them on any device. You don&apos;t need one to talk.
+        </p>
+        <button
+          type="button"
+          onClick={() => void google()}
+          className="press mt-2 flex min-h-14 items-center justify-center gap-2.5 rounded-pill bg-[#effcfa] text-base font-semibold text-[#0b2a35]"
+        >
           <GoogleMark /> Continue with Google
-        </Button>
-        <div className="flex items-center gap-3 text-sm text-faint">
-          <span className="h-px flex-1 bg-border" />
+        </button>
+        <div aria-hidden className="flex items-center gap-3 text-[13px] text-faint">
+          <span className="h-px flex-1 bg-edge-hi" />
           or
-          <span className="h-px flex-1 bg-border" />
+          <span className="h-px flex-1 bg-edge-hi" />
         </div>
-        <form onSubmit={sendLink} className="flex flex-col gap-5">
-          <label className="flex flex-col gap-1.5 text-sm text-muted">
-            Email
+        <form onSubmit={(e) => void submit(e)} noValidate className="flex flex-col gap-4">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[14px] font-semibold text-muted">Email</span>
             <input
               type="email"
-              required
               autoComplete="email"
               value={email}
+              placeholder="you@example.com"
+              aria-invalid={invalid || undefined}
+              aria-describedby={invalid ? "email-error" : undefined}
               onChange={(e) => setEmail(e.target.value)}
-              className="min-h-[52px] rounded-md border border-border bg-surface px-4 text-base text-text shadow-soft focus:border-accent-strong focus:outline-none"
+              className={`min-h-[52px] rounded-sm border bg-field px-4 text-base text-text placeholder:text-faint focus:outline-none ${
+                invalid ? "border-danger-edge" : "border-edge-hi focus:border-[rgba(143,240,232,.6)]"
+              }`}
             />
+            {invalid && (
+              <span id="email-error" role="alert" className="text-[14px] text-danger-text">
+                That doesn&apos;t look like an email address.
+              </span>
+            )}
           </label>
           <Button type="submit" variant="primary" disabled={state === "sending"} className="min-h-[52px] text-base">
-            {state === "sending" ? "Sending…" : "Send me a sign-in link"}
+            {state === "sending" ? "Sending…" : "Email me a sign-in link"}
           </Button>
         </form>
         {state === "error" && (
-          <p role="alert" className="text-center text-care">
+          <p role="alert" className="m-0 text-[14px] text-danger-text">
             That didn&apos;t work. Please try again.
           </p>
         )}
-        <p className="text-center text-sm text-faint">
-          No password. The link works once. By continuing you agree to the{" "}
-          <Link href="/terms" className="underline">
-            terms
-          </Link>
-          .
+        <p className="m-0 mt-1 text-[13px] text-faint">
+          No password. We&apos;ll only use your email to sign you in. <Link href="/privacy">Privacy</Link>
         </p>
       </>
     );
   }
 
   return (
-    <div className="relative min-h-dvh">
-      <Backdrop weather="breaking" />
-      <TopBar back />
-      <main className="relative mx-auto flex w-full max-w-[440px] flex-col gap-5 px-4 pt-10 pb-8">
-        <div className="flex justify-center">
-          <Presence state="idle" tone="hopeful" className="w-[140px]" />
-        </div>
-        {body}
+    <div className="relative flex min-h-dvh flex-col">
+      <Backdrop />
+      <TopBar title="Sign in" />
+      <main className="relative z-[1] flex flex-1 flex-col items-center px-5 pt-6 pb-12">
+        <div className="flex w-full max-w-[420px] flex-col gap-4">{body}</div>
       </main>
     </div>
   );

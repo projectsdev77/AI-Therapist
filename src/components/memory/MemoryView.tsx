@@ -1,63 +1,56 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PageShell } from "@/components/shell/PageShell";
 import { Button } from "@/components/ui/Button";
-import { WriteIcon } from "@/components/ui/icons";
+import { PlusIcon } from "@/components/ui/icons";
+import { Sheet } from "@/components/ui/Sheet";
 import { Switch } from "@/components/ui/Switch";
 import { useStore } from "@/lib/data/StoreProvider";
 import { MEMORY_CATEGORIES, MEMORY_CATEGORY_LABELS, type Memory } from "@/lib/data/types";
+import { usePendingForget } from "@/lib/memory/usePendingForget";
+import { NoteRow } from "./NoteRow";
 
-type Forgotten = { memory: Memory; timer: ReturnType<typeof setTimeout> };
+const input =
+  "min-h-12 w-full rounded-sm border border-edge-hi bg-field px-3.5 py-[11px] text-base text-text placeholder:text-faint focus:border-[rgba(143,240,232,.6)] focus:outline-none";
 
+/** "What I remember": the switch, the summary, notes by category with Edit and Forget (with Undo), Add, Forget everything. */
 export function MemoryView() {
   const { store, profile, updateProfile } = useStore();
   const [memories, setMemories] = useState<Memory[] | null>(null);
   const [editingSummary, setEditingSummary] = useState(false);
   const [summaryDraft, setSummaryDraft] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  const [adding, setAdding] = useState(false);
   const [newFact, setNewFact] = useState("");
-  const [forgotten, setForgotten] = useState<Forgotten | null>(null);
-  const forgottenRef = useRef<Forgotten | null>(null);
+  const [confirmAll, setConfirmAll] = useState(false);
 
   const reload = useCallback(async () => setMemories(await store.listMemories()), [store]);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- loads from the store
     void reload();
   }, [reload]);
-  useEffect(
-    () => () => {
-      if (forgottenRef.current) clearTimeout(forgottenRef.current.timer);
-    },
-    [],
-  );
+
+  const { pending, forget, undo } = usePendingForget(async (id) => {
+    await store.deleteMemory(id);
+    setMemories((m) => m?.filter((x) => x.id !== id) ?? null);
+  });
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
     if (!newFact.trim()) return;
     await store.addMemory({ fact: newFact.trim(), category: "other", sourceSessionId: null });
     setNewFact("");
+    setAdding(false);
     await reload();
   }
 
-  async function forget(memory: Memory) {
-    if (forgottenRef.current) clearTimeout(forgottenRef.current.timer);
-    await store.deleteMemory(memory.id);
-    const timer = setTimeout(() => {
-      forgottenRef.current = null;
-      setForgotten(null);
-    }, 8000);
-    forgottenRef.current = { memory, timer };
-    setForgotten(forgottenRef.current);
-    await reload();
-  }
-
-  async function undo() {
-    const f = forgottenRef.current;
-    if (!f) return;
-    clearTimeout(f.timer);
-    forgottenRef.current = null;
-    setForgotten(null);
-    await store.addMemory({ fact: f.memory.fact, category: f.memory.category, sourceSessionId: f.memory.sourceSessionId });
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingId || !editDraft.trim()) return;
+    await store.updateMemory(editingId, { fact: editDraft.trim() });
+    setEditingId(null);
     await reload();
   }
 
@@ -66,28 +59,39 @@ export function MemoryView() {
     setEditingSummary(false);
   }
 
+  async function forgetEverything() {
+    for (const m of memories ?? []) await store.deleteMemory(m.id);
+    await updateProfile({ clientSummary: null, clientSummaryUpdatedAt: null });
+    setConfirmAll(false);
+    await reload();
+  }
+
+  const on = profile?.memoryEnabled ?? true;
   const grouped = MEMORY_CATEGORIES.map((c) => ({ category: c, items: (memories ?? []).filter((m) => m.category === c) })).filter((g) => g.items.length);
+  const hasAnything = (memories?.length ?? 0) > 0 || Boolean(profile?.clientSummary);
 
   return (
-    <PageShell
-      title={
-        <>
-          What I <span className="accent">remember</span>
-        </>
-      }
-      subtitle="These are my notes about you. Change or remove anything. I only use what's here."
-    >
-      <div className="flex flex-col gap-5">
-        {profile && (
-          <div className="flex items-center justify-between gap-3 rounded-md bg-band py-1.5 pr-1.5 pl-4">
-            <span className="text-[15px]">{profile.memoryEnabled ? "Remembering is on" : "Remembering is off. I'm not using these notes."}</span>
-            <Switch checked={profile.memoryEnabled} onChange={(on) => void updateProfile({ memoryEnabled: on })} label="Remember between conversations" />
-          </div>
-        )}
+    <PageShell title="What I remember" width={640}>
+      {profile && (
+        <div className="flex items-center gap-3 rounded-md border border-edge-hi bg-glass py-3 pr-1.5 pl-[18px]">
+          <span className="flex flex-1 flex-col">
+            <span className="text-base font-semibold">Remember our conversations</span>
+            <span className="text-[14px] text-muted">{on ? "I keep short notes so you don't have to start over." : "Off. Turn it on whenever you like."}</span>
+          </span>
+          <Switch checked={on} onChange={(v) => void updateProfile({ memoryEnabled: v })} label="Remember our conversations" />
+        </div>
+      )}
 
-        <section className="flex flex-col gap-2 rounded-lg border border-border bg-surface px-5 py-[18px] shadow-soft">
+      {!on && (
+        <p role="status" className="m-0 rounded-md border border-dashed border-edge-hi px-4 py-3.5 text-[15px] text-muted">
+          Remembering is off. I&apos;m not adding notes or using the ones below. They stay until you delete them.
+        </p>
+      )}
+
+      <div className={`flex flex-col gap-[22px] ${on ? "" : "opacity-60"}`}>
+        <div className="flex flex-col gap-1 rounded-md bg-glass-strong px-[18px] py-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium text-muted">In short</h2>
+            <span className="text-[13px] font-semibold text-accent-strong">In short</span>
             {!editingSummary && (
               <button
                 type="button"
@@ -95,7 +99,7 @@ export function MemoryView() {
                   setSummaryDraft(profile?.clientSummary ?? "");
                   setEditingSummary(true);
                 }}
-                className="-my-2.5 -mr-2.5 min-h-11 px-2.5 text-[15px] font-medium text-accent-strong"
+                className="press -my-2.5 -mr-2 min-h-11 rounded-pill bg-transparent px-2.5 text-[14px] text-muted hover:text-text"
               >
                 Edit
               </button>
@@ -104,135 +108,121 @@ export function MemoryView() {
           {editingSummary ? (
             <div className="flex flex-col gap-2">
               <label htmlFor="summary" className="sr-only">
-                Notes
+                In short
               </label>
-              <textarea
-                id="summary"
-                value={summaryDraft}
-                onChange={(e) => setSummaryDraft(e.target.value)}
-                rows={4}
-                maxLength={1200}
-                className="voice-person rounded-sm border border-border bg-bg p-3 text-xl leading-[1.4] text-text focus:border-accent-strong focus:outline-none"
-              />
+              <textarea id="summary" value={summaryDraft} onChange={(e) => setSummaryDraft(e.target.value)} rows={4} maxLength={1200} className={input} />
               <div className="flex justify-end gap-2">
-                <Button variant="ghost" onClick={() => setEditingSummary(false)}>
+                <Button variant="tertiary" onClick={() => setEditingSummary(false)}>
                   Cancel
                 </Button>
-                <Button variant="primary" onClick={saveSummary}>
+                <Button variant="primary" onClick={() => void saveSummary()}>
                   Save
                 </Button>
               </div>
             </div>
           ) : (
-            <p className={profile?.clientSummary ? "voice-person text-xl leading-[1.4] text-pretty" : "text-muted"}>
+            <p className={`m-0 text-base ${profile?.clientSummary ? "" : "text-muted"}`}>
               {profile?.clientSummary ?? "Nothing yet. After we talk, I'll write a short note about what's going on for you."}
             </p>
           )}
-        </section>
-
-        {forgotten && (
-          <div role="status" className="flex items-center justify-between gap-3 rounded-md border border-dashed border-border py-1 pr-1 pl-4">
-            <span className="text-[15px] text-muted">Forgotten.</span>
-            <Button variant="ghost" onClick={undo} className="!text-accent-strong font-medium">
-              Undo
-            </Button>
-          </div>
-        )}
+        </div>
 
         {memories && memories.length === 0 && (
-          <p className="text-muted">I don&apos;t remember anything specific yet. As we talk, the things that matter to you will show up here.</p>
+          <p className="m-0 text-muted">I don&apos;t remember anything specific yet. As we talk, the things that matter to you will show up here.</p>
         )}
 
         {grouped.map((g) => (
           <section key={g.category} aria-labelledby={`cat-${g.category}`} className="flex flex-col gap-1.5">
-            <h2 id={`cat-${g.category}`} className="text-sm font-medium text-muted">
+            <h2 id={`cat-${g.category}`} className="t-group m-0 mb-0.5 ml-1">
               {MEMORY_CATEGORY_LABELS[g.category]}
             </h2>
-            {g.items.map((m) => (
-              <MemoryItem key={m.id} memory={m} onChange={reload} onForget={forget} />
-            ))}
+            {g.items.map((m) =>
+              editingId === m.id ? (
+                <form key={m.id} onSubmit={saveEdit} className="flex flex-col gap-2 rounded-sm border border-[rgba(143,240,232,.45)] bg-glass p-3">
+                  <label htmlFor={`m-${m.id}`} className="text-[13px] font-semibold text-accent-strong">
+                    Editing
+                  </label>
+                  <input id={`m-${m.id}`} value={editDraft} autoFocus maxLength={300} onChange={(e) => setEditDraft(e.target.value)} className={input} />
+                  <div className="flex justify-end gap-2">
+                    <Button variant="tertiary" onClick={() => setEditingId(null)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" variant="primary">
+                      Save
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <NoteRow
+                  key={m.id}
+                  text={m.fact}
+                  gone={pending.includes(m.id)}
+                  onForget={() => forget(m.id)}
+                  onUndo={() => undo(m.id)}
+                  onEdit={() => {
+                    setEditingId(m.id);
+                    setEditDraft(m.fact);
+                  }}
+                />
+              ),
+            )}
           </section>
         ))}
 
-        <form onSubmit={add} className="flex min-h-14 items-center gap-2 rounded-pill border border-dashed border-border pr-1.5 pl-[18px]">
-          <label htmlFor="new-fact" className="sr-only">
-            Add something I should know
-          </label>
-          <input
-            id="new-fact"
-            value={newFact}
-            onChange={(e) => setNewFact(e.target.value)}
-            maxLength={300}
-            placeholder="Add something I should know"
-            className="min-h-11 flex-1 bg-transparent text-text placeholder:text-faint focus:outline-none"
-          />
-          <Button type="submit" disabled={!newFact.trim()} className="border-0 bg-surface-strong !shadow-none">
-            Add
-          </Button>
-        </form>
+        {adding && (
+          <form onSubmit={add} className="flex flex-col gap-2">
+            <label htmlFor="new-fact" className="t-group ml-1">
+              Add something I should know
+            </label>
+            <input id="new-fact" value={newFact} autoFocus maxLength={300} onChange={(e) => setNewFact(e.target.value)} className={input} />
+            <div className="flex justify-end gap-2">
+              <Button variant="tertiary" onClick={() => setAdding(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" disabled={!newFact.trim()}>
+                Add
+              </Button>
+            </div>
+          </form>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          {!adding && (
+            <Button variant="secondary" size="lg" onClick={() => setAdding(true)}>
+              <PlusIcon size={16} />
+              Add something
+            </Button>
+          )}
+          {hasAnything && (
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              onClick={() => setConfirmAll(true)}
+              className="min-h-11 rounded-pill bg-transparent px-3 text-[14px] text-muted underline underline-offset-[3px] hover:text-text"
+            >
+              Forget everything
+            </button>
+          )}
+        </div>
       </div>
-    </PageShell>
-  );
-}
 
-function MemoryItem({ memory, onChange, onForget }: { memory: Memory; onChange: () => Promise<void>; onForget: (m: Memory) => void }) {
-  const { store } = useStore();
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(memory.fact);
-
-  async function save() {
-    if (!draft.trim()) return;
-    await store.updateMemory(memory.id, { fact: draft.trim() });
-    setEditing(false);
-    await onChange();
-  }
-
-  if (editing) {
-    return (
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void save();
-        }}
-        className="flex flex-col gap-2 rounded-md border-2 border-accent-strong bg-surface p-3.5"
+      <Sheet
+        open={confirmAll}
+        onClose={() => setConfirmAll(false)}
+        role="alertdialog"
+        closeButton={false}
+        title="Forget everything I remember?"
+        subtitle="Every note and the short summary will be deleted. Your conversations and cards stay. This can't be undone."
       >
-        <label htmlFor={`m-${memory.id}`} className="text-[13px] font-medium text-accent-strong">
-          Editing
-        </label>
-        <input
-          id={`m-${memory.id}`}
-          value={draft}
-          autoFocus
-          maxLength={300}
-          onChange={(e) => setDraft(e.target.value)}
-          className="min-h-11 bg-transparent text-text focus:outline-none"
-        />
-        <div className="flex justify-end gap-2">
-          <Button variant="ghost" onClick={() => setEditing(false)}>
-            Cancel
+        <div className="flex flex-col gap-2">
+          <Button variant="danger" onClick={() => void forgetEverything()} className="min-h-[52px] w-full text-base">
+            Forget everything
           </Button>
-          <Button type="submit" variant="primary">
-            Save
+          <Button variant="secondary" onClick={() => setConfirmAll(false)} className="min-h-[52px] w-full text-base">
+            Keep them
           </Button>
         </div>
-      </form>
-    );
-  }
-
-  return (
-    <div className="flex min-h-[52px] items-center gap-2 rounded-md border border-border bg-surface py-1 pr-1 pl-4">
-      <span className="flex-1 text-pretty">{memory.fact}</span>
-      <button
-        type="button"
-        aria-label={`Edit: ${memory.fact}`}
-        onClick={() => setEditing(true)}
-        className="inline-flex size-11 shrink-0 items-center justify-center text-muted"
-      >
-        <WriteIcon size={18} />
-      </button>
-      <button type="button" aria-label={`Forget: ${memory.fact}`} onClick={() => onForget(memory)} className="min-h-11 shrink-0 px-2.5 text-sm text-muted">
-        Forget
-      </button>
-    </div>
+      </Sheet>
+    </PageShell>
   );
 }

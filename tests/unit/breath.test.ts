@@ -31,3 +31,11 @@ describe("sampleBreath", () => {
     expect(sampleBreath(box, 3.2).remaining).toBe(1);
   });
 });
+
+describe("breath count and round", () => {
+  it("says which second of the phase and which round", () => {
+    const box = BREATH_PATTERNS.find((p) => p.id === "box")!;
+    expect(sampleBreath(box, 2.5)).toMatchObject({ phase: "in", count: 3, length: 4, round: 1 });
+    expect(sampleBreath(box, 16 + 0.1)).toMatchObject({ phase: "in", count: 1, round: 2 });
+  });
+});

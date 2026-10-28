@@ -19,12 +19,31 @@
   --color-care-surface: var(--color-care-surface);
   --color-care-strong: var(--color-care-strong);
   --color-on-care: var(--color-on-care);
-  --color-night-star: var(--night-star);
-  --color-night-label: var(--night-label);
+
+  /* Lagoon names */
+  --color-ink: var(--lg-ink);
+  --color-ink-deep: var(--lg-ink-deep);
+  --color-glass: var(--lg-glass);
+  --color-glass-strong: var(--lg-glass-strong);
+  --color-glass-hover: var(--lg-glass-hover);
+  --color-edge-hi: var(--lg-edge-hi);
+  --color-edge-lo: var(--lg-edge-lo);
+  --color-mic: var(--lg-mic);
+  --color-mic-hover: var(--lg-mic-hover);
+  --color-mic-fg: var(--lg-mic-fg);
+  --color-mic-ring: var(--lg-mic-ring);
+  --color-dot: var(--lg-accent);
+  --color-sheet: var(--lg-sheet);
+  --color-scrim: var(--lg-scrim);
+  --color-field: var(--lg-field);
+  --color-care-edge: var(--lg-care-edge);
+  --color-danger: var(--lg-danger);
+  --color-danger-on: var(--lg-danger-on);
+  --color-danger-edge: var(--lg-danger-edge);
+  --color-danger-text: var(--lg-danger-text);
 
   --font-display: var(--font-display);
   --font-sans: var(--font-body);
-  --font-accent: var(--font-accent);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
@@ -37,15 +56,16 @@
   --ease-calm: var(--ease-calm);
   --ease-settle: var(--ease-settle);
   --ease-breath: var(--ease-breath);
+  --ease-lg: var(--lg-ease);
 }
 
 @layer base {
   html,
   body {
-    background: var(--color-bg);
-    color: var(--color-text);
-    font-family: var(--font-body);
-    font-weight: var(--weight-body);
+    background: var(--lg-ink-deep);
+    color: var(--lg-text);
+    font-family: var(--lg-font);
+    font-weight: 400;
   }
 
   body {
@@ -55,71 +75,157 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+
   :focus-visible {
-    outline: 2px solid var(--color-focus);
+    outline: 2px solid var(--lg-focus);
     outline-offset: 3px;
   }
 
   ::selection {
-    background: var(--color-accent);
-    color: var(--color-on-accent);
+    background: var(--lg-mic);
+    color: var(--lg-mic-fg);
   }
 
   button {
     cursor: pointer;
+    font-family: inherit;
+  }
+
+  a {
+    color: var(--lg-accent-strong);
+  }
+  a:hover {
+    color: var(--lg-text);
   }
 }
 
 @layer components {
-  /* Headings: Geist 300 with one word in Instrument Serif italic (wrap it in .accent). */
-  .heading {
-    font-family: var(--font-display);
-    font-weight: var(--weight-display);
-    font-size: 34px;
+  /* Glass surface: background, 1px edge, blur. */
+  .glass {
+    background: var(--lg-glass);
+    border: 1px solid var(--lg-edge-hi);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .glass-strong {
+    background: var(--lg-glass-strong);
+    border: 1px solid var(--lg-edge-hi);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+  .press {
+    transition:
+      background var(--lg-fast) var(--lg-ease),
+      color var(--lg-fast) var(--lg-ease),
+      transform var(--lg-fast) var(--lg-ease);
+  }
+  .press:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  /* Type roles (README "Type"). */
+  .t-landing-h1 {
+    font-size: clamp(38px, 5.6cqi, 72px);
+    font-weight: 600;
+    line-height: 1.04;
+    letter-spacing: -0.045em;
+  }
+  .t-screen-h1 {
+    font-size: clamp(30px, 3.6cqi, 46px);
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+  }
+  .t-page-h1 {
+    font-size: 40px;
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+  }
+  .t-h2 {
+    font-size: clamp(30px, 3.6cqi, 46px);
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+  }
+  .t-sheet {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+  }
+  .t-card {
+    font-size: clamp(28px, 2.6cqi, 34px);
+    font-weight: 600;
     line-height: 1.12;
-    letter-spacing: -0.025em;
-    text-wrap: balance;
+    letter-spacing: -0.035em;
+  }
+  .t-group {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--lg-text-muted);
+  }
+
+  /* Kept so older markup still renders while screens move over; no serif in Deep lagoon. */
+  .heading {
+    font-weight: 600;
+    font-size: 30px;
+    line-height: 1.1;
+    letter-spacing: -0.04em;
   }
   .heading-lg {
     font-size: 36px;
   }
   .heading-sheet {
-    font-size: 28px;
-    letter-spacing: -0.02em;
+    font-size: 24px;
+    letter-spacing: -0.03em;
   }
-  .accent {
-    font-family: var(--font-accent);
-    font-style: italic;
-    font-weight: 400;
-    font-size: 1.11em;
-    letter-spacing: normal;
-  }
-  /* The person's own words: Instrument Serif italic. */
-  .voice-person {
-    font-family: var(--font-accent);
-    font-style: italic;
-    font-weight: 400;
-  }
-  /* The companion's words: Geist 300. */
+  .accent,
+  .voice-person,
   .voice-companion {
-    font-family: var(--font-display);
-    font-weight: var(--weight-display);
-    letter-spacing: -0.01em;
+    font-style: normal;
   }
 }
 
-/* Sheets: rise 24px and fade in; close over 420ms. (Tailwind's translate utilities use the
-   separate `translate` property, so this transform composes with centering.) */
+/* Sheets slide up 320ms; dialogs fade and scale from .98 (README "Motion"). */
 @keyframes sheet-in {
   from {
-    opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(100%);
   }
 }
 @keyframes sheet-out {
   to {
+    transform: translateY(100%);
+  }
+}
+@keyframes dialog-in {
+  from {
     opacity: 0;
-    transform: translateY(24px);
+    transform: scale(0.98);
+  }
+}
+@keyframes dialog-out {
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+@keyframes side-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes side-out {
+  to {
+    transform: translateX(100%);
   }
 }
 @keyframes fade-in {
@@ -132,20 +238,32 @@
     opacity: 0;
   }
 }
-.sheet-panel {
-  animation: sheet-in var(--motion-sheet) var(--ease-settle) both;
-}
 .sheet-scrim {
-  animation: fade-in var(--motion-base) var(--ease-calm) both;
-}
-[data-state="closing"] .sheet-panel {
-  animation: sheet-out 420ms var(--ease-calm) both;
+  animation: fade-in var(--lg-base) var(--lg-ease) both;
 }
 [data-state="closing"] .sheet-scrim {
-  animation: fade-out 420ms var(--ease-calm) both;
+  animation: fade-out var(--lg-base) var(--lg-ease) both;
+}
+.sheet-panel[data-placement="bottom"] {
+  animation: sheet-in var(--lg-base) var(--lg-ease) both;
+}
+[data-state="closing"] .sheet-panel[data-placement="bottom"] {
+  animation: sheet-out var(--lg-base) var(--lg-ease) both;
+}
+.sheet-panel[data-placement="center"] {
+  animation: dialog-in var(--lg-base) var(--lg-ease) both;
+}
+[data-state="closing"] .sheet-panel[data-placement="center"] {
+  animation: dialog-out var(--lg-base) var(--lg-ease) both;
+}
+.sheet-panel[data-placement="side"] {
+  animation: side-in var(--lg-base) var(--lg-ease) both;
+}
+[data-state="closing"] .sheet-panel[data-placement="side"] {
+  animation: side-out var(--lg-base) var(--lg-ease) both;
 }
 
-/* Crisis panel expands over 1s with the settle easing. */
+/* Care panel and inline rows arriving. */
 @keyframes panel-in {
   from {
     opacity: 0;
@@ -153,10 +271,10 @@
   }
 }
 .panel-in {
-  animation: panel-in var(--motion-slow) var(--ease-settle) both;
+  animation: panel-in var(--lg-base) var(--lg-ease) both;
 }
 
-/* New caption: from 0 opacity, +8px, over 1s with the settle easing. */
+/* Captions: a new line rises in. */
 @keyframes caption-in {
   from {
     opacity: 0;
@@ -164,22 +282,11 @@
   }
 }
 .caption-line {
-  animation: caption-in var(--motion-slow) var(--ease-settle) both;
-  transition: color var(--motion-slow) var(--ease-calm);
-}
-@keyframes caption-leave {
-  from {
-    opacity: 0.6;
-    filter: blur(0);
-    transform: translateY(0);
-  }
-}
-.caption-leaving {
-  animation: caption-leave var(--motion-slow) var(--ease-calm) both;
+  animation: caption-in var(--lg-slow) var(--lg-ease) both;
 }
 
-/* Streaming / pending dots: opacity .3↔1, scale .8↔1 over 1.6s. */
-@keyframes hv-pulse {
+/* Streaming dot (hvDot) and the mic animations (lgPulse, lgBar). */
+@keyframes hv-dot {
   0%,
   100% {
     opacity: 0.3;
@@ -191,21 +298,71 @@
   }
 }
 .pulse-dot {
-  animation: hv-pulse 1.6s var(--ease-breath) infinite;
+  animation: hv-dot 1.6s var(--lg-ease) infinite;
+}
+.pulse-dot-slow {
+  animation: hv-dot 4s var(--lg-ease) infinite;
+}
+@keyframes lg-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0;
+  }
+}
+.mic-pulse {
+  animation: lg-pulse 2.4s var(--lg-ease) infinite;
+}
+@keyframes lg-bar {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.mic-bar {
+  animation: lg-bar 1s ease-in-out infinite;
 }
 
-/* Calm by default: honor reduced-motion everywhere. */
+/* Reduced motion: stop every animation, including the orb (README "Motion"). */
 @media (prefers-reduced-motion: reduce) {
-  /* Dots are hidden; the status text carries the state. */
-  .pulse-dot {
-    display: none;
-  }
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition: none !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* The orb (haven-orb.js). */
+@keyframes ho-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ho-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+@keyframes ho-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
   }
 }

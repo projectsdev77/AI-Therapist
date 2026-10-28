@@ -202,7 +202,9 @@ export class SupabaseStore implements DataStore {
     return (rows as SessionRow[]).map(toSession);
   }
 
-  async deleteSession(id: string): Promise<void> {
+  async deleteSession(id: string, opts: { keepMemories?: boolean } = {}): Promise<void> {
+    // Unlink memories first to keep them; otherwise they cascade with the session.
+    if (opts.keepMemories) check(await this.sb.from("memories").update({ source_session_id: null }).eq("source_session_id", id));
     // Messages, reflection, and sourced memories cascade in the database.
     check(await this.sb.from("sessions").delete().eq("id", id));
   }

@@ -3,6 +3,7 @@
 import type { User } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { finishPendingSessions } from "@/lib/reflection/pending";
+import { syncReturningCookie } from "@/lib/returning";
 import { getSupabase } from "@/lib/supabase/client";
 import { LocalStore } from "./localStore";
 import { SupabaseStore } from "./supabaseStore";
@@ -92,6 +93,11 @@ export function StoreProvider({ store: injected, children }: { store?: DataStore
     },
     [store],
   );
+
+  // Keep the "returning visitor" cookie in step with consent (and clear it after Delete everything).
+  useEffect(() => {
+    if (profile) syncReturningCookie(Boolean(profile.consentedAt));
+  }, [profile]);
 
   // Once per store, after load: finish conversations whose card never got made.
   const loaded = profile !== null && !authLoading;

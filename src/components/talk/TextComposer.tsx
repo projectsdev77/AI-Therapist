@@ -11,21 +11,25 @@ export interface TextComposerProps {
   autoFocus?: boolean;
 }
 
-/** Composer pill on the sage band: switch to talking, text that grows to 6 lines, send. */
+/**
+ * One glass composer (README "Composer"): the round aqua button is the mic while the box is
+ * empty (switch to voice) and becomes Send once there is text.
+ */
 export function TextComposer({ onSend, onTypingChange, onSwitchToVoice, disabled = false, autoFocus = true }: TextComposerProps) {
   const [value, setValue] = useState("");
   const ref = useRef<HTMLTextAreaElement>(null);
+  const hasText = value.trim().length > 0;
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 6 * 24 + 20)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 6 * 24 + 16)}px`;
   }, [value]);
 
   useEffect(() => {
-    onTypingChange?.(value.trim().length > 0);
-  }, [value, onTypingChange]);
+    onTypingChange?.(hasText);
+  }, [hasText, onTypingChange]);
 
   function submit() {
     const text = value.trim();
@@ -34,24 +38,18 @@ export function TextComposer({ onSend, onTypingChange, onSwitchToVoice, disabled
     setValue("");
   }
 
+  const round = "press inline-flex size-[46px] shrink-0 items-center justify-center rounded-full bg-mic text-mic-fg hover:bg-mic-hover";
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
         submit();
       }}
-      className="flex min-h-14 items-end gap-1 rounded-[28px] border border-border bg-surface px-1.5 py-1.5 shadow-soft focus-within:border-accent-strong"
+      className={`flex min-h-[60px] items-end gap-2 rounded-[30px] border bg-glass-strong has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-offset-[3px] has-[textarea:focus-visible]:outline-focus has-[textarea:focus-visible]:outline-solid py-1.5 pr-[7px] pl-5 backdrop-blur-[18px] ${
+        hasText ? "border-[rgba(143,240,232,.5)]" : "border-edge-hi"
+      }`}
     >
-      {onSwitchToVoice && (
-        <button
-          type="button"
-          onClick={onSwitchToVoice}
-          aria-label="Switch to talking"
-          className="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-text"
-        >
-          <MicIcon size={20} />
-        </button>
-      )}
       <label htmlFor="composer" className="sr-only">
         Write to your companion
       </label>
@@ -70,16 +68,17 @@ export function TextComposer({ onSend, onTypingChange, onSwitchToVoice, disabled
             submit();
           }
         }}
-        className="max-h-[164px] min-h-11 flex-1 resize-none bg-transparent px-2 py-2.5 text-base leading-6 text-text placeholder:text-faint focus:outline-none focus-visible:outline-none"
+        className="max-h-[160px] min-h-[46px] flex-1 resize-none self-center bg-transparent py-[11px] text-base leading-6 text-text placeholder:text-faint focus:outline-none focus-visible:outline-none"
       />
-      <button
-        type="submit"
-        disabled={disabled || !value.trim()}
-        aria-label="Send"
-        className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-accent text-on-accent transition-opacity duration-[var(--motion-base)] disabled:opacity-40"
-      >
-        <SendIcon size={20} strokeWidth={1.8} />
-      </button>
+      {hasText || !onSwitchToVoice ? (
+        <button type="submit" disabled={disabled || !hasText} aria-label="Send" className={`${round} disabled:opacity-45`}>
+          <SendIcon size={20} />
+        </button>
+      ) : (
+        <button type="button" onClick={onSwitchToVoice} aria-label="Switch to talking" className={round}>
+          <MicIcon size={22} />
+        </button>
+      )}
     </form>
   );
 }

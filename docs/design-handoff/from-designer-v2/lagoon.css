@@ -1,0 +1,18 @@
+/* Haven design system: Deep lagoon (dark only) + 5f halo orb. Prefix --lg- so it never collides with the round-1 tokens.css. */
+:root {
+  --lg-bg: linear-gradient(180deg,#15726c 0%,#10565c 30%,#0b2a35 66%,#081822 100%);
+  --lg-ink:#0b2a35; --lg-ink-deep:#081822;
+  --lg-text:#effcfa; --lg-text-muted:#b3d4d3; --lg-text-faint:#9cc0bf;
+  --lg-accent:#3fd6cd; --lg-accent-strong:#8ff0e8; --lg-on-accent:#032a2a; --lg-focus:#e6f59a;
+  --lg-care:#dccfff; --lg-care-surface:rgba(10,20,50,.32);
+  --lg-glass:rgba(150,240,230,.10); --lg-glass-strong:rgba(150,240,230,.17);
+  --lg-edge-hi:rgba(255,255,255,.16); --lg-edge-lo:rgba(255,255,255,.06);
+  --lg-streak-a:rgba(80,230,215,.16); --lg-streak-b:rgba(30,90,170,.26); --lg-streak-c:rgba(40,200,190,.14);
+  --lg-mic:#5fe3da; --lg-mic-fg:#032a2a; --lg-mic-ring:rgba(160,250,240,.24); --lg-mic-shadow:rgba(0,0,0,.22);
+  --lg-radius-sm:14px; --lg-radius-md:18px; --lg-radius-lg:32px; --lg-pill:999px;
+  --lg-font:"Geist",system-ui,sans-serif;
+  --lg-ease:cubic-bezier(.4,0,.2,1); --lg-fast:160ms; --lg-base:320ms; --lg-slow:640ms;
+}
+@keyframes lgPulse{0%,100%{transform:scale(1);opacity:.55}50%{transform:scale(1.12);opacity:0}}
+@keyframes lgBar{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}

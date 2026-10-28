@@ -6,7 +6,7 @@ A voice-first AI companion for everyday conversations, emotional support, and se
 
 - **Spec:** [docs/SPEC.md](docs/SPEC.md)
 - **Deploying:** [docs/DEPLOY.md](docs/DEPLOY.md)
-- **Visual design:** direction 3a "Sage & lamplight" by the designer, in [docs/design-handoff/from-designer/](docs/design-handoff/from-designer/HANDOFF.md). Open the `.dc.html` files there for every screen and state.
+- **Visual design:** "Deep lagoon" (v2) by the designer, in [docs/design-handoff/from-designer-v2/](docs/design-handoff/from-designer-v2/README.md). Open the `.dc.html` files there for every screen and state; [IMPLEMENTATION_NOTES.md](docs/design-handoff/from-designer-v2/IMPLEMENTATION_NOTES.md) lists where the build differs.
 - **Design handoff (for the redesign):** [docs/DESIGN_HANDOFF.md](docs/DESIGN_HANDOFF.md), with the prompt for Claude Design in [docs/design-handoff/PROMPT.md](docs/design-handoff/PROMPT.md)
 - **Client reference mock:** https://ai-therapist-1.lovable.app
 
@@ -14,7 +14,8 @@ A voice-first AI companion for everyday conversations, emotional support, and se
 
 | Area | What it does |
 |---|---|
-| **The Presence** | A WebGL orb that breathes, listens (reacts to your mic), thinks, speaks (moves with its voice), and settles when you're struggling. It is tinted by the tone of the conversation. |
+| **The orb** | A living orb with eyes that floats, leans in while you talk, looks away while it thinks, pulses while it speaks, and goes still and soft when you're struggling. |
+| **Landing page** | `/` explains what it is for first-time visitors; returning visitors go straight to their Home at `/home`. |
 | **Talk or Write** | Voice conversations (ElevenLabs, or the browser's speech APIs) or typing. Both use film-style captions, never chat bubbles. You can interrupt it by talking. |
 | **Safety** | A consent screen before the first conversation (18+, not therapy, not for emergencies), an always-visible Get help button, risk detection on every message (model + keyword backstop), and a support panel with region-aware crisis lines. |
 | **Reflection cards** | Each conversation is folded into a card: a title, your own words, one insight, and a small next step. You can save it as an image. |
@@ -23,7 +24,7 @@ A voice-first AI companion for everyday conversations, emotional support, and se
 | **Memory (on by default)** | It remembers what matters across sessions, the way a counselor keeps notes. *What I remember* lets you see, edit, add, or delete any of it, or turn memory off. |
 | **Accounts** | Guests keep everything on-device (IndexedDB). Signing in (email link or Google, via Supabase) moves it to the cloud with Row-Level Security. |
 | **Ambient sound** | Optional (off by default): soft rain, room tone, or a low hum under the conversation, or matched to the sky. It ducks whenever anyone speaks and never feeds the voice detection. Swap in your own recordings in `public/audio/` (see its README). |
-| **Breathe** | The orb becomes a breath pacer (box, 4-7-8, slow exhale), with optional haptics. |
+| **Breathe** | The orb becomes a breath pacer (Calm 4·6, Box, Deep 4·7·8), with optional vibration. |
 | **Your data** | Export everything as JSON, or delete everything with a typed confirmation. |
 
 ## Run it

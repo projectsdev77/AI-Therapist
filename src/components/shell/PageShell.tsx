@@ -1,35 +1,33 @@
 import type { ReactNode } from "react";
-import type { Weather } from "@/lib/conversation/types";
+import { PageHeading } from "@/components/ui/List";
 import { Backdrop } from "./Backdrop";
 import { TopBar } from "./TopBar";
 
-/** Standard screen: sky + mesh, top bar with back, and a centered 640px column. */
+/** A standard page: lagoon background, top bar (title on phone), and a centred column. */
 export function PageShell({
   title,
   subtitle,
   children,
-  weather = null,
-  back = true,
+  width = 640,
+  heading = true,
 }: {
-  /** Use <span className="accent"> for the one serif accent word. */
-  title?: ReactNode;
+  title: string;
   subtitle?: ReactNode;
   children: ReactNode;
-  weather?: Weather | null;
-  back?: boolean;
+  /** Column max-width in px (640 memory/settings, 680–720 privacy/skies, 760 patterns, 1040 reflection). */
+  width?: number;
+  /** Show the desktop page title and subtitle above the content. */
+  heading?: boolean;
 }) {
   return (
-    <div className="relative min-h-dvh">
-      <Backdrop weather={weather} />
-      <TopBar back={back} />
-      <main className="relative mx-auto w-full max-w-[640px] px-4 pt-3 pb-8">
-        {title && (
-          <header className="mb-5 flex flex-col gap-1">
-            <h1 className="heading">{title}</h1>
-            {subtitle && <p className="text-muted text-pretty">{subtitle}</p>}
-          </header>
-        )}
-        {children}
+    <div className="relative flex min-h-dvh flex-col">
+      <Backdrop />
+      <TopBar title={title} />
+      <main className="relative w-full flex-1 px-5 pt-4 pb-12">
+        <div className="mx-auto flex flex-col gap-[22px]" style={{ maxWidth: width }}>
+          {heading && <PageHeading title={title} subtitle={subtitle} />}
+          {children}
+        </div>
       </main>
     </div>
   );

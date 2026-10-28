@@ -10,7 +10,7 @@ export interface DayEntry {
   weather: Weather | null;
 }
 
-const WEIGHT: Record<Weather, number> = { storm: 4, drizzle: 3, haze: 2, breaking: 1, clear: 0 };
+const WEIGHT: Record<Weather, number> = { storm: 4, drizzle: 3, haze: 2, breaking: 1, clear: 0, quiet: 0 };
 
 export function dayKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;

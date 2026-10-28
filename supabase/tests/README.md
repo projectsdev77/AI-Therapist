@@ -8,6 +8,7 @@ createdb haven_test
 psql -d haven_test -f supabase/tests/supabase_shim.sql
 psql -d haven_test -v ON_ERROR_STOP=1 -f supabase/migrations/0001_init.sql
 psql -d haven_test -v ON_ERROR_STOP=1 -f supabase/migrations/0002_reflection_feedback.sql
+psql -d haven_test -v ON_ERROR_STOP=1 -f supabase/migrations/0003_quiet_sky.sql
 psql -d haven_test -f supabase/tests/rls_test.sql
 ```
 

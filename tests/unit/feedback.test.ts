@@ -105,8 +105,8 @@ describe("support style and starters", () => {
     expect(buildContextBlock(ctx)).not.toMatch(/They asked you to/);
   });
 
-  it("offers starters with unique ids, and the listen starter sets listening", () => {
+  it("offers starters with unique ids, and the vent starter sets listening", () => {
     expect(new Set(STARTERS.map((s) => s.id)).size).toBe(STARTERS.length);
-    expect(STARTERS.find((s) => s.id === "listen")?.supportStyle).toBe("listen");
+    expect(STARTERS.find((s) => s.id === "vent")?.supportStyle).toBe("listen");
   });
 });

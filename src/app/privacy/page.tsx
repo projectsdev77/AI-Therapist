@@ -1,57 +1,69 @@
 import type { Metadata } from "next";
+import { PrivacyActions } from "@/components/settings/PrivacyActions";
 import { PageShell } from "@/components/shell/PageShell";
 import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = { title: "Privacy" };
 
+const GROUPS: { name: string; rows: [string, string][] }[] = [
+  {
+    name: "Where your words go",
+    rows: [
+      ["Without an account", "Everything stays in this browser on this device. Clearing this site's data in your browser deletes it."],
+      ["With an account", "It's stored in our database, encrypted at rest, and only your account can open it. Use it on any device."],
+      [
+        "To reply",
+        "Your words, and your notes if memory is on, go to our AI provider (Anthropic). When you talk out loud, your voice goes to our speech provider (ElevenLabs). We only use providers whose terms don't allow training on your conversations (to be confirmed with each provider before launch).",
+      ],
+      [
+        "If voice falls back to your browser",
+        "If our speech provider isn't available, your browser's own speech features are used. Some browsers send that audio to their maker (Chrome sends it to Google). Write instead if you'd rather avoid that.",
+      ],
+      ["Our server", `${BRAND.name}'s server passes your words and voice along but doesn't keep them.`],
+    ],
+  },
+  {
+    name: "What we never do",
+    rows: [
+      ["Sell or share for ads", "Never. Not your words, not your skies, not your notes."],
+      ["Put conversations in analytics", "There are no analytics yet. If we add them, they'll count things like \"a conversation started\", never what was said."],
+    ],
+  },
+  {
+    name: "Your controls",
+    rows: [
+      [
+        "See and edit memory",
+        "Turn memory off before your first conversation or anytime. Off stops new notes and stops using old ones; existing notes stay until you delete them. Everything I remember is listed in What I remember.",
+      ],
+      ["Change any card", "Edit a reflection card's words, choose its sky, or delete a conversation, with or without the notes it produced."],
+      ["Export or delete", "Take everything with you as one file, or delete it all at once."],
+    ],
+  },
+];
+
 export default function PrivacyPage() {
   return (
-    <PageShell title="Privacy, in plain words" subtitle="Draft — to be finalized with legal review before launch.">
-      <div className="flex flex-col gap-6 leading-relaxed text-muted [&_h2]:font-display [&_h2]:text-xl [&_h2]:text-text">
-        <section>
-          <h2>What we save</h2>
-          <p>
-            Your conversations, the reflection cards made from them, and short notes about what matters to you (people,
-            situations, what helps). {BRAND.name} saves these by default so it can remember you between conversations.
-          </p>
-        </section>
-        <section>
-          <h2>Where it lives</h2>
-          <p>
-            Without an account, everything stays in this browser on this device. With an account, it&apos;s stored
-            encrypted in our database so you can use it on any device. Only you can access it. Your ambient sound
-            choice always stays on the device.
-          </p>
-        </section>
-        <section>
-          <h2>Who processes it</h2>
-          <p>
-            To reply, your words, along with your notes if memory is on, are sent to our AI provider (Anthropic). When
-            you talk out loud, your voice is sent to our speech provider (ElevenLabs) to be turned into text, and the
-            replies are turned back into speech there. We only use providers whose terms don&apos;t allow training on
-            your conversations (to be confirmed with each provider before launch).
-          </p>
-          <p>
-            If our speech provider isn&apos;t available, your browser&apos;s own speech features are used instead.
-            Some browsers send that audio to their maker (for example, Chrome sends it to Google) under the
-            browser&apos;s privacy terms. If you&apos;d rather avoid that, write instead of talking.
-          </p>
-          <p>Our own server passes your words and voice along but doesn&apos;t keep them.</p>
-        </section>
-        <section>
-          <h2>What we never do</h2>
-          <p>No advertising. No selling data. No training AI on your conversations. No conversation content in analytics.</p>
-        </section>
-        <section>
-          <h2>Your controls</h2>
-          <p>
-            You can turn memory off (before your first conversation, or anytime in Settings), see and edit everything
-            remembered, delete single conversations along with what was learned
-            from them, export everything, or delete everything permanently. Turning memory off stops new notes and
-            stops using old ones; existing notes stay until you delete them.
-          </p>
-        </section>
+    <PageShell title="Privacy" heading={false} width={680}>
+      <div className="flex flex-col gap-2">
+        <h1 className="t-page-h1 m-0 hidden min-[720px]:block">Privacy, in plain words</h1>
+        <p className="m-0 text-[17px] text-muted">What you share here is personal. Here is exactly what happens to it.</p>
+        <p className="m-0 text-[13px] text-faint">Draft, to be finalized with legal review before launch.</p>
       </div>
+      {GROUPS.map((g) => (
+        <section key={g.name} className="flex flex-col gap-1.5">
+          <h2 className="t-group m-0 mb-0.5 ml-1">{g.name}</h2>
+          <div className="overflow-hidden rounded-md border border-edge-hi bg-glass [&>*+*]:border-t [&>*+*]:border-edge-lo">
+            {g.rows.map(([t, d]) => (
+              <div key={t} className="flex flex-col gap-0.5 px-4 py-3.5">
+                <strong className="text-base font-semibold">{t}</strong>
+                <span className="text-[15px] text-muted">{d}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+      <PrivacyActions />
     </PageShell>
   );
 }

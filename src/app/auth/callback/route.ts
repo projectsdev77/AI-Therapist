@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const next = url.searchParams.get("next");
-  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/home";
 
   if (!accountsEnabled || !code) return NextResponse.redirect(new URL("/signin?error=1", url.origin));
 

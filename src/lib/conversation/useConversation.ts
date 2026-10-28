@@ -39,7 +39,15 @@ export interface Conversation {
   tones: Tone[];
   demo: boolean;
   error: string | null;
-  start: () => Promise<void>;
+  /**
+   * Starts the conversation, or picks up an unfinished one by id. With `firstMessage`, the
+   * person's words open the conversation instead of the companion's greeting.
+   */
+  start: (resumeId?: string, firstMessage?: string) => Promise<void>;
+  /** Asks again for the reply to the last message (after an error). */
+  retry: () => void;
+  /** True when this conversation was picked up from before. */
+  resumed: boolean;
   send: (text: string) => Promise<void>;
   /** Stops the companion mid-reply (barge-in). */
   interrupt: () => void;
@@ -73,6 +81,7 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
   const [userTurns, setUserTurns] = useState(0);
   const [supportStyle, setSupportStyleState] = useState<SupportStyle | null>(null);
   const [slow, setSlow] = useState(false);
+  const [resumed, setResumed] = useState(false);
 
   const callbacksRef = useRef(callbacks);
   const modeRef = useRef(mode);
@@ -154,7 +163,7 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
             clearTimeout(slowTimer);
             setSlow(false);
             setPhase("streaming");
-            setLines((prev) => [...prev, { id: lineId, speaker: "companion", text: "", pending: true }]);
+            setLines((prev) => [...prev, { id: lineId, speaker: "companion", text: "", pending: true, at: Date.now() }]);
             callbacksRef.current.onReplyStart?.();
           }
           text += event.text;
@@ -195,18 +204,48 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
     abortRef.current?.abort();
   }, []);
 
-  const start = useCallback(async () => {
-    if (startedRef.current || !profile) return;
-    startedRef.current = true;
-    setupRef.current = (async () => {
-      const s = await store.createSession(modeRef.current);
-      sessionRef.current = s;
-      contextRef.current = await buildCompanionContext(store, profile, modeRef.current, s.id);
-      setSession(s);
-    })();
-    await setupRef.current;
-    await runTurn();
-  }, [store, profile, runTurn]);
+  const sendNowRef = useRef<(text: string) => Promise<void>>(async () => undefined);
+  const start = useCallback(
+    async (resumeId?: string, firstMessage?: string) => {
+      if (startedRef.current || !profile) return;
+      startedRef.current = true;
+      let picked = false;
+      setupRef.current = (async () => {
+        const previous = resumeId ? await store.getSession(resumeId) : null;
+        if (previous && !previous.endedAt) {
+          // Pick up where we left off: same session, same words, no new greeting.
+          const messages = await store.listMessages(previous.id);
+          historyRef.current = messages.map((m) => ({ role: m.role === "user" ? "user" : "assistant", content: m.content }));
+          setLines(messages.map((m) => ({ id: m.id, speaker: m.role === "user" ? "user" : "companion", text: m.content, at: Date.parse(m.createdAt) })));
+          setUserTurns(messages.filter((m) => m.role === "user").length);
+          const lastTone = [...messages].reverse().find((m) => m.tone)?.tone;
+          if (lastTone) {
+            toneRef.current = lastTone;
+            setTone(lastTone);
+            firstToneRef.current = false;
+          }
+          sessionRef.current = previous;
+          picked = true;
+        } else {
+          sessionRef.current = await store.createSession(modeRef.current);
+        }
+        contextRef.current = await buildCompanionContext(store, profile, modeRef.current, sessionRef.current.id);
+        setSession(sessionRef.current);
+        setResumed(picked);
+      })();
+      await setupRef.current;
+      if (picked) return;
+      if (firstMessage) await sendNowRef.current(firstMessage);
+      else await runTurn();
+    },
+    [store, profile, runTurn],
+  );
+
+  const retry = useCallback(() => {
+    if (abortRef.current) return;
+    if (historyRef.current.at(-1)?.role !== "user") return;
+    void runTurn();
+  }, [runTurn]);
 
   const sendNow = useCallback(
     async (raw: string) => {
@@ -220,7 +259,7 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
       await turnRef.current;
       const risk = keywordRisk(text);
       historyRef.current.push({ role: "user", content: text });
-      setLines((prev) => [...prev, { id: newId(), speaker: "user", text }]);
+      setLines((prev) => [...prev, { id: newId(), speaker: "user", text, at: Date.now() }]);
       setUserTurns((n) => n + 1);
       if (riskAtLeast(risk, "elevated")) {
         // Keyword backstop reacts instantly; the model's analysis follows.
@@ -234,6 +273,10 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
     },
     [store, interrupt, runTurn],
   );
+
+  useEffect(() => {
+    sendNowRef.current = sendNow;
+  });
 
   const send = useCallback(
     (raw: string) => {
@@ -280,6 +323,8 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
     demo,
     error,
     start,
+    retry,
+    resumed,
     send,
     interrupt,
     end,

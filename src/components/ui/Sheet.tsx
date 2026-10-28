@@ -1,32 +1,59 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { CloseIcon } from "@/components/ui/icons";
+import { useIsDesktop } from "@/lib/useIsDesktop";
 
 export interface SheetProps {
   open: boolean;
   onClose: () => void;
-  label: string;
+  /** The sheet title (24/600). Also its accessible name. */
+  title: string;
+  subtitle?: ReactNode;
   children: ReactNode;
-  /** Prevents closing with Escape or the scrim (e.g. consent). */
+  /** Show the 44px round Close button. */
+  closeButton?: boolean;
+  /** alertdialog for End and Delete confirmations. */
+  role?: "dialog" | "alertdialog";
+  /** Prevents closing with Escape or the scrim. */
   dismissible?: boolean;
-  /** "bottom": bottom sheet on mobile, centered panel on desktop. "side": bottom sheet on mobile, right panel on desktop. */
-  placement?: "bottom" | "side";
+  /** "side": the menu, a right panel on desktop. Otherwise a centred dialog on desktop. */
+  placement?: "center" | "side";
+  /** Wider desktop dialog (Transcript). */
+  wide?: boolean;
+  /** Lilac title (Get help). */
+  care?: boolean;
 }
 
-const CLOSE_MS = 420;
+const CLOSE_MS = 320;
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
 
 /**
- * Sheets sit below the top bar (z-40 vs the bar's z-50), so Get help is never covered.
- * Rise 24px and fade in over --motion-sheet with --ease-settle; close over 420ms.
+ * One shell for every sheet and dialog (README "Sheet / dialog shell"). Phone: a bottom sheet
+ * with a grabber. Desktop: a centred dialog, or a right side panel for the menu. Focus is
+ * trapped, Esc closes, and focus returns to the trigger.
  */
-export function Sheet({ open, onClose, label, children, dismissible = true, placement = "bottom" }: SheetProps) {
+export function Sheet({
+  open,
+  onClose,
+  title,
+  subtitle,
+  children,
+  closeButton = true,
+  role = "dialog",
+  dismissible = true,
+  placement = "center",
+  wide = false,
+  care = false,
+}: SheetProps) {
+  const desktop = useIsDesktop();
   const [mounted, setMounted] = useState(open);
   const [closing, setClosing] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
+  const titleId = useId();
   useEffect(() => {
     onCloseRef.current = onClose;
   });
@@ -53,7 +80,7 @@ export function Sheet({ open, onClose, label, children, dismissible = true, plac
     if (!open || !mounted) return;
     returnFocus.current = document.activeElement as HTMLElement | null;
     const panel = panelRef.current;
-    const first = panel?.querySelector<HTMLElement>(FOCUSABLE);
+    const first = panel?.querySelector<HTMLElement>(`[data-autofocus], ${FOCUSABLE}`);
     (first ?? panel)?.focus({ preventScroll: true });
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -87,30 +114,52 @@ export function Sheet({ open, onClose, label, children, dismissible = true, plac
 
   if (!mounted || typeof document === "undefined") return null;
 
-  const side = placement === "side";
+  const mode = !desktop ? "bottom" : placement === "side" ? "side" : "center";
+  const layout = {
+    bottom: "items-end justify-center pt-6",
+    center: "items-center justify-center p-10",
+    side: "items-stretch justify-end p-3",
+  }[mode];
+  const panel = {
+    bottom: "w-full max-h-full rounded-t-lg px-5 pt-2.5 pb-[max(34px,env(safe-area-inset-bottom))]",
+    center: `w-full max-h-full rounded-lg px-6 pt-6 pb-7 ${wide ? "max-w-[640px]" : "max-w-[520px]"}`,
+    side: "w-full max-w-[380px] rounded-lg px-6 pt-6 pb-7",
+  }[mode];
+
   return createPortal(
-    <div className="fixed inset-0 z-40" data-state={closing ? "closing" : "open"}>
-      <div
-        aria-hidden
-        onClick={() => dismissible && onClose()}
-        className="sheet-scrim absolute inset-0 bg-[rgba(10,12,8,0.45)]"
-      />
-      <div
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={label}
-        tabIndex={-1}
-        className={[
-          "sheet-panel absolute inset-x-0 bottom-0 flex max-h-[calc(100dvh-100px)] flex-col overflow-y-auto",
-          "rounded-t-lg bg-bg px-5 pt-2.5 pb-[max(30px,env(safe-area-inset-bottom))] text-text shadow-raised outline-none",
-          side
-            ? "sm:inset-x-auto sm:top-[92px] sm:right-[clamp(16px,3vw,40px)] sm:bottom-auto sm:w-[396px] sm:rounded-lg sm:pb-5"
-            : "sm:inset-x-0 sm:top-1/2 sm:bottom-auto sm:mx-auto sm:w-[min(560px,calc(100vw-32px))] sm:-translate-y-1/2 sm:rounded-lg sm:pb-7",
-        ].join(" ")}
-      >
-        <span aria-hidden className="mb-4 h-1 w-10 shrink-0 self-center rounded-full bg-border sm:hidden" />
-        {children}
+    <div className="fixed inset-0 z-[60]" data-state={closing ? "closing" : "open"}>
+      <div aria-hidden onClick={() => dismissible && onClose()} className="sheet-scrim absolute inset-0 bg-scrim" />
+      <div className={`pointer-events-none absolute inset-0 flex ${layout}`}>
+        <div
+          ref={panelRef}
+          role={role}
+          aria-modal="true"
+          aria-labelledby={titleId}
+          tabIndex={-1}
+          data-placement={mode}
+          className={`sheet-panel pointer-events-auto relative flex flex-col gap-4 overflow-y-auto border border-edge-hi bg-sheet text-text shadow-raised outline-none ${panel}`}
+        >
+          {mode === "bottom" && <span aria-hidden className="-mb-1 h-1 w-10 shrink-0 self-center rounded-[2px] bg-edge-hi" />}
+          <div className="flex items-start gap-3">
+            <div className="flex flex-1 flex-col gap-1 pt-1">
+              <h2 id={titleId} className={`t-sheet m-0 ${care ? "text-care" : "text-text"}`}>
+                {title}
+              </h2>
+              {subtitle && <p className="m-0 text-[15px] text-muted">{subtitle}</p>}
+            </div>
+            {closeButton && (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className="press inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-edge-lo bg-glass text-text hover:bg-glass-strong"
+              >
+                <CloseIcon size={18} />
+              </button>
+            )}
+          </div>
+          {children}
+        </div>
       </div>
     </div>,
     document.body,

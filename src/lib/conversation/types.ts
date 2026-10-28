@@ -23,16 +23,25 @@ export type SupportStyle = (typeof SUPPORT_STYLES)[number];
 
 export const SUPPORT_STYLE_LABELS: Record<SupportStyle, string> = {
   listen: "Just listen",
-  understand: "Help me understand",
-  act: "What can I do?",
+  understand: "Help me make sense of it",
+  act: "Help me find a next step",
 };
 
+/** The style sheet's choices (null = "Whatever feels right"), with their one-line descriptions and acknowledgements. */
+export const SUPPORT_STYLE_OPTIONS: { id: SupportStyle | null; label: string; desc: string; ack: string }[] = [
+  { id: null, label: "Whatever feels right", desc: "I'll follow your lead", ack: "Okay. I'll follow your lead." },
+  { id: "listen", label: "Just listen", desc: "Room to get it all out", ack: "Okay. I'll just listen." },
+  { id: "understand", label: "Help me make sense of it", desc: "We'll untangle what's going on", ack: "Okay. Let's make sense of it together." },
+  { id: "act", label: "Help me find a next step", desc: "Something small you can do", ack: "Okay. Let's look for one small next step." },
+];
+
 /** Inner Weather: one per session, derived from tone and its arc. */
-export const WEATHERS = ["clear", "haze", "drizzle", "storm", "breaking"] as const;
+/** "quiet" is never computed; the person can choose it in the sky picker. */
+export const WEATHERS = ["clear", "haze", "drizzle", "storm", "breaking", "quiet"] as const;
 export type Weather = (typeof WEATHERS)[number];
 
 /** Visual state of the Presence orb. */
-export type PresenceState = "idle" | "listening" | "thinking" | "speaking" | "concerned";
+export type PresenceState = "idle" | "listening" | "thinking" | "speaking" | "breathing" | "concerned";
 
 export function isTone(value: unknown): value is Tone {
   return typeof value === "string" && (TONES as readonly string[]).includes(value);
@@ -52,4 +61,5 @@ export const WEATHER_LABELS: Record<Weather, string> = {
   drizzle: "Drizzle",
   storm: "Storm",
   breaking: "Rain, then clearing",
+  quiet: "Quiet",
 };

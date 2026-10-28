@@ -102,7 +102,7 @@ export class LocalStore implements DataStore {
     return all.reverse().slice(0, limit);
   }
 
-  async deleteSession(id: string): Promise<void> {
+  async deleteSession(id: string, opts: { keepMemories?: boolean } = {}): Promise<void> {
     const db = await this.dbPromise;
     const tx = db.transaction(["sessions", "messages", "reflections", "memories"], "readwrite");
     await tx.objectStore("sessions").delete(id);
@@ -112,8 +112,10 @@ export class LocalStore implements DataStore {
     for (const key of await tx.objectStore("reflections").index("bySession").getAllKeys(id)) {
       await tx.objectStore("reflections").delete(key);
     }
-    for (const key of await tx.objectStore("memories").index("bySource").getAllKeys(id)) {
-      await tx.objectStore("memories").delete(key);
+    const memories = tx.objectStore("memories");
+    for (const memory of await memories.index("bySource").getAll(id)) {
+      if (opts.keepMemories) await memories.put({ ...memory, sourceSessionId: null });
+      else await memories.delete(memory.id);
     }
     await tx.done;
   }

@@ -1,18 +1,26 @@
 "use client";
 
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { NoteRow } from "@/components/memory/NoteRow";
 import { Presence } from "@/components/presence/Presence";
+import { ShareCardSheet } from "@/components/reflection/ShareCardSheet";
 import { Backdrop } from "@/components/shell/Backdrop";
 import { TopBar } from "@/components/shell/TopBar";
+import { TranscriptSheet } from "@/components/talk/TalkSheets";
 import { Button, LinkButton } from "@/components/ui/Button";
-import { Sheet } from "@/components/ui/Sheet";
+import { CheckIcon, ChevronIcon, DownloadIcon, WriteIcon } from "@/components/ui/icons";
+import { WEATHER_LABELS } from "@/lib/conversation/types";
 import { useStore } from "@/lib/data/StoreProvider";
-import type { Message, Reflection, Session } from "@/lib/data/types";
-import { ShareCardSheet } from "@/components/reflection/ShareCardSheet";
+import type { Memory, Message, Reflection, ReflectionFeedback, Session } from "@/lib/data/types";
+import { skyGradient } from "@/lib/design/skies";
+import { usePendingForget } from "@/lib/memory/usePendingForget";
+import { cleanCardEdit, editCard, memoriesFromConversation, setCardFeedback, setConversationSky, type CardEdit } from "@/lib/reflection/edit";
 import { finalizeSession } from "@/lib/reflection/finalize";
 import { accountsEnabled } from "@/lib/supabase/config";
-import { ReflectionCard } from "./ReflectionCard";
+import { ReflectionCard, ReflectionCardEditor } from "./ReflectionCard";
+import { DeleteReflection, SkyPicker } from "./ReflectionSheets";
 
 type State =
   | { kind: "loading" }
@@ -21,14 +29,17 @@ type State =
   | { kind: "error"; message: string }
   | { kind: "ready"; session: Session; reflection: Reflection | null; messages: Message[] };
 
+const GUEST_KEY = "haven:keep-dismissed";
+
 export function SessionDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { store, profile, refreshProfile, user } = useStore();
   const [state, setState] = useState<State>({ kind: "loading" });
-  const [showTranscript, setShowTranscript] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [sharing, setSharing] = useState(false);
+  const [notes, setNotes] = useState<Memory[]>([]);
+  const [sheet, setSheet] = useState<null | "transcript" | "sky" | "delete" | "share">(null);
+  const [draft, setDraft] = useState<Required<CardEdit> | null>(null);
+  const [guestDismissed, setGuestDismissed] = useState(true);
 
   const load = useCallback(async () => {
     if (!profile) return;
@@ -45,109 +56,251 @@ export function SessionDetail() {
         return setState({ kind: "error", message: err instanceof Error ? err.message : "Something went wrong." });
       }
     }
+    setNotes(await memoriesFromConversation(store, id));
     setState({ kind: "ready", session: (await store.getSession(id)) ?? session, reflection, messages });
   }, [id, profile, store, refreshProfile]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- loads from the local store
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loads from the store
     void load();
+    try {
+      setGuestDismissed(localStorage.getItem(GUEST_KEY) === "1");
+    } catch {
+      setGuestDismissed(false);
+    }
   }, [load]);
 
-  async function remove() {
-    await store.deleteSession(id);
+  const { pending, forget, undo } = usePendingForget(async (memoryId) => {
+    await store.deleteMemory(memoryId);
+    setNotes((n) => n.filter((m) => m.id !== memoryId));
+  });
+
+  const reflection = state.kind === "ready" ? state.reflection : null;
+  const setReflection = (r: Reflection) => setState((s) => (s.kind === "ready" ? { ...s, reflection: r } : s));
+
+  async function feedback(value: ReflectionFeedback) {
+    if (!reflection) return;
+    setReflection(await setCardFeedback(store, id, reflection.feedback === value ? null : value));
+  }
+
+  async function saveEdits() {
+    if (!draft || !reflection) return;
+    setReflection(await editCard(store, id, draft));
+    setDraft(null);
+  }
+
+  async function remove(forgetNotes: boolean) {
+    await store.deleteSession(id, { keepMemories: !forgetNotes });
     router.push("/history");
   }
 
-  const weather = state.kind === "ready" ? (state.reflection?.weather ?? state.session.weather) : null;
+  function dismissGuest() {
+    setGuestDismissed(true);
+    try {
+      localStorage.setItem(GUEST_KEY, "1");
+    } catch {
+      // Fine: it just shows again next time.
+    }
+  }
+
+  const editing = draft !== null && reflection !== null;
+  const memoryOn = profile?.memoryEnabled ?? true;
 
   return (
-    <div className="relative min-h-dvh">
-      <Backdrop weather={weather} />
-      <TopBar back />
-      <main className="relative mx-auto flex w-full max-w-[600px] flex-col gap-4 px-4 pt-3 pb-8">
-        {state.kind === "loading" && <p className="text-muted">Loading…</p>}
-        {state.kind === "missing" && <p className="text-muted">This conversation isn&apos;t here anymore.</p>}
+    <div className="relative flex min-h-dvh flex-col">
+      <Backdrop />
+      <TopBar title={editing ? "Edit card" : "Reflection"} />
+      <main className="relative z-[1] flex-1 px-4 pt-4 pb-12">
+        {state.kind === "loading" && <p className="text-center text-muted">Loading…</p>}
+        {state.kind === "missing" && <p className="text-center text-muted">This conversation isn&apos;t here anymore.</p>}
         {state.kind === "folding" && (
-          <div className="flex flex-col items-center gap-4 py-10 text-center" role="status">
-            <Presence state="thinking" className="w-48" />
-            <p className="voice-companion text-[23px]">Folding our conversation into a card…</p>
+          <div role="status" className="flex flex-col items-center gap-4 py-10 text-center">
+            <Presence state="thinking" size={170} />
+            <p className="m-0 text-[23px] font-medium tracking-[-0.02em]">Folding our conversation into a card…</p>
           </div>
         )}
         {state.kind === "error" && (
-          <div className="flex flex-col items-start gap-3">
-            <p role="alert" className="text-care">
-              {state.message}
-            </p>
-            <Button onClick={() => void load()}>Try again</Button>
+          <div role="alert" className="mx-auto flex max-w-[520px] flex-col items-start gap-3 rounded-md border border-edge-hi bg-glass p-4">
+            <p className="m-0">{state.message}</p>
+            <Button variant="primary" onClick={() => void load()}>
+              Try again
+            </Button>
           </div>
         )}
-        {state.kind === "ready" && (
-          <>
-            {state.reflection ? (
-              <ReflectionCard reflection={state.reflection} id="reflection-card" />
-            ) : (
-              <p className="text-muted">This conversation was too short for a reflection.</p>
-            )}
 
-            <div className="flex flex-wrap gap-2">
-              {state.reflection && (
-                <Button variant="primary" onClick={() => setSharing(true)} className="min-h-12">
-                  Save image
-                </Button>
+        {state.kind === "ready" && (
+          <div className="mx-auto grid max-w-[1040px] grid-cols-[repeat(auto-fit,minmax(min(100%,440px),1fr))] items-start gap-7">
+            <div className="flex min-w-0 flex-col gap-4">
+              {reflection ? (
+                editing ? (
+                  <ReflectionCardEditor reflection={reflection} draft={draft} onChange={setDraft} />
+                ) : (
+                  <ReflectionCard reflection={reflection} id="reflection-card" />
+                )
+              ) : (
+                <div className="rounded-lg border border-edge-hi bg-glass p-6 text-muted">This conversation was too short for a reflection.</div>
               )}
-              <Button onClick={() => setShowTranscript(true)} aria-haspopup="dialog" className="min-h-12">
-                Read the conversation
-              </Button>
-              <Button variant="ghost" onClick={() => setConfirmDelete(true)} className="min-h-12">
-                Delete
-              </Button>
+
+              {editing ? (
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="primary" size="lg" onClick={() => void saveEdits()} className="px-[22px]">
+                      Save changes
+                    </Button>
+                    <Button variant="tertiary" size="lg" onClick={() => setDraft(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                  <p className="m-0 text-sm text-muted">Empty fields keep their old words. The saved image uses your changes.</p>
+                </div>
+              ) : (
+                <>
+                  {reflection && (
+                    <div role="group" aria-label="Does this feel right?" className="flex flex-wrap items-center gap-2">
+                      <span className="min-w-[120px] flex-1 text-[15px] text-muted">Does this feel right?</span>
+                      {(
+                        [
+                          ["right", "Feels right"],
+                          ["not_quite", "Not quite"],
+                        ] as const
+                      ).map(([value, label]) => {
+                        const on = reflection.feedback === value;
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            aria-pressed={on}
+                            onClick={() => void feedback(value)}
+                            className={`press flex min-h-11 items-center gap-1.5 rounded-pill px-4 text-[15px] ${
+                              on ? "bg-mic font-semibold text-mic-fg" : "border border-edge-hi bg-glass text-text hover:bg-glass-strong"
+                            }`}
+                          >
+                            {on && <CheckIcon size={16} />}
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {reflection && (
+                      <Button variant="primary" size="lg" onClick={() => setSheet("share")}>
+                        <DownloadIcon size={16} />
+                        Save image
+                      </Button>
+                    )}
+                    <Button variant="secondary" size="lg" onClick={() => setSheet("transcript")} aria-haspopup="dialog" className="font-normal">
+                      Read the conversation
+                    </Button>
+                    <Button variant="tertiary" size="lg" onClick={() => setSheet("delete")} aria-haspopup="dialog" className="px-3.5">
+                      Delete
+                    </Button>
+                  </div>
+                  {accountsEnabled && !user && reflection && !guestDismissed && (
+                    <div className="flex flex-col gap-2.5 rounded-md border border-dashed border-edge-hi px-[18px] py-4">
+                      <div className="flex flex-col gap-0.5">
+                        <strong className="text-base font-semibold">Want to keep this?</strong>
+                        <span className="text-sm text-muted">Right now your cards live only on this device. Sign in to keep them safe and see them anywhere.</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <LinkButton href={`/signin?next=/history/${id}`} variant="secondary">
+                          Sign in
+                        </LinkButton>
+                        <Button variant="tertiary" onClick={dismissGuest}>
+                          Not now
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
-            {accountsEnabled && !user && state.reflection && (
-              <div className="flex flex-wrap items-center gap-3 rounded-md border border-border px-4 py-3.5">
-                <span className="min-w-[180px] flex-1 text-[15px]">
-                  <strong className="font-medium">Want to keep this?</strong>{" "}
-                  <span className="text-muted">Sign in and your skies stay with you.</span>
-                </span>
-                <LinkButton href={`/signin?next=/history/${id}`} variant="secondary" className="!shadow-none">
-                  Sign in
-                </LinkButton>
-              </div>
+            {reflection && !editing && (
+              <section aria-labelledby="your-say" className="flex min-w-0 flex-col gap-[22px]">
+                <div className="flex flex-col gap-2">
+                  <h2 id="your-say" className="t-group m-0 ml-1">
+                    Your say
+                  </h2>
+                  <div className="overflow-hidden rounded-md border border-edge-hi bg-glass">
+                    <button
+                      type="button"
+                      onClick={() => setDraft(cleanCardEdit({}, reflection))}
+                      className="press flex min-h-16 w-full items-center gap-3 bg-transparent px-4 py-2.5 text-left text-text hover:bg-glass"
+                    >
+                      <span className="flex flex-1 flex-col">
+                        <span className="text-base">Edit this card</span>
+                        <span className="text-sm text-muted">Change any words that don&apos;t fit</span>
+                      </span>
+                      <WriteIcon size={18} className="text-accent-strong" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-haspopup="dialog"
+                      onClick={() => setSheet("sky")}
+                      className="press flex min-h-16 w-full items-center gap-3 border-t border-edge-lo bg-transparent px-4 py-2.5 text-left text-text hover:bg-glass"
+                    >
+                      <span className="flex flex-1 flex-col">
+                        <span className="text-base">Sky</span>
+                        <span className="text-sm text-muted">
+                          {WEATHER_LABELS[reflection.weather]}
+                          {reflection.weatherByPerson ? " · chosen by you" : ""}
+                        </span>
+                      </span>
+                      <span aria-hidden className="size-[30px] rounded-full" style={{ background: skyGradient(reflection.weather) }} />
+                      <ChevronIcon size={18} className="text-faint" />
+                    </button>
+                  </div>
+                  <p className="m-0 mx-1 mt-0.5 text-sm text-muted">Your sky is how our conversation sounded to me, not a measure of you. You can change it.</p>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <h2 className="t-group m-0 ml-1">What I&apos;ll remember from this</h2>
+                  {!memoryOn ? (
+                    <p className="m-0 rounded-sm border border-dashed border-edge-hi px-4 py-3 text-[15px] text-muted">
+                      Remembering is off, so I didn&apos;t keep notes from this conversation.
+                    </p>
+                  ) : notes.length === 0 ? (
+                    <p className="m-0 rounded-sm border border-dashed border-edge-hi px-4 py-3 text-[15px] text-muted">Nothing new to remember from this one.</p>
+                  ) : (
+                    notes.map((n) => (
+                      <NoteRow key={n.id} text={n.fact} gone={pending.includes(n.id)} onForget={() => forget(n.id)} onUndo={() => undo(n.id)} />
+                    ))
+                  )}
+                  <Link href="/memory" className="flex min-h-11 items-center self-start px-1 text-[15px] font-medium text-accent-strong no-underline">
+                    See everything I remember
+                  </Link>
+                </div>
+              </section>
             )}
-
-            <Sheet open={showTranscript} onClose={() => setShowTranscript(false)} label="Conversation transcript">
-              <h2 className="heading heading-sheet">
-                The <span className="accent">conversation</span>
-              </h2>
-              <ol className="mt-5 flex flex-col gap-4">
-                {state.messages.map((m) => (
-                  <li key={m.id}>
-                    <p className="text-sm font-medium text-muted">{m.role === "user" ? "You" : "Companion"}</p>
-                    <p className={m.role === "user" ? "voice-person mt-0.5 text-[19px]" : "voice-companion mt-0.5 text-[19px]"}>{m.content}</p>
-                  </li>
-                ))}
-              </ol>
-            </Sheet>
-
-            <Sheet open={confirmDelete} onClose={() => setConfirmDelete(false)} label="Delete this conversation">
-              <h2 className="heading heading-sheet">
-                Delete this <span className="accent">conversation?</span>
-              </h2>
-              <p className="mt-2 text-muted">Its card, its sky, and anything I remembered from it will be gone. This can&apos;t be undone.</p>
-              <div className="mt-6 flex flex-col gap-2">
-                <Button variant="care" size="lg" onClick={remove}>
-                  Delete
-                </Button>
-                <Button variant="ghost" onClick={() => setConfirmDelete(false)}>
-                  Keep it
-                </Button>
-              </div>
-            </Sheet>
-
-            {state.reflection && <ShareCardSheet open={sharing} onClose={() => setSharing(false)} reflection={state.reflection} />}
-          </>
+          </div>
         )}
       </main>
+
+      {state.kind === "ready" && (
+        <>
+          <TranscriptSheet
+            open={sheet === "transcript"}
+            onClose={() => setSheet(null)}
+            startedAt={state.session.startedAt}
+            lines={state.messages.map((m) => ({ id: m.id, speaker: m.role === "user" ? "user" : "companion", text: m.content, at: Date.parse(m.createdAt) }))}
+          />
+          <DeleteReflection open={sheet === "delete"} onClose={() => setSheet(null)} noteCount={notes.length} onDelete={(f) => void remove(f)} />
+          {reflection && (
+            <>
+              <SkyPicker
+                key={`${reflection.weather}-${sheet === "sky"}`}
+                open={sheet === "sky"}
+                onClose={() => setSheet(null)}
+                current={reflection.weather}
+                byPerson={reflection.weatherByPerson}
+                onChoose={(w) => void setConversationSky(store, id, w).then(setReflection)}
+              />
+              <ShareCardSheet open={sheet === "share"} onClose={() => setSheet(null)} reflection={reflection} />
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }

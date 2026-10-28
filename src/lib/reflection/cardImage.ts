@@ -1,8 +1,8 @@
-import { drawSky, type SkyWeather } from "@/components/sky/skyRenderer";
 import { BRAND } from "@/lib/brand";
-import { WEATHER_LABELS, type Tone } from "@/lib/conversation/types";
+import { WEATHER_LABELS } from "@/lib/conversation/types";
 import type { Reflection } from "@/lib/data/types";
-import { readToken, toneToken } from "@/lib/design/tokens";
+import { readToken } from "@/lib/design/tokens";
+import { SKY_COLORS } from "@/lib/design/skies";
 
 export type CardFormat = "feed" | "story";
 
@@ -10,11 +10,15 @@ export interface CardOptions {
   format: CardFormat;
   /** The person's own words are off by default; one tap adds the first quote. */
   includeQuote: boolean;
-  tone?: Tone;
 }
 
 const SIZES: Record<CardFormat, [number, number]> = { feed: [1080, 1350], story: [1080, 1920] };
 const PAD = 96;
+
+// Deep lagoon values (src/styles/tokens.css).
+const TEXT = "#effcfa";
+const MUTED = "#b3d4d3";
+const ACCENT = "#8ff0e8";
 
 function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
   const lines: string[] = [];
@@ -32,48 +36,22 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): st
   return lines;
 }
 
-function rgba(hex: string, a: number) {
-  const h = hex.replace("#", "");
-  const n = parseInt(h.length === 3 ? h.replace(/./g, "$&$&") : h, 16);
-  return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`;
-}
-
-/** One still frame of the orb: membranes and lit core, from tokens. */
-function drawOrb(ctx: CanvasRenderingContext2D, cx: number, cy: number, R: number, tone: string, core: string, membrane: string, dark: boolean) {
-  const glow = ctx.createRadialGradient(cx, cy, R * 0.4, cx, cy, R * 1.9);
-  glow.addColorStop(0, rgba(tone, dark ? 0.1 : 0.4));
-  glow.addColorStop(1, rgba(tone, 0));
-  ctx.fillStyle = glow;
-  ctx.fillRect(cx - R * 2, cy - R * 2, R * 4, R * 4);
-  ctx.globalCompositeOperation = dark ? "screen" : "source-over";
-  for (const [k, c, a] of [
-    [1.22, membrane, 0.22],
-    [1.08, tone, 0.38],
-    [0.94, tone, 0.55],
-  ] as const) {
-    ctx.fillStyle = rgba(c, a);
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, R * k, R * k * 0.97, 0.3, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.globalCompositeOperation = "source-over";
-  const g = ctx.createRadialGradient(cx - R * 0.12, cy - R * 0.15, 0, cx, cy, R * 0.85);
-  g.addColorStop(0, rgba(core, 0.95));
-  g.addColorStop(0.35, rgba(core, 0.55));
-  g.addColorStop(1, rgba(tone, 0));
-  ctx.fillStyle = g;
+function streak(ctx: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, rot: number, color: string) {
+  ctx.save();
+  ctx.filter = "blur(60px)";
+  ctx.fillStyle = color;
+  ctx.translate(x, y);
+  ctx.rotate(rot);
   ctx.beginPath();
-  ctx.arc(cx, cy, R * 0.85, 0, Math.PI * 2);
+  ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
   ctx.fill();
+  ctx.restore();
 }
 
-/** Renders a reflection card to PNG, drawn from the live design tokens and current theme. */
+/** Renders a reflection card to PNG on the Deep lagoon background (README open item 4). */
 export async function renderCardImage(reflection: Reflection, opts: CardOptions): Promise<Blob> {
   await document.fonts.ready;
-  const root = document.documentElement;
   const geist = readToken("--font-geist") || "system-ui";
-  const serif = readToken("--font-instrument") || "Georgia";
-  const dark = getComputedStyle(root).colorScheme !== "light";
   const [W, H] = SIZES[opts.format];
   const story = opts.format === "story";
 
@@ -82,116 +60,132 @@ export async function renderCardImage(reflection: Reflection, opts: CardOptions)
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
 
-  const bg = readToken("--color-bg");
-  const text = readToken("--color-text");
-  const muted = readToken("--color-text-muted");
-  const accentStrong = readToken("--color-accent-strong");
-  const band = readToken("--color-band");
-
-  // Page.
+  // Background: the --lg-bg gradient and two soft light streaks.
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, "#15726c");
+  bg.addColorStop(0.3, "#10565c");
+  bg.addColorStop(0.66, "#0b2a35");
+  bg.addColorStop(1, "#081822");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
+  streak(ctx, W * 0.3, H * 0.28, W * 0.8, 120, -0.28, "rgba(80,230,215,.16)");
+  streak(ctx, W * 0.9, H * 0.62, W * 0.7, 120, 0.24, "rgba(30,90,170,.26)");
 
-  // Sky (and orb on Stories) across the top, fading into the page.
-  const skyH = Math.round(H * (story ? 0.4 : 0.32));
-  const w = reflection.weather as SkyWeather;
-  drawSky(
-    ctx,
-    W,
-    skyH,
-    { top: readToken(`--sky-${w}-top`), bottom: readToken(`--sky-${w}-bottom`), glow: readToken("--sky-glow"), dark },
-    { weather: w, t: 0, full: false },
-  );
-  const fade = ctx.createLinearGradient(0, skyH * 0.6, 0, skyH);
-  fade.addColorStop(0, rgba(bg, 0));
-  fade.addColorStop(1, rgba(bg, 1));
-  ctx.fillStyle = fade;
-  ctx.fillRect(0, skyH * 0.6, W, skyH * 0.4 + 1);
+  // The card: a glass panel with its sky across the top.
+  const cardX = PAD - 24;
+  const cardW = W - cardX * 2;
+  const cardY = story ? 220 : PAD;
+  const cardH = H - cardY - (story ? 300 : PAD + 110);
+  const skyH = story ? 300 : 240;
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(cardX, cardY, cardW, cardH, 56);
+  ctx.clip();
+  ctx.fillStyle = "rgba(150,240,230,.10)";
+  ctx.fillRect(cardX, cardY, cardW, cardH);
+  const [a, b] = SKY_COLORS[reflection.weather];
+  const sky = ctx.createLinearGradient(cardX, cardY, cardX + cardW * 0.6, cardY + skyH * 1.6);
+  sky.addColorStop(0, a);
+  sky.addColorStop(1, b);
+  ctx.fillStyle = sky;
+  ctx.fillRect(cardX, cardY, cardW, skyH);
+  const shade = ctx.createLinearGradient(0, cardY, 0, cardY + skyH);
+  shade.addColorStop(0.3, "rgba(8,24,34,0)");
+  shade.addColorStop(1, "rgba(8,24,34,.6)");
+  ctx.fillStyle = shade;
+  ctx.fillRect(cardX, cardY, cardW, skyH);
+  ctx.restore();
+  ctx.strokeStyle = "rgba(255,255,255,.16)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(cardX, cardY, cardW, cardH, 56);
+  ctx.stroke();
 
-  if (story) {
-    drawOrb(
-      ctx,
-      W / 2,
-      skyH * 0.55,
-      W * 0.17,
-      readToken(toneToken(opts.tone ?? "neutral")),
-      readToken("--orb-core"),
-      readToken("--orb-membrane"),
-      dark,
-    );
-  }
-
-  // Date line (inside the Stories safe area).
+  // Date and sky name on the sky.
   const d = new Date(reflection.createdAt);
   const date = new Intl.DateTimeFormat(undefined, { weekday: "long", day: "numeric", month: "long" }).format(d);
-  ctx.fillStyle = text;
+  ctx.fillStyle = TEXT;
   ctx.font = `500 32px ${geist}`;
   ctx.textBaseline = "alphabetic";
-  const dateY = story ? 250 : PAD + 24;
-  ctx.fillText(date, PAD, dateY);
+  ctx.fillText(date, PAD + 12, cardY + skyH - 32);
   ctx.textAlign = "right";
-  ctx.fillStyle = muted;
-  ctx.font = `400 32px ${geist}`;
-  ctx.fillText(WEATHER_LABELS[reflection.weather], W - PAD, dateY);
+  ctx.fillText(WEATHER_LABELS[reflection.weather], W - PAD - 12, cardY + skyH - 32);
   ctx.textAlign = "left";
 
   // Title.
-  let y = skyH + (story ? 120 : 90);
-  const titleSize = story ? 92 : 76;
-  ctx.fillStyle = text;
-  ctx.font = `300 ${titleSize}px ${geist}`;
-  for (const line of wrap(ctx, reflection.title, W - PAD * 2).slice(0, 3)) {
-    ctx.fillText(line, PAD, y);
+  const inner = cardW - 2 * (PAD - cardX + 12);
+  const x = PAD + 12;
+  let y = cardY + skyH + (story ? 120 : 96);
+  const titleSize = story ? 84 : 70;
+  ctx.fillStyle = TEXT;
+  ctx.font = `600 ${titleSize}px ${geist}`;
+  for (const line of wrap(ctx, reflection.title, inner).slice(0, 3)) {
+    ctx.fillText(line, x, y);
     y += titleSize * 1.12;
   }
 
-  // One quote, only if the person chose to include it.
+  // One quote, only if the person chose to include it, with the aqua rule.
   if (opts.includeQuote && reflection.quotes[0]) {
-    y += story ? 40 : 24;
-    const qSize = story ? 70 : 52;
-    ctx.font = `italic 400 ${qSize}px ${serif}`;
-    ctx.fillStyle = text;
-    for (const line of wrap(ctx, `“${reflection.quotes[0]}”`, W - PAD * 2).slice(0, 4)) {
-      ctx.fillText(line, PAD, y);
-      y += qSize * 1.25;
+    y += story ? 36 : 22;
+    const qSize = story ? 52 : 42;
+    ctx.font = `400 ${qSize}px ${geist}`;
+    const qLines = wrap(ctx, `“${reflection.quotes[0]}”`, inner - 40).slice(0, 4);
+    ctx.fillStyle = "rgba(143,240,232,.4)";
+    ctx.fillRect(x, y - qSize, 5, qLines.length * qSize * 1.35);
+    ctx.fillStyle = TEXT;
+    for (const line of qLines) {
+      ctx.fillText(line, x + 36, y);
+      y += qSize * 1.35;
     }
   }
 
-  // Insight on the feed card.
-  if (!story) {
-    y += 20;
-    ctx.font = `400 38px ${geist}`;
-    ctx.fillStyle = muted;
-    for (const line of wrap(ctx, reflection.insight, W - PAD * 2).slice(0, 4)) {
-      ctx.fillText(line, PAD, y);
-      y += 54;
-    }
+  // Insight.
+  y += story ? 30 : 18;
+  ctx.font = `400 ${story ? 40 : 36}px ${geist}`;
+  ctx.fillStyle = MUTED;
+  for (const line of wrap(ctx, reflection.insight, inner).slice(0, story ? 5 : 3)) {
+    ctx.fillText(line, x, y);
+    y += story ? 56 : 50;
   }
 
-  // Next step on a band.
-  const footerY = story ? H - 250 : H - PAD;
+  // Next step in a glass box at the foot of the card.
   if (reflection.nextStep) {
-    ctx.font = `400 ${story ? 44 : 38}px ${geist}`;
-    const stepLines = wrap(ctx, reflection.nextStep, W - PAD * 2 - 72).slice(0, 2);
-    const lineH = story ? 58 : 50;
-    const boxH = 72 + 40 + stepLines.length * lineH;
-    const boxY = Math.min(Math.max(y + 30, skyH), footerY - boxH - 70);
-    ctx.fillStyle = band;
-    ctx.beginPath();
-    ctx.roundRect(PAD, boxY, W - PAD * 2, boxH, 32);
-    ctx.fill();
-    ctx.fillStyle = accentStrong;
-    ctx.font = `500 30px ${geist}`;
-    ctx.fillText("A small next step", PAD + 36, boxY + 64);
-    ctx.fillStyle = text;
-    ctx.font = `400 ${story ? 44 : 38}px ${geist}`;
-    stepLines.forEach((line, i) => ctx.fillText(line, PAD + 36, boxY + 64 + 52 + i * lineH));
+    ctx.font = `400 ${story ? 42 : 36}px ${geist}`;
+    const stepLines = wrap(ctx, reflection.nextStep, inner - 72).slice(0, 2);
+    const lineH = story ? 56 : 48;
+    const boxH = 64 + 40 + stepLines.length * lineH;
+    const boxY = Math.max(y + 20, cardY + cardH - boxH - 48);
+    if (boxY + boxH < cardY + cardH - 20) {
+      ctx.fillStyle = "rgba(150,240,230,.17)";
+      ctx.beginPath();
+      ctx.roundRect(x, boxY, inner, boxH, 36);
+      ctx.fill();
+      ctx.fillStyle = ACCENT;
+      ctx.font = `600 30px ${geist}`;
+      ctx.fillText("A small next step", x + 36, boxY + 60);
+      ctx.fillStyle = TEXT;
+      ctx.font = `400 ${story ? 42 : 36}px ${geist}`;
+      stepLines.forEach((line, i) => ctx.fillText(line, x + 36, boxY + 60 + 50 + i * lineH));
+    }
   }
 
-  // Wordmark.
-  ctx.fillStyle = muted;
-  ctx.font = `italic 400 52px ${serif}`;
-  ctx.fillText(BRAND.name.toLowerCase(), PAD, footerY);
+  // Wordmark: the orb dot and the name.
+  const footY = story ? H - 170 : H - PAD + 10;
+  const dotR = 22;
+  const dot = ctx.createRadialGradient(PAD + dotR, footY - 14 - dotR * 0.16, 0, PAD + dotR, footY - 14, dotR);
+  dot.addColorStop(0, "#1a8c84");
+  dot.addColorStop(0.62, "#0b3c44");
+  dot.addColorStop(1, "#04141a");
+  ctx.fillStyle = dot;
+  ctx.beginPath();
+  ctx.arc(PAD + dotR, footY - 14, dotR, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(111,240,230,.55)";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.fillStyle = TEXT;
+  ctx.font = `600 40px ${geist}`;
+  ctx.fillText(BRAND.name, PAD + dotR * 2 + 18, footY);
 
   return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not render image"))), "image/png"));
 }

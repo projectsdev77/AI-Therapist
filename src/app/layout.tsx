@@ -1,23 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Instrument_Serif } from "next/font/google";
+import { Geist } from "next/font/google";
 import { BRAND } from "@/lib/brand";
-import { InlineScript } from "@/components/InlineScript";
-import { THEME_SCRIPT } from "@/lib/theme";
 import { Providers } from "./providers";
 import "./globals.css";
 
 const geist = Geist({
   variable: "--font-geist",
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
-  display: "swap",
-});
-
-const instrument = Instrument_Serif({
-  variable: "--font-instrument",
-  subsets: ["latin"],
-  weight: "400",
-  style: ["normal", "italic"],
+  weight: ["300", "400", "500", "600"],
   display: "swap",
 });
 
@@ -33,10 +23,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#181a16" },
-    { media: "(prefers-color-scheme: light)", color: "#fbf9f2" },
-  ],
+  themeColor: "#15726c",
+  colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -46,12 +34,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geist.variable} ${instrument.variable} h-full`}
-      suppressHydrationWarning
+      className={`${geist.variable} h-full`}
     >
-      <head>
-        <InlineScript html={THEME_SCRIPT} />
-      </head>
       <body className="min-h-full">
         <Providers>{children}</Providers>
       </body>

@@ -14,10 +14,9 @@ export interface Starter {
 
 export const STARTERS: Starter[] = [
   { id: "happened", label: "Something happened today", message: "Something happened today." },
-  { id: "off", label: "I've been feeling off lately", message: "I've been feeling off lately." },
+  { id: "off", label: "I've been feeling off", message: "I've been feeling off." },
   { id: "stuck", label: "I can't stop thinking about something", message: "I can't stop thinking about something." },
-  { id: "unsure", label: "I don't know what I'm feeling", message: "I don't know what I'm feeling.", supportStyle: "understand" },
-  { id: "listen", label: "I just want someone to listen", message: "I just want someone to listen.", supportStyle: "listen" },
+  { id: "vent", label: "I just need to vent", message: "I just need to vent.", supportStyle: "listen" },
 ];
 
 export function starterById(id: string): Starter | undefined {

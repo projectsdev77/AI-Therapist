@@ -1,5 +1,3 @@
-import type { Tone } from "@/lib/conversation/types";
-
 export type RGB = [number, number, number];
 
 /** Reads a CSS custom property from :root (client only). */
@@ -23,10 +21,6 @@ export function parseColor(value: string): RGB {
     if ([r, g, b].every((x) => Number.isFinite(x))) return [r / 255, g / 255, b / 255];
   }
   return [0.6, 0.6, 0.7];
-}
-
-export function toneToken(tone: Tone | "concerned"): string {
-  return `--tone-${tone}`;
 }
 
 export function readMs(name: string, fallback: number): number {

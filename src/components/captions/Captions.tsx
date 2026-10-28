@@ -1,68 +1,73 @@
+import type { ReactNode } from "react";
+
 export interface CaptionLine {
   id: string;
   speaker: "user" | "companion";
   text: string;
   /** True while the line is still streaming in. */
   pending?: boolean;
+  /** When the line was said (ms since epoch), for the transcript. */
+  at?: number;
+}
+
+export interface CaptionView {
+  /** The line before the latest exchange: faint, blurred, two lines at most. */
+  prev: CaptionLine | null;
+  /** The person's latest words. */
+  person: CaptionLine | null;
+  /** The companion's latest words. */
+  companion: CaptionLine | null;
+}
+
+/** Which lines are on screen: the latest exchange plus one line of context before it. */
+export function pickCaptions(lines: CaptionLine[]): CaptionView {
+  const visible = lines.filter((l) => l.text.trim().length > 0);
+  const last = visible.at(-1) ?? null;
+  if (!last) return { prev: null, person: null, companion: null };
+  if (last.speaker === "user") return { prev: visible.at(-2) ?? null, person: last, companion: null };
+  const before = visible.at(-2) ?? null;
+  if (before?.speaker === "user") return { prev: visible.at(-3) ?? null, person: before, companion: last };
+  return { prev: before, person: null, companion: last };
 }
 
 export interface CaptionsProps {
-  lines: CaptionLine[];
-  /** Waiting for the first words of a reply. */
-  thinking?: boolean;
-  className?: string;
+  view: CaptionView;
+  /** Waiting for the first words of a reply: show the companion's dot alone. */
+  waiting?: boolean;
+  /** Extra rows under the captions (acknowledgement, slow reply, errors, support pill). */
+  children?: ReactNode;
 }
 
-function lineClass(speaker: CaptionLine["speaker"], age: number) {
-  const voice =
-    speaker === "user"
-      ? "voice-person text-[20px] leading-[1.35]"
-      : "voice-companion text-[23px] leading-[1.38]";
-  // Age 0 is full text; age 1 is muted but full opacity (AA); age 2 is decorative.
-  const color = age === 0 ? "text-text" : "text-muted";
-  return `${voice} ${color}`;
-}
-
-/**
- * Captions, not bubbles. The companion speaks in a light grotesque; the person's words
- * are set in serif italic. The previous line stays muted; the one before dissolves.
- */
-export function Captions({ lines, thinking = false, className = "" }: CaptionsProps) {
-  const visible = lines.filter((l) => l.text.trim().length > 0).slice(-3);
-  const older = visible.length === 3 ? visible[0] : null;
-  const live = visible.slice(older ? 1 : 0);
-
+/** Captions, not bubbles (README "Talking & writing"). Left-aligned on phone, centred on desktop. */
+export function Captions({ view, waiting = false, children }: CaptionsProps) {
+  const { prev, person, companion } = view;
+  const streaming = companion?.pending;
   return (
-    <div className={`mx-auto flex w-full max-w-[600px] flex-col gap-3.5 px-7 ${className}`}>
-      {older && (
-        <p
-          key={older.id}
-          aria-hidden
-          className="caption-leaving m-0 line-clamp-2 text-[17px] font-light opacity-[0.22] blur-[1.2px] -translate-y-1.5"
-        >
-          {older.text}
+    <>
+      {prev && (
+        <p aria-hidden className="m-0 line-clamp-2 text-[clamp(15px,1.3vw,17px)] opacity-[.28] blur-[1px]">
+          {prev.text}
         </p>
       )}
-      <div aria-live="polite" className="flex flex-col gap-3.5">
-        {live.map((line, i) => {
-          const age = live.length - 1 - i;
-          return (
-            <p key={line.id} className={`caption-line m-0 text-pretty ${lineClass(line.speaker, age)}`} data-age={age}>
-              {line.text}
-              {line.pending && line.speaker === "companion" && (
-                <span aria-hidden className="pulse-dot ml-2 inline-block size-[7px] rounded-full bg-accent-strong align-middle" />
-              )}
-            </p>
-          );
-        })}
-        {thinking && (
-          <p role="status" className="m-0 flex h-8 items-center gap-1.5" aria-label="Thinking">
-            {[0, 250, 500].map((d) => (
-              <span key={d} aria-hidden className="pulse-dot size-[7px] rounded-full bg-accent-strong" style={{ animationDelay: `${d}ms` }} />
-            ))}
+      <div aria-live="polite" className="flex flex-col items-start gap-3 min-[720px]:items-center">
+        {person && (
+          <p key={person.id} className="caption-line m-0 text-[clamp(17px,1.4vw,19px)] text-muted">
+            {person.text}
           </p>
         )}
+        {companion && (
+          <p key={companion.id} className="caption-line m-0 text-[clamp(23px,2.4vw,30px)] leading-[1.3] font-medium tracking-[-0.02em]">
+            {companion.text}
+            {streaming && <span aria-hidden className="pulse-dot ml-2 inline-block size-2 rounded-full bg-dot align-middle" />}
+          </p>
+        )}
+        {waiting && !companion && (
+          <p role="status" aria-label="Thinking" className="m-0 flex h-[39px] items-center">
+            <span aria-hidden className="pulse-dot inline-block size-2 rounded-full bg-dot" />
+          </p>
+        )}
+        {children}
       </div>
-    </div>
+    </>
   );
 }

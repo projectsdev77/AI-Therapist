@@ -1,86 +1,88 @@
 "use client";
 
-import { HelpIcon } from "@/components/ui/icons";
-import type { RiskLevel } from "@/lib/conversation/types";
-import { callLabel, resourcesFor, smsHref } from "@/lib/safety/resources";
+import { HelpIcon, PhoneIcon } from "@/components/ui/icons";
+import { resourcesFor, smsHref } from "@/lib/safety/resources";
 import { useRegion } from "@/lib/safety/useRegion";
 
-export interface CrisisPanelProps {
-  risk: RiskLevel;
-  expanded: boolean;
-  onExpand: () => void;
-  onCollapse: () => void;
-  /** Opens the full Get help sheet. */
-  onMoreOptions: () => void;
+/** Elevated risk (or after "I'm safe right now"): a lilac pill under the reply that opens Get help. Offered, never forced. */
+export function SupportPill({ onOpen }: { onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-haspopup="dialog"
+      className="press flex min-h-11 items-center gap-2 rounded-pill border border-care-edge bg-care-surface px-4 text-[15px] font-semibold text-care"
+    >
+      <HelpIcon size={15} />
+      Support options
+    </button>
+  );
 }
 
-const pill = "inline-flex min-h-11 items-center rounded-pill px-5 text-[15px] font-medium";
-
 /**
- * Non-modal support panel between the captions and the composer. Never covers either.
- * Elevated: an outlined "Support options" pill that expands. Acute: opens on its own;
- * after "I'm safe right now" it stays as a filled "Talk to someone now" pill.
+ * Acute risk: a care panel that opens on its own, with the region's main line to call or
+ * text. It never covers the composer, so the conversation keeps going.
  */
-export function CrisisPanel({ risk, expanded, onExpand, onCollapse, onMoreOptions }: CrisisPanelProps) {
+export function CarePanel({ onSafe }: { onSafe: () => void }) {
   const region = useRegion();
   const res = resourcesFor(region);
   const line = res.lines[0];
-  const acute = risk === "acute";
-
-  if (!expanded) {
-    return acute ? (
-      <button type="button" onClick={onExpand} className={`${pill} gap-2 self-start bg-care-strong text-on-care`}>
-        <HelpIcon size={16} /> Talk to someone now
-      </button>
-    ) : (
-      <button type="button" onClick={onExpand} className={`${pill} gap-2 self-start border border-care bg-care-surface text-care`}>
-        <HelpIcon size={16} /> Support options
-      </button>
-    );
-  }
+  const number = line?.callDisplay ?? line?.call;
 
   return (
-    <section aria-label="Support options" className="panel-in flex flex-col gap-2 rounded-lg bg-care-surface px-4 pt-3.5 pb-1.5">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-[19px] font-medium" aria-live="assertive">
-          {acute ? "Please reach out to someone now." : "You don't have to carry this alone."}
+    <section
+      aria-labelledby="care-title"
+      className="panel-in flex w-[min(640px,calc(100%-32px))] shrink-0 flex-col gap-3 self-center rounded-md border border-[rgba(220,207,255,.3)] px-[18px] py-4"
+      style={{ background: "linear-gradient(160deg, rgba(220,207,255,.14), rgba(10,20,50,.4))" }}
+    >
+      <div className="flex flex-col gap-0.5">
+        <h2 id="care-title" aria-live="assertive" className="m-0 text-[17px] font-semibold text-care">
+          You don&apos;t have to carry this alone
         </h2>
-        <p className="text-[15px] text-muted text-pretty">
-          {acute
-            ? "A person can be with you tonight. I'll stay right here while you call."
-            : "If it feels like too much, someone is there to listen, any time. I'm still here too."}
-        </p>
+        <p className="m-0 text-[15px] text-muted">You can talk to a person right now, free and any time. I&apos;ll stay right here.</p>
       </div>
-      {line && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="min-w-[150px] flex-1 text-[15px] font-medium">
-            {line.shortName ?? line.name} <span className="font-normal text-muted">· free, 24/7</span>
-          </span>
-          {line.call && (
-            <a href={`tel:${line.call}`} className={`${pill} bg-care-strong text-on-care`}>
-              {callLabel(line)}
-            </a>
-          )}
-          {line.text && (
-            <a href={smsHref(line.text)} className={`${pill} border border-care text-care`}>
-              Text
-            </a>
-          )}
-          {line.url && (
-            <a href={line.url} target="_blank" rel="noreferrer" className={`${pill} bg-care-strong text-on-care`}>
-              {line.display}
-            </a>
-          )}
-        </div>
-      )}
-      <div className="-mx-2 -mt-1 flex items-center justify-between">
-        <button type="button" onClick={onMoreOptions} className="min-h-11 px-2 text-[15px] font-medium text-care">
-          More options
-        </button>
-        <button type="button" onClick={onCollapse} className="min-h-11 px-2 text-[15px] text-muted">
-          {acute ? "I'm safe right now" : "Not now"}
-        </button>
+      <div className="grid grid-cols-2 gap-2">
+        {line?.call ? (
+          <a
+            href={`tel:${line.call}`}
+            className="press flex min-h-12 items-center justify-center gap-2 rounded-pill bg-care text-[15px] font-semibold text-on-care no-underline hover:text-on-care"
+          >
+            <PhoneIcon size={16} />
+            Call {number}
+          </a>
+        ) : (
+          <a
+            href={line?.url ?? "https://findahelpline.com"}
+            target="_blank"
+            rel="noreferrer"
+            className="press col-span-2 flex min-h-12 items-center justify-center rounded-pill bg-care text-[15px] font-semibold text-on-care no-underline hover:text-on-care"
+          >
+            Find a helpline
+          </a>
+        )}
+        {line?.call && line.text ? (
+          <a
+            href={smsHref(line.text)}
+            className="press flex min-h-12 items-center justify-center rounded-pill border border-[rgba(220,207,255,.5)] text-[15px] font-semibold text-care no-underline hover:text-care"
+          >
+            Text {line.text.to}
+          </a>
+        ) : line?.call ? (
+          <a
+            href={`tel:${res.emergency}`}
+            className="press flex min-h-12 items-center justify-center rounded-pill border border-[rgba(220,207,255,.5)] text-[15px] font-semibold text-care no-underline hover:text-care"
+          >
+            Call {res.emergency}
+          </a>
+        ) : null}
       </div>
+      <button
+        type="button"
+        onClick={onSafe}
+        className="min-h-11 self-start bg-transparent px-1 text-[15px] text-text underline decoration-[rgba(239,252,250,.35)] underline-offset-[3px]"
+      >
+        I&apos;m safe right now
+      </button>
     </section>
   );
 }

@@ -60,23 +60,22 @@ export function MovePrompt() {
   }
 
   return (
-    <Sheet open onClose={keep} label="Move your conversations">
-      <h2 className="font-display text-2xl">Bring your conversations with you?</h2>
-      <p className="mt-2 text-muted">
+    <Sheet open onClose={keep} title="Bring your conversations with you?">
+      <p className="m-0 text-muted">
         This device has {count} conversation{count === 1 ? "" : "s"} from before you signed in. Move them into your account so
         they&apos;re on every device and I can keep remembering you. They&apos;ll be removed from this browser afterward.
       </p>
       {state === "error" && (
-        <p role="alert" className="mt-3 text-care">
+        <p role="alert" className="m-0 text-danger-text">
           Something went wrong moving them. Nothing was deleted. Try again?
         </p>
       )}
-      <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button variant="ghost" onClick={keep} disabled={state === "moving"}>
-          Keep them on this device
-        </Button>
-        <Button variant="primary" onClick={move} disabled={state === "moving"}>
+      <div className="flex flex-col gap-2">
+        <Button variant="primary" size="xl" onClick={move} disabled={state === "moving"}>
           {state === "moving" ? "Moving…" : "Move them to my account"}
+        </Button>
+        <Button variant="tertiary" onClick={keep} disabled={state === "moving"}>
+          Keep them on this device
         </Button>
       </div>
     </Sheet>

@@ -37,6 +37,8 @@ export interface Voice {
   start: () => Promise<void>;
   stop: () => void;
   setMuted: (muted: boolean) => void;
+  /** Stops the companion mid-sentence and goes back to listening (tap to interrupt). */
+  interrupt: () => void;
   getLevel: () => number;
   /** Pass to useConversation so replies are spoken. */
   callbacks: ConversationCallbacks;
@@ -168,6 +170,16 @@ export function useVoice({ serverVoice, voiceId, phase, onUtterance, onBargeIn }
     recognizerRef.current?.setMuted(m);
   }, []);
 
+  const interrupt = useCallback(() => {
+    if (statusRef.current !== "speaking" && !(statusRef.current === "thinking" && replyActive.current)) return;
+    speakerRef.current?.stop();
+    chunker.current.reset();
+    replyActive.current = false;
+    handlersRef.current.onBargeIn();
+    recognizerRef.current?.resume();
+    if (recognizerRef.current) set("listening");
+  }, [set]);
+
   const getLevel = useCallback(() => {
     const speaker = speakerRef.current;
     if (speaker?.speaking) return speaker.getLevel();
@@ -198,5 +210,5 @@ export function useVoice({ serverVoice, voiceId, phase, onUtterance, onBargeIn }
     [set],
   );
 
-  return { status, error, partial, muted, supported, start, stop, setMuted, getLevel, callbacks };
+  return { status, error, partial, muted, supported, start, stop, setMuted, interrupt, getLevel, callbacks };
 }

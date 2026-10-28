@@ -218,3 +218,9 @@ The designer's handoff ([`from-designer/HANDOFF.md`](design-handoff/from-designe
 - **Wordmark:** the app renders it as live text in the loaded font. Outline the SVG wordmark before using it as a static file.
 
 **Round 2 (product review):** the brief for the next design pass is in [`design-handoff/round-2/HANDOFF.md`](design-handoff/round-2/HANDOFF.md), with the prompt in `round-2/PROMPT.md`.
+
+---
+
+## 11. Deep lagoon (v2), now the current design
+
+The designer's second handoff (`design-handoff/from-designer-v2/`) replaces "Sage & lamplight" across the whole app and adds a landing page. It's implemented; see [`from-designer-v2/IMPLEMENTATION_NOTES.md`](design-handoff/from-designer-v2/IMPLEMENTATION_NOTES.md) for what differs from the design and which changes were never agreed. Sections 3–10 above describe the earlier direction.

@@ -80,7 +80,7 @@ export type MemoryCategory = (typeof MEMORY_CATEGORIES)[number];
 
 export const MEMORY_CATEGORY_LABELS: Record<MemoryCategory, string> = {
   person: "People",
-  situation: "Your days",
+  situation: "What's going on",
   goal: "Hopes and goals",
   pattern: "Patterns",
   helps: "What helps",
@@ -124,8 +124,11 @@ export interface DataStore {
   updateSession(id: string, patch: Partial<Omit<Session, "id">>): Promise<Session>;
   /** Most recent first. */
   listSessions(limit?: number): Promise<Session[]>;
-  /** Deletes the session with its messages, reflection, and memories sourced from it. */
-  deleteSession(id: string): Promise<void>;
+  /**
+   * Deletes the session with its messages and reflection. Memories learned from it are
+   * deleted too, unless keepMemories is set (then they stay, no longer linked to it).
+   */
+  deleteSession(id: string, opts?: { keepMemories?: boolean }): Promise<void>;
 
   addMessage(message: Omit<Message, "id" | "createdAt"> & { createdAt?: string }): Promise<Message>;
   listMessages(sessionId: string): Promise<Message[]>;

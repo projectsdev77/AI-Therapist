@@ -11,20 +11,20 @@ export interface BreathPattern {
 export const BREATH_PATTERNS: BreathPattern[] = [
   {
     id: "calm",
-    name: "Calm 4·6",
+    name: "Calm",
     description: "In 4 · out 6",
     phases: { in: 4, "hold-in": 0, out: 6, "hold-out": 0 },
   },
   {
     id: "box",
-    name: "Box 4·4",
-    description: "In 4 · hold 4 · out 4 · hold 4",
+    name: "Box",
+    description: "4 · 4 · 4 · 4",
     phases: { in: 4, "hold-in": 4, out: 4, "hold-out": 4 },
   },
   {
     id: "478",
-    name: "4·7·8",
-    description: "In 4 · hold 7 · out 8",
+    name: "Deep",
+    description: "4 · 7 · 8",
     phases: { in: 4, "hold-in": 7, out: 8, "hold-out": 0 },
   },
 ];
@@ -50,6 +50,11 @@ export interface BreathSample {
   remaining: number;
   /** 0 = fully exhaled, 1 = fully inhaled. Eased. */
   fullness: number;
+  /** Which second of the phase we're in (1-based), and the phase's length: "3 of 4". */
+  count: number;
+  length: number;
+  /** Which round of the pattern (1-based). */
+  round: number;
 }
 
 const ease = (t: number) => 0.5 - Math.cos(Math.PI * t) / 2;
@@ -57,6 +62,7 @@ const ease = (t: number) => 0.5 - Math.cos(Math.PI * t) / 2;
 /** Pure: where in the breath cycle are we after `elapsed` seconds? */
 export function sampleBreath(pattern: BreathPattern, elapsed: number): BreathSample {
   const total = cycleLength(pattern);
+  const round = Math.floor(Math.max(0, elapsed) / total) + 1;
   let t = ((elapsed % total) + total) % total;
   for (const phase of ORDER) {
     const len = pattern.phases[phase];
@@ -65,9 +71,9 @@ export function sampleBreath(pattern: BreathPattern, elapsed: number): BreathSam
       const progress = t / len;
       const fullness =
         phase === "in" ? ease(progress) : phase === "out" ? 1 - ease(progress) : phase === "hold-in" ? 1 : 0;
-      return { phase, progress, remaining: Math.ceil(len - t), fullness };
+      return { phase, progress, remaining: Math.ceil(len - t), fullness, count: Math.min(len, Math.floor(t) + 1), length: len, round };
     }
     t -= len;
   }
-  return { phase: "in", progress: 0, remaining: pattern.phases.in, fullness: 0 };
+  return { phase: "in", progress: 0, remaining: pattern.phases.in, fullness: 0, count: 1, length: pattern.phases.in, round };
 }

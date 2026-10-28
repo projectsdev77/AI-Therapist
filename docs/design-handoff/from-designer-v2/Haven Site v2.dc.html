@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./tokens.css">
+<link rel="stylesheet" href="./lagoon.css">
+<style>body{margin:0;background:#c9dcda!important;-webkit-font-smoothing:antialiased}a{color:#0a6e63}a:hover{color:#06302c}</style>
+</helmet>
+<div style="padding:64px;display:flex;flex-direction:column;gap:72px;font-family:'Geist',sans-serif;color:#06302c">
+<header style="max-width:960px;display:flex;flex-direction:column;gap:12px">
+<span style="font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#3b625e">Haven · Deep lagoon · v2 · whole app</span>
+<h1 style="margin:0;font-weight:500;font-size:52px;letter-spacing:-.035em;line-height:1.05">Every screen, sheet and state</h1>
+<p style="margin:0;font-size:17px;line-height:1.55;color:#3b625e;text-wrap:pretty">Each row shows old desktop, old phone, new desktop and new phone. Every new frame is one component, <code>Haven App v2.dc.html</code>, with the props <code>screen</code> and <code>desktop</code>.</p>
+<p style="margin:0;font-size:17px;line-height:1.55;color:#3b625e;text-wrap:pretty">It's one system throughout. There is one top bar with Get help in every screen, and the same glass surfaces, buttons, switches and rows everywhere. Aqua always means "do it"; lilac always means care. Sheets slide up from the bottom on phone and open centred on desktop. The menu opens as a side panel on desktop. The full list is in <code>SITE-MAP.md</code>.</p>
+<nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="6"><a href="#{{ g.id }}" style="padding:6px 12px;border-radius:999px;background:#eef6f5;text-decoration:none;font-size:14px">{{ g.name }}</a></sc-for>
+</nav>
+</header>
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
+<section id="{{ g.id }}" style="display:flex;flex-direction:column;gap:40px">
+<h2 style="margin:0;font-size:40px;font-weight:500;letter-spacing:-.03em;border-top:2px solid #06302c;padding-top:20px">{{ g.name }}</h2>
+<sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="2">
+<div id="{{ r.s }}" style="display:flex;flex-direction:column;gap:16px">
+<div style="max-width:960px;display:flex;flex-direction:column;gap:6px">
+<h3 style="margin:0;font-size:26px;font-weight:500;letter-spacing:-.02em">{{ r.name }}</h3>
+<p style="margin:0;font-size:16px;line-height:1.55;color:#3b625e;text-wrap:pretty">{{ r.note }}</p>
+</div>
+<div style="display:flex;gap:28px;align-items:flex-start;width:max-content">
+<sc-if value="{{ r.hasOld }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:14px;font-weight:600;color:#6b7570">Old · desktop</span><div data-theme="dark" style="width:1280px;height:800px;border-radius:18px;overflow:hidden;box-shadow:0 24px 60px rgba(4,40,36,.25)"><dc-import name="Haven R2" screen="{{ r.old }}" desktop="{{ true }}" still="{{ true }}" hint-size="1280px,800px" style="width:100%;height:100%"></dc-import></div></div>
+<div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:14px;font-weight:600;color:#6b7570">Old · phone</span><div data-theme="dark" style="width:390px;height:844px;border-radius:44px;overflow:hidden;box-shadow:0 24px 60px rgba(4,40,36,.25)"><dc-import name="Haven R2" screen="{{ r.old }}" still="{{ true }}" hint-size="390px,844px" style="width:100%;height:100%"></dc-import></div></div>
+</sc-if>
+<sc-if value="{{ r.noOld }}" hint-placeholder-val="{{ true }}">
+<div style="width:280px;height:200px;box-sizing:border-box;padding:24px;border-radius:18px;border:1.5px dashed rgba(6,48,44,.3);display:flex;flex-direction:column;justify-content:center;gap:6px;color:#3b625e"><strong style="font-size:16px;font-weight:600;color:#06302c">New in v2</strong><span style="font-size:14px;line-height:1.5">There's no old version of this screen to compare with.</span></div>
+</sc-if>
+<div style="width:2px;align-self:stretch;background:rgba(6,48,44,.18)"></div>
+<div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:14px;font-weight:600">New · desktop</span><div style="width:1280px;height:800px;border-radius:18px;overflow:hidden;box-shadow:0 24px 60px rgba(4,40,36,.32)"><dc-import name="Haven App v2" screen="{{ r.s }}" desktop="{{ true }}" hint-size="1280px,800px" style="width:100%;height:100%"></dc-import></div></div>
+<div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:14px;font-weight:600">New · phone</span><div style="width:390px;height:844px;border-radius:44px;overflow:hidden;box-shadow:0 24px 60px rgba(4,40,36,.32)"><dc-import name="Haven App v2" screen="{{ r.s }}" hint-size="390px,844px" style="width:100%;height:100%"></dc-import></div></div>
+</div>
+</div>
+</sc-for>
+</section>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const R = (s, old, name, note) => ({ s, old: old || '', hasOld: !!old, noOld: !old, name, note });
+    return {
+      groups: [
+        { id: 'g-home', name: 'Home & onboarding', rows: [
+          R('home-first', 'home-first', 'Home · first visit', 'One sentence says what Haven is, followed by three promises as quiet chips. The dock always has the same three controls: Write, Talk (the hero) and Slow down. The disclaimer sits at the foot.'),
+          R('consent', 'consent', 'Consent', 'Each rule has an icon and plain words. Memory is a real switch so you can opt out before anything is saved. The 18+ check gates Let\'s begin. Not now returns you to Home without starting.'),
+          R('home-return', 'home-return', 'Home · returning', 'Welcome back is plain type: a small line with your name and the day\'s sky, then a large question. A single "Last time" row lets you pick up where you left off. Nothing else competes with Talk.'),
+          R('menu', '', 'Menu', 'It slides up as a sheet on phone and opens as a side panel on desktop. Sections first, then account and settings, with Get help at the bottom in lilac so it is never lost.'),
+        ] },
+        { id: 'g-talk', name: 'Talking & writing', rows: [
+          R('talk-start', 'voice-start', 'Start of a conversation', 'Haven greets you first so the screen is never blank. Starters sit under the greeting and disappear after your first message.'),
+          R('talk-off', '', 'Voice ready (mic off)', 'In voice mode, Mute is greyed out until the mic is live. The tools row swaps End for Write, because End lives in the dock in voice mode.'),
+          R('talk-listening', '', 'Listening', 'The orb leans in and faces you. The mic shows live level bars with a pulsing ring, and your words appear as a muted caption as you speak.'),
+          R('talk-speaking', '', 'Speaking', 'The orb pulses with its voice. The caption streams in with a dot at the end. The mic turns into pause bars, labelled Tap to interrupt.'),
+          R('talk-text', 'write-mid', 'Writing', 'Captions sit above one glass composer. The mic inside the composer switches back to voice and becomes Send once you\'ve typed. The tools are four labelled buttons: Style, Breathe, Transcript and End.'),
+          R('talk-style', 'write-style-open', 'Style sheet', '"What would help right now?" with four choices. It lasts for this conversation, and the note says you can simply ask for it out loud instead.'),
+          R('talk-styled', 'write-listen', 'After choosing a style', 'A quiet line confirms the choice ("Okay. I\'ll just listen."). A small dot on the Style button shows a style is active, and its label reads it out to screen readers.'),
+          R('talk-slow', 'write-slow', 'Slow reply', 'The orb shows thinking. After 8 seconds, a breathing dot appears with "Taking a little longer than usual…" and Stop waiting.'),
+          R('talk-error', '', "Didn't send", 'The error appears in the conversation, not as a toast. Your words stay in the composer and Try again is right beside the message.'),
+          R('transcript', '', 'Transcript', 'The full conversation, with each speaker labelled and timed. Copy text and Back to talking stay pinned to the bottom of the sheet.'),
+          R('end-confirm', '', 'End conversation', 'Ending asks first and says what happens next. End and make my card is the main button, Keep talking is second, and End without a card is the quiet third option.'),
+        ] },
+        { id: 'g-care', name: 'Safety & breathing', rows: [
+          R('safety-elevated', '', 'Safety · something sounds heavy', 'The orb softens into concerned. A Support options pill appears under the reply. It\'s offered, never forced.'),
+          R('safety-acute', '', 'Safety · acute', 'A care panel opens by itself with Call or Text 988. "I\'m safe right now" dismisses it. The orb shrinks to make room, and the composer stays usable so the conversation keeps going.'),
+          R('help', '', 'Get help', 'It opens from the top bar on every screen. 911 comes first, then three lines with direct Call, Text or Chat buttons, then a region picker. Closing it keeps your conversation exactly where it was.'),
+          R('breathe', '', 'Breathe', 'The orb paces the breath. The phase is large, with the count and round below. You can switch between three patterns and turn the step vibration on or off. I\'m done takes you back to wherever you started.'),
+        ] },
+        { id: 'g-refl', name: 'Reflection', rows: [
+          R('reflection', 'refl', 'Reflection card', 'The card sits under its sky. "Does this feel right?" shows the selected state. Save image is the main action and Delete the quietest. On desktop, Your say and the memory list sit beside the card. Forget shows Undo right where the note was. Guests see "Want to keep this?" with Sign in.'),
+          R('reflection-edit', 'refl-edit', 'Edit card', 'Each part of the card is its own field. The title has a character count, and quotes and the next step can be removed. Save changes or Cancel. Empty fields keep their old words.'),
+          R('sky-picker', 'refl-sky', 'Choose a sky', 'Six skies to choose from, with my pick selected. Underneath, I say why I picked it, so you can disagree with my reason, not just the colour.'),
+          R('delete-confirm', '', 'Delete reflection', 'An alert dialog that spells out exactly what goes. A checkbox lets you also forget the notes from this conversation. Delete uses the only coral in the app, and Keep it is just as easy to reach.'),
+        ] },
+        { id: 'g-look', name: 'Skies, patterns & memory', rows: [
+          R('skies', 'skies', 'Your skies', 'A single 30-day sky line, a count for each sky type, and a list of recent conversations. Each row shows the time and the sky, with "chosen by you" where you changed it.'),
+          R('skies-empty', '', 'Your skies · empty', 'An empty sky line, one sentence on what will appear here, and Start a conversation.'),
+          R('patterns', 'patterns', 'Your patterns', 'Stars are 44 px tap targets. Screen readers hear each topic and how many conversations it came up in.'),
+          R('patterns-topic', '', 'Pattern topic', 'Tap a star to see the conversations it came from. From there you can Talk about this or Hide this topic.'),
+          R('memory', 'refl-forgot', 'What I remember', 'A switch at the top, then "In short", then notes grouped as People, What\'s going on and What helps. Every note has Edit and Forget. Add something and Forget everything sit at the end.'),
+          R('memory-off', 'refl-off', 'Memory off', 'It says plainly that I\'m not adding or using notes, and that the existing ones stay until you delete them.'),
+        ] },
+        { id: 'g-acct', name: 'Account & settings', rows: [
+          R('settings', '', 'Settings', 'The same row pattern throughout: switches, links and one button. Match my sky is disabled until Ambient sound is on. Delete everything says that it can\'t be undone.'),
+          R('signin', '', 'Sign in', 'Google, or a magic link with no password. It says up front that you don\'t need an account to talk.'),
+          R('signin-sent', '', 'Check your email', 'Shows the address the link went to and how long it lasts. You can send it again or use a different email.'),
+          R('privacy', '', 'Privacy', 'Plain words, grouped: where your words go, what we never do, and your controls. It ends with Export and Delete everything.'),
+        ] },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

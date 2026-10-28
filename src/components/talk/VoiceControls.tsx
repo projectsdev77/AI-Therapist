@@ -1,78 +1,122 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
-import { MicIcon, MicOffIcon, WriteIcon } from "@/components/ui/icons";
+import type { ReactNode } from "react";
+import { Dock, DockMic, DockSide } from "@/components/shell/Dock";
+import { CheckIcon, MicIcon, MicOffIcon, PauseIcon } from "@/components/ui/icons";
 import type { Voice } from "@/lib/voice/useVoice";
 
-const STATUS_TEXT: Partial<Record<Voice["status"], string>> = {
-  starting: "Getting ready…",
-  listening: "I'm listening",
-  hearing: "I'm listening",
-  transcribing: "Taking that in…",
-  thinking: "Thinking…",
-  speaking: "Speaking",
-};
+/** The mic's three looks: idle (mic), listening (level bars + pulsing ring), speaking (pause). */
+export function micLook(voice: Voice): "off" | "listening" | "speaking" {
+  if (voice.status === "speaking") return "speaking";
+  if (!voice.muted && (voice.status === "listening" || voice.status === "hearing")) return "listening";
+  return "off";
+}
 
-/** Before voice starts: a 64px start button (needed so iOS plays the greeting) and Write instead. */
-export function VoiceStart({ voice, onStart, onSwitchToText }: { voice: Voice; onStart: () => void; onSwitchToText: () => void }) {
-  const unavailable = !voice.supported || voice.status === "unsupported" || voice.status === "error";
+/**
+ * Voice mode's dock: Mute · mic · Wrap up. The mic starts talking when idle, pauses (mutes)
+ * while listening, and interrupts while the companion speaks.
+ */
+export function VoiceDock({
+  voice,
+  started,
+  onStart,
+  onWrapUp,
+}: {
+  voice: Voice;
+  started: boolean;
+  onStart: () => void;
+  onWrapUp: () => void;
+}) {
+  const look = micLook(voice);
+  const live = started && voice.status !== "off" && voice.status !== "error" && voice.status !== "unsupported";
+  const thinking = voice.status === "thinking" || voice.status === "transcribing";
+
+  let icon: ReactNode = <MicIcon size={28} />;
+  let label = "Tap to talk";
+  let aria = "Start talking";
+  let action = onStart;
+  if (live && look === "listening") {
+    icon = [0, 0.15, 0.3, 0.45, 0.6].map((d) => (
+      <span key={d} className="mic-bar block h-[22px] w-1 rounded-[2px] bg-current" style={{ animationDelay: `${d}s` }} />
+    ));
+    label = "Listening";
+    aria = "Listening. Tap to pause";
+    action = () => voice.setMuted(true);
+  } else if (live && look === "speaking") {
+    icon = <PauseIcon size={26} />;
+    label = "Tap to interrupt";
+    aria = "Haven is speaking. Tap to interrupt";
+    action = voice.interrupt;
+  } else if (live && voice.muted) {
+    label = "Paused";
+    aria = "Paused. Tap to keep talking";
+    action = () => voice.setMuted(false);
+  } else if (live && thinking) {
+    label = "Thinking";
+    aria = "Thinking";
+    action = () => undefined;
+  } else if (live) {
+    label = "Listening";
+    aria = "Listening";
+    action = () => undefined;
+  }
+
   return (
-    <div className="mx-auto flex w-full max-w-[600px] flex-col items-center gap-3.5 px-6 pb-11 text-center">
-      {unavailable ? (
-        <>
-          <p className="voice-companion text-[23px]">Let&apos;s write instead.</p>
-          <p role="alert" className="mb-2.5 text-[15px] text-muted">
-            {voice.error ?? "Voice isn't available in this browser."}
-          </p>
-          <Button variant="primary" size="xl" onClick={onSwitchToText} className="w-full max-w-[340px]">
-            <WriteIcon size={22} /> Write instead
-          </Button>
-        </>
-      ) : (
-        <>
-          <p className="voice-companion text-[23px]">I&apos;ll say hello first.</p>
-          <p className="mb-2.5 text-[15px] text-muted">Turn your sound on, then tap when you&apos;re ready.</p>
-          <Button variant="primary" size="xl" onClick={onStart} className="w-full max-w-[340px]">
-            <MicIcon size={22} /> Tap to start talking
-          </Button>
-          <Button variant="link" onClick={onSwitchToText} className="min-h-11 text-base">
-            Write instead
-          </Button>
-        </>
-      )}
-    </div>
+    <Dock
+      className="mt-11 w-full"
+      left={
+        <DockSide label="Mute" ariaLabel="Mute microphone" pressed={voice.muted} disabled={!live} onClick={() => voice.setMuted(!voice.muted)}>
+          <MicOffIcon size={22} />
+        </DockSide>
+      }
+      center={
+        <DockMic ariaLabel={aria} label={label} onClick={action} live={live && look === "listening"}>
+          {icon}
+        </DockMic>
+      }
+      right={
+        <DockSide label="Wrap up" ariaLabel="Wrap up this conversation" haspopup onClick={onWrapUp}>
+          <CheckIcon size={22} strokeWidth={1.8} />
+        </DockSide>
+      }
+    />
   );
 }
 
-/** While talking: live status, Mute, Write, End. */
-export function VoiceBand({ voice, onSwitchToText, onEnd, ending }: { voice: Voice; onSwitchToText: () => void; onEnd: () => void; ending: boolean }) {
-  const live = !voice.muted && (voice.status === "listening" || voice.status === "hearing");
+/** A 56px tool button: 18px aqua icon over a 13px label (README "Tools row"). */
+export function ToolButton({
+  label,
+  ariaLabel,
+  icon,
+  onClick,
+  haspopup,
+  active,
+  dot,
+  disabled,
+}: {
+  label: string;
+  ariaLabel?: string;
+  icon: ReactNode;
+  onClick: () => void;
+  haspopup?: boolean;
+  active?: boolean;
+  dot?: boolean;
+  disabled?: boolean;
+}) {
   return (
-    <div className="flex flex-col items-center gap-2.5">
-      <div role="status" className="flex min-h-11 items-center gap-2.5 text-[17px] font-medium">
-        {live && <span aria-hidden className="pulse-dot size-2 rounded-full bg-accent-strong" />}
-        {voice.muted ? "Microphone is muted" : STATUS_TEXT[voice.status]}
-      </div>
-      <p className="-mt-2 mb-1 text-sm text-muted">
-        {voice.muted ? "Unmute when you're ready" : "Speak anytime to interrupt"}
-      </p>
-      <div className="flex w-full justify-center gap-2">
-        <Button
-          variant="secondary"
-          onClick={() => voice.setMuted(!voice.muted)}
-          aria-pressed={voice.muted}
-          className="min-h-[52px] !shadow-none"
-        >
-          {voice.muted ? <MicOffIcon size={18} /> : <MicIcon size={18} />}
-          {voice.muted ? "Unmute" : "Mute"}
-        </Button>
-        <Button variant="secondary" onClick={onSwitchToText} className="min-h-[52px] !shadow-none">
-          <WriteIcon size={18} /> Write
-        </Button>
-        <Button variant="ghost" onClick={onEnd} disabled={ending} className="min-h-[52px]">
-          {ending ? "Ending…" : "End"}
-        </Button>
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      aria-haspopup={haspopup ? "dialog" : undefined}
+      disabled={disabled}
+      className={`press relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-sm border border-edge-lo px-1 py-1.5 text-[13px] font-medium hover:bg-glass hover:text-text disabled:opacity-45 ${
+        active || dot ? "text-text" : "text-muted"
+      } ${active ? "bg-glass-strong" : "bg-transparent"}`}
+    >
+      <span className="text-accent-strong">{icon}</span>
+      {label}
+      {dot && <span aria-hidden className="absolute top-2 right-[calc(50%-18px)] size-[7px] rounded-full bg-dot" />}
+    </button>
   );
 }

@@ -1,21 +1,22 @@
 import { expect, test } from "@playwright/test";
 import { expectAccessible, say, startConversation } from "./helpers";
 
-test("theme choice persists without a flash", async ({ page }) => {
+test("settings are grouped and accessible", async ({ page }) => {
   await page.goto("/settings");
-  await page.getByRole("radio", { name: "Twilight" }).click();
-  await page.reload();
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  for (const g of ["Account", "Conversations", "Your data", "About"]) await expect(page.getByRole("heading", { name: g })).toBeVisible();
+  await expect(page.getByRole("switch", { name: "Match my sky" })).toBeDisabled();
   await expectAccessible(page);
 });
 
-test("turning memory off is reflected on the memory page", async ({ page }) => {
-  await page.goto("/settings");
-  await page.getByRole("switch", { name: "Remember between conversations" }).uncheck();
+test("turning memory off is shown plainly on the memory page", async ({ page }) => {
   await page.goto("/memory");
+  const sw = page.getByRole("switch", { name: "Remember our conversations" });
+  await sw.click();
+  await expect(sw).toHaveAttribute("aria-checked", "false");
   await expect(page.getByText("Remembering is off.")).toBeVisible();
-  await page.getByRole("switch", { name: "Remember between conversations" }).check();
-  await expect(page.getByText("Remembering is on")).toBeVisible();
+  await sw.click();
+  await expect(page.getByText("I keep short notes so you don't have to start over.")).toBeVisible();
+  await expectAccessible(page);
 });
 
 test("delete everything needs a typed confirmation", async ({ page }) => {
@@ -23,14 +24,14 @@ test("delete everything needs a typed confirmation", async ({ page }) => {
   await say(page, "Just testing.");
   await page.goto("/settings");
   await page.getByRole("button", { name: /^Delete everything/ }).click();
-  const dialog = page.getByRole("dialog", { name: "Delete everything" });
+  const dialog = page.getByRole("alertdialog", { name: "Delete everything?" });
   const button = dialog.getByRole("button", { name: "Delete everything" });
   await expect(button).toBeDisabled();
   await dialog.getByLabel("Type DELETE to confirm").fill("DELETE");
   await button.click();
-  await page.waitForURL("**/");
+  await page.waitForURL("**/home");
   await page.goto("/history");
-  await expect(page.getByText("No skies yet.")).toBeVisible();
+  await expect(page.getByText("Your first sky is waiting")).toBeVisible();
 });
 
 test("ambient sound is a per-device setting and plays alongside a conversation", async ({ page }) => {

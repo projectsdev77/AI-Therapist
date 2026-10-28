@@ -1,17 +1,22 @@
 import { BRAND } from "@/lib/brand";
 
-/** The orb mark: membrane, middle, and core, drawn from tokens so it follows the theme. */
-export function LogoMark({ size = 26 }: { size?: number }) {
+/** The orb dot (README "Top bar"): a 24px orb with an aqua ring. */
+export function LogoMark({ size = 24 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
-      <circle cx="16" cy="16" r="15" fill="var(--tone-neutral)" opacity=".35" />
-      <circle cx="15" cy="15.5" r="11" fill="var(--tone-neutral)" opacity=".6" />
-      <circle cx="14.5" cy="14.5" r="6.5" fill="var(--orb-core)" />
-    </svg>
+    <span
+      aria-hidden
+      className="inline-block shrink-0 rounded-full"
+      style={{
+        width: size,
+        height: size,
+        background: "radial-gradient(circle at 50% 42%, #1a8c84, #0b3c44 62%, #04141a)",
+        boxShadow: size > 20 ? "0 0 0 2px rgba(111,240,230,.55), 0 0 12px rgba(63,214,205,.5)" : "0 0 0 1.5px rgba(111,240,230,.55)",
+      }}
+    />
   );
 }
 
-/** Lowercase Instrument Serif italic wordmark. A rename is a one-string change in BRAND. */
+/** "Haven" at 18/600. A rename is a one-string change in BRAND. */
 export function Wordmark({ className = "" }: { className?: string }) {
-  return <span className={`font-accent text-[27px] leading-none tracking-[-0.01em] italic ${className}`}>{BRAND.name.toLowerCase()}</span>;
+  return <span className={`text-[18px] font-semibold tracking-[-0.025em] ${className}`}>{BRAND.name}</span>;
 }

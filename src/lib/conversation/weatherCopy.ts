@@ -7,4 +7,5 @@ export const WEATHER_PHRASES: Record<Weather, string> = {
   drizzle: "light drizzle",
   storm: "a storm",
   breaking: "the sun breaking through",
+  quiet: "a quiet sky",
 };

@@ -1,8 +1,11 @@
 import type { DataStore } from "@/lib/data/types";
+import { clearPaused, isPaused } from "@/lib/conversation/paused";
 import { finalizeSession } from "./finalize";
 
 /** A conversation with no activity for this long, and never ended, counts as finished. */
 export const ABANDONED_AFTER_MS = 2 * 60 * 60 * 1000;
+/** Left with "I'll be back": wait a day before finishing it. */
+export const PAUSED_AFTER_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Makes the cards (and memory updates) that never happened: conversations that ended
@@ -19,8 +22,10 @@ export async function finishPendingSessions(store: DataStore, now = Date.now(), 
     if (!messages.some((m) => m.role === "user")) continue;
     if (!session.endedAt) {
       const lastActivity = messages[messages.length - 1].createdAt;
-      if (now - Date.parse(lastActivity) < ABANDONED_AFTER_MS) continue;
+      const wait = isPaused(session.id) ? PAUSED_AFTER_MS : ABANDONED_AFTER_MS;
+      if (now - Date.parse(lastActivity) < wait) continue;
       await store.updateSession(session.id, { endedAt: lastActivity });
+      clearPaused(session.id);
     }
     try {
       // Fresh profile each time: the previous card may have rewritten the summary.
