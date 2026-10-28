@@ -29,6 +29,7 @@ const context = (id: string): CompanionContext => ({
   sessionCount: 3,
   mode: "voice",
   localTime: "Friday 8:30 pm",
+  supportStyle: id === "style-listen" ? "listen" : null,
 });
 
 async function reply(history: { role: "user" | "assistant"; content: string }[], id: string) {

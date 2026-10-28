@@ -216,3 +216,5 @@ The designer's handoff ([`from-designer/HANDOFF.md`](design-handoff/from-designe
 - **Home "Last time" card:** it opens the reflection ("See this reflection"), not "Pick up from here". The companion already picks up from memory in the next conversation.
 - **What I remember, Add:** a new item goes under *Other*, because their design has no category picker.
 - **Wordmark:** the app renders it as live text in the loaded font. Outline the SVG wordmark before using it as a static file.
+
+**Round 2 (product review):** the brief for the next design pass is in [`design-handoff/round-2/HANDOFF.md`](design-handoff/round-2/HANDOFF.md), with the prompt in `round-2/PROMPT.md`.

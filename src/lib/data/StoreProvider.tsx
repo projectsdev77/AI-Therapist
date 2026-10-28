@@ -2,6 +2,7 @@
 
 import type { User } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { finishPendingSessions } from "@/lib/reflection/pending";
 import { getSupabase } from "@/lib/supabase/client";
 import { LocalStore } from "./localStore";
 import { SupabaseStore } from "./supabaseStore";
@@ -22,6 +23,8 @@ interface StoreContextValue {
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
+
+const caughtUp = new WeakSet<DataStore>();
 
 let localStoreSingleton: LocalStore | null = null;
 export function getLocalStore(): LocalStore {
@@ -89,6 +92,19 @@ export function StoreProvider({ store: injected, children }: { store?: DataStore
     },
     [store],
   );
+
+  // Once per store, after load: finish conversations whose card never got made.
+  const loaded = profile !== null && !authLoading;
+  useEffect(() => {
+    if (injected || !loaded || caughtUp.has(store)) return;
+    const timer = setTimeout(() => {
+      caughtUp.add(store);
+      finishPendingSessions(store)
+        .then((n) => (n > 0 ? refreshProfile() : undefined))
+        .catch((err) => console.warn("pending reflections", err));
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [injected, loaded, store, refreshProfile]);
 
   const signOut = useCallback(async () => {
     await supabase?.auth.signOut();

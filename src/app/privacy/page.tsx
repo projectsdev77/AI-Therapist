@@ -19,15 +19,24 @@ export default function PrivacyPage() {
           <h2>Where it lives</h2>
           <p>
             Without an account, everything stays in this browser on this device. With an account, it&apos;s stored
-            encrypted in our database so you can use it on any device. Only you can access it.
+            encrypted in our database so you can use it on any device. Only you can access it. Your ambient sound
+            choice always stays on the device.
           </p>
         </section>
         <section>
           <h2>Who processes it</h2>
           <p>
-            To reply, your words are sent to our AI provider (Anthropic). Voice is processed by our speech provider
-            (ElevenLabs). Neither may use your conversations to train their models under our agreements.
+            To reply, your words, along with your notes if memory is on, are sent to our AI provider (Anthropic). When
+            you talk out loud, your voice is sent to our speech provider (ElevenLabs) to be turned into text, and the
+            replies are turned back into speech there. We only use providers whose terms don&apos;t allow training on
+            your conversations (to be confirmed with each provider before launch).
           </p>
+          <p>
+            If our speech provider isn&apos;t available, your browser&apos;s own speech features are used instead.
+            Some browsers send that audio to their maker (for example, Chrome sends it to Google) under the
+            browser&apos;s privacy terms. If you&apos;d rather avoid that, write instead of talking.
+          </p>
+          <p>Our own server passes your words and voice along but doesn&apos;t keep them.</p>
         </section>
         <section>
           <h2>What we never do</h2>
@@ -36,8 +45,10 @@ export default function PrivacyPage() {
         <section>
           <h2>Your controls</h2>
           <p>
-            In Settings you can turn memory off, see and edit everything remembered, delete single conversations, export
-            everything, or delete everything permanently.
+            You can turn memory off (before your first conversation, or anytime in Settings), see and edit everything
+            remembered, delete single conversations along with what was learned
+            from them, export everything, or delete everything permanently. Turning memory off stops new notes and
+            stops using old ones; existing notes stay until you delete them.
           </p>
         </section>
       </div>

@@ -8,7 +8,11 @@ import { keywordRisk, maxRisk, riskAtLeast } from "@/lib/safety/keywords";
 import { ConverseError, converse } from "./client";
 import { buildCompanionContext } from "./context";
 import type { Analysis, ChatTurn, CompanionContext } from "./protocol";
-import type { RiskLevel, Tone } from "./types";
+import type { Starter } from "./starters";
+import type { RiskLevel, SupportStyle, Tone } from "./types";
+
+/** After this long with no reply text, the conversation counts as slow. */
+export const SLOW_REPLY_MS = 8000;
 
 export type TurnPhase = "idle" | "waiting" | "streaming";
 
@@ -43,6 +47,15 @@ export interface Conversation {
   end: () => Promise<Session | null>;
   /** Number of things the person said this session. */
   userTurns: number;
+  /** The kind of support the person chose (null = not chosen). Applies from the next reply. */
+  supportStyle: SupportStyle | null;
+  setSupportStyle: (style: SupportStyle | null) => void;
+  /** Begins with one of the optional starters (see starters.ts). */
+  sendStarter: (starter: Starter) => Promise<void>;
+  /** A reply has been pending for SLOW_REPLY_MS with no text yet. */
+  slow: boolean;
+  /** Gives up on the pending reply. The person's message stays; they can say more or switch modes. */
+  cancelReply: () => void;
 }
 
 export function useConversation(mode: SessionMode, callbacks: ConversationCallbacks = {}): Conversation {
@@ -58,6 +71,8 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
   const [demo, setDemo] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userTurns, setUserTurns] = useState(0);
+  const [supportStyle, setSupportStyleState] = useState<SupportStyle | null>(null);
+  const [slow, setSlow] = useState(false);
 
   const callbacksRef = useRef(callbacks);
   const modeRef = useRef(mode);
@@ -76,6 +91,7 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
   // Sends run one at a time, in order; each new one interrupts the previous reply.
   const sendChainRef = useRef<Promise<void>>(Promise.resolve());
   const startedRef = useRef(false);
+  const supportStyleRef = useRef<SupportStyle | null>(null);
   const toneRef = useRef<Tone>("neutral");
   const firstToneRef = useRef(true);
 
@@ -118,6 +134,8 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
     let text = "";
     setPhase("waiting");
     setError(null);
+    setSlow(false);
+    const slowTimer = setTimeout(() => setSlow(true), SLOW_REPLY_MS);
 
     const finish = async (interrupted: boolean) => {
       if (!text) return;
@@ -129,10 +147,12 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
     };
 
     try {
-      const request = { history: historyRef.current, context: { ...ctx, mode: modeRef.current } };
+      const request = { history: historyRef.current, context: { ...ctx, mode: modeRef.current, supportStyle: supportStyleRef.current } };
       for await (const event of converse(request, controller.signal)) {
         if (event.type === "delta") {
           if (!text) {
+            clearTimeout(slowTimer);
+            setSlow(false);
             setPhase("streaming");
             setLines((prev) => [...prev, { id: lineId, speaker: "companion", text: "", pending: true }]);
             callbacksRef.current.onReplyStart?.();
@@ -157,6 +177,8 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
         if (text) await finish(true);
       }
     } finally {
+      clearTimeout(slowTimer);
+      setSlow(false);
       if (abortRef.current === controller) {
         abortRef.current = null;
         setPhase("idle");
@@ -222,6 +244,19 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
     [sendNow],
   );
 
+  const setSupportStyle = useCallback((style: SupportStyle | null) => {
+    supportStyleRef.current = style;
+    setSupportStyleState(style);
+  }, []);
+
+  const sendStarter = useCallback(
+    (starter: Starter) => {
+      if (starter.supportStyle) setSupportStyle(starter.supportStyle);
+      return send(starter.message);
+    },
+    [send, setSupportStyle],
+  );
+
   const end = useCallback(async () => {
     interrupt();
     await turnRef.current;
@@ -233,5 +268,26 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
     return ended;
   }, [store, interrupt]);
 
-  return { session, lines, phase, tone, tones, sessionRisk, latestRisk, themes, demo, error, start, send, interrupt, end, userTurns };
+  return {
+    session,
+    lines,
+    phase,
+    tone,
+    tones,
+    sessionRisk,
+    latestRisk,
+    themes,
+    demo,
+    error,
+    start,
+    send,
+    interrupt,
+    end,
+    userTurns,
+    supportStyle,
+    setSupportStyle,
+    sendStarter,
+    slow,
+    cancelReply: interrupt,
+  };
 }

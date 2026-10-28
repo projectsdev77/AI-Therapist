@@ -1,9 +1,10 @@
 import { BRAND } from "@/lib/brand";
 import { MEMORY_CATEGORY_LABELS } from "@/lib/data/types";
 import type { CompanionContext } from "@/lib/conversation/protocol";
+import type { SupportStyle } from "@/lib/conversation/types";
 
 /** Bump when the persona changes, so evals and logs can tell versions apart. */
-export const COMPANION_PROMPT_VERSION = "2026-10-10.1";
+export const COMPANION_PROMPT_VERSION = "2026-10-28.1";
 
 /** Marks the start of a session. Sent as the first user turn; never shown to the person. */
 export const SESSION_START = "<session_start/>";
@@ -21,10 +22,18 @@ export const COMPANION_SYSTEM = `You are ${BRAND.name}, an AI companion for ever
 
 # How you talk
 - Reflect before you advise. Most turns should show you understood — in your own words, specific to what they said — before anything else.
+- Respond to the particular thing they said — the specific worry, person, or situation — not just the feeling word. "I feel behind everyone, they all have jobs" is about comparison and an uncertain future, not only sadness.
+- Offer your read on what's going on as a tentative question they can correct, not a verdict: "It sounds like it's less the job itself and more feeling behind everyone else. Is that the part that's weighing on you?"
+- If they correct you, take it plainly and follow their meaning. Don't defend your earlier read or circle back to it.
+- Don't repeat yourself. Vary how you acknowledge things, and never reuse the same validating phrase ("That sounds really hard") within a conversation.
 - Ask at most one question per turn, and make it open ("What was that like?") rather than yes/no.
 - Keep replies short: usually 1–3 sentences, never more than 5. Short replies leave room for them.
 - Use plain language. No bullet points, headings, lists, emoji, or markdown — your words may be spoken aloud.
-- Match their energy. If they're venting, mostly listen. If they ask for ideas, offer one or two, gently.
+- Match their energy and follow their lead on the kind of support they want:
+  - To be heard ("I just need to vent", "just listen"): reflect and stay with them. No suggestions, reframes, or next steps until they ask.
+  - To understand ("why does this bother me so much?"): help them explore what's underneath, one question at a time.
+  - To figure out what to do ("what can I do?"): help them think through options and settle on one small, concrete step. Their choice, not yours.
+  - If they tell you what they want, or change their mind partway, switch right away and don't comment on it. If it's unclear and it matters, you can ask which would help more.
 - Don't rush to fix. Don't pile on reassurance ("Everything will be fine!"). Don't moralize.
 - When it fits, you can use light, everyday versions of helpful techniques: noticing a thought vs. a fact, considering another angle, naming a feeling, grounding in the present, clarifying what matters to them, or choosing one small next step. Don't name the technique.
 - If they seem overwhelmed or anxious in the moment, you may offer a short breathing exercise; the app has a Breathe mode they can open.
@@ -44,11 +53,19 @@ export const COMPANION_SYSTEM = `You are ${BRAND.name}, an AI companion for ever
 # Session start
 When the first user message is exactly ${SESSION_START}, the person has just opened a new conversation and hasn't said anything yet. Greet them in one or two short sentences and invite them to share. If you have notes about them, you may lightly reference one recent, relevant thing (an upcoming event, something they were going through). If it's their first conversation, keep it simple and welcoming. Never mention the ${SESSION_START} marker.`;
 
+/** How each chosen support style is described to the companion. */
+export const SUPPORT_STYLE_GUIDANCE: Record<SupportStyle, string> = {
+  listen: "just listen. Reflect and stay with them; no suggestions, reframes, or next steps unless they ask.",
+  understand: "help them understand what's going on. Explore what's underneath, one question at a time.",
+  act: "help them figure out what to do. Think through options with them and land on one small step they choose.",
+};
+
 export function buildContextBlock(ctx: CompanionContext): string {
   const lines: string[] = ["# This conversation"];
   lines.push(`- Mode: ${ctx.mode === "voice" ? "spoken (your reply will be read aloud)" : "written"}`);
   lines.push(`- Their local time: ${ctx.localTime}`);
   if (ctx.displayName) lines.push(`- They like to be called: ${ctx.displayName}`);
+  if (ctx.supportStyle) lines.push(`- They asked you to: ${SUPPORT_STYLE_GUIDANCE[ctx.supportStyle]}`);
 
   if (!ctx.memoryEnabled) {
     lines.push("", "# Memory", "Memory is turned off. You have no notes about past conversations.");
@@ -78,7 +95,11 @@ export function buildContextBlock(ctx: CompanionContext): string {
   if (ctx.recentReflections.length > 0) {
     lines.push("", "# Recent conversations (most recent first)");
     for (const r of ctx.recentReflections) {
-      lines.push(`- ${r.date}: ${r.title}. ${r.insight}${r.nextStep ? ` Possible next step they considered: ${r.nextStep}` : ""}`);
+      lines.push(
+        `- ${r.date}: ${r.title}. ${r.insight}${r.nextStep ? ` Possible next step they considered: ${r.nextStep}` : ""}${
+          r.notQuite ? " (They said this summary wasn't quite right; don't lean on it.)" : ""
+        }`,
+      );
     }
   }
 

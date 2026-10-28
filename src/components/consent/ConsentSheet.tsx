@@ -70,7 +70,8 @@ export function ConsentSheet({ open, onAccept, onCancel }: ConsentSheetProps) {
           <li className="flex flex-col">
             <strong className="font-medium">Your words stay private.</strong>
             <span className="text-[15px] text-muted">
-              Never sold, never used for ads.{" "}
+              Never sold, never used for ads. To reply, your words go to our AI provider; spoken words go to a speech
+              service.{" "}
               <Link href="/privacy" className="text-accent-strong underline underline-offset-2">
                 How I handle your data
               </Link>

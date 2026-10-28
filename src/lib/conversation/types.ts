@@ -14,6 +14,19 @@ export type Tone = (typeof TONES)[number];
 export const RISK_LEVELS = ["none", "low", "elevated", "acute"] as const;
 export type RiskLevel = (typeof RISK_LEVELS)[number];
 
+/**
+ * The kind of support the person asked for: to be heard, to understand what's going on,
+ * or to work out what to do. null = let the conversation show it.
+ */
+export const SUPPORT_STYLES = ["listen", "understand", "act"] as const;
+export type SupportStyle = (typeof SUPPORT_STYLES)[number];
+
+export const SUPPORT_STYLE_LABELS: Record<SupportStyle, string> = {
+  listen: "Just listen",
+  understand: "Help me understand",
+  act: "What can I do?",
+};
+
 /** Inner Weather: one per session, derived from tone and its arc. */
 export const WEATHERS = ["clear", "haze", "drizzle", "storm", "breaking"] as const;
 export type Weather = (typeof WEATHERS)[number];

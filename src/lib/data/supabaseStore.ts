@@ -9,6 +9,9 @@ import type {
   Message,
   Profile,
   Reflection,
+  ReflectionFeedback,
+  ReflectionInput,
+  ReflectionPatch,
   SafetyEvent,
   Session,
   SessionMode,
@@ -55,6 +58,9 @@ interface ReflectionRow {
   next_step: string | null;
   themes: string[];
   weather: Weather;
+  feedback: ReflectionFeedback | null;
+  edited_at: string | null;
+  weather_by_person: boolean | null;
   created_at: string;
 }
 interface MemoryRow {
@@ -128,8 +134,23 @@ const toReflection = (r: ReflectionRow): Reflection => ({
   nextStep: r.next_step,
   themes: r.themes ?? [],
   weather: r.weather,
+  feedback: r.feedback ?? null,
+  editedAt: r.edited_at ?? null,
+  weatherByPerson: r.weather_by_person ?? false,
   createdAt: r.created_at,
 });
+const fromReflectionPatch = (p: ReflectionPatch) => {
+  const row: Record<string, unknown> = {};
+  if (p.title !== undefined) row.title = p.title;
+  if (p.quotes !== undefined) row.quotes = p.quotes;
+  if (p.insight !== undefined) row.insight = p.insight;
+  if (p.nextStep !== undefined) row.next_step = p.nextStep;
+  if (p.weather !== undefined) row.weather = p.weather;
+  if (p.feedback !== undefined) row.feedback = p.feedback;
+  if (p.editedAt !== undefined) row.edited_at = p.editedAt;
+  if (p.weatherByPerson !== undefined) row.weather_by_person = p.weatherByPerson;
+  return row;
+};
 const toMemory = (r: MemoryRow): Memory => ({
   id: r.id,
   fact: r.fact,
@@ -210,7 +231,7 @@ export class SupabaseStore implements DataStore {
     return (rows as MessageRow[]).map(toMessage);
   }
 
-  async saveReflection(r: Omit<Reflection, "id" | "createdAt">): Promise<Reflection> {
+  async saveReflection(r: ReflectionInput): Promise<Reflection> {
     const row = check(
       await this.sb
         .from("reflections")
@@ -227,6 +248,13 @@ export class SupabaseStore implements DataStore {
   async getReflection(sessionId: string): Promise<Reflection | null> {
     const row = check(await this.sb.from("reflections").select("*").eq("session_id", sessionId).maybeSingle<ReflectionRow>());
     return row ? toReflection(row) : null;
+  }
+
+  async updateReflection(sessionId: string, patch: ReflectionPatch): Promise<Reflection> {
+    const row = check(
+      await this.sb.from("reflections").update(fromReflectionPatch(patch)).eq("session_id", sessionId).select("*").single<ReflectionRow>(),
+    );
+    return toReflection(row);
   }
 
   async listReflections(limit = 100): Promise<Reflection[]> {
@@ -330,7 +358,20 @@ export class SupabaseStore implements DataStore {
         const r = s.reflection;
         check(
           await this.sb.from("reflections").upsert(
-            { id: r.id, session_id: s.id, title: r.title, quotes: r.quotes, insight: r.insight, next_step: r.nextStep, themes: r.themes, weather: r.weather, created_at: r.createdAt },
+            {
+              id: r.id,
+              session_id: s.id,
+              title: r.title,
+              quotes: r.quotes,
+              insight: r.insight,
+              next_step: r.nextStep,
+              themes: r.themes,
+              weather: r.weather,
+              feedback: r.feedback ?? null,
+              edited_at: r.editedAt ?? null,
+              weather_by_person: r.weatherByPerson ?? false,
+              created_at: r.createdAt,
+            },
             { onConflict: "session_id" },
           ),
         );

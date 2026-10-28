@@ -5,7 +5,7 @@ The app is a standard Next.js app. The recommended setup is **Vercel** for the a
 ## 1. Supabase (accounts and data)
 
 1. Create a Supabase project.
-2. Apply the schema with `supabase db push`, or paste `supabase/migrations/0001_init.sql` into the SQL editor.
+2. Apply the schema with `supabase db push`, or paste each file in `supabase/migrations/` into the SQL editor, in order (`0001_init.sql`, then `0002_reflection_feedback.sql`).
 3. **Auth → Providers:**
    - Enable **Email**. Magic links are used; no passwords.
    - Optionally enable **Google**: create an OAuth client in Google Cloud and paste its ID and secret.

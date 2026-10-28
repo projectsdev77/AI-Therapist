@@ -9,6 +9,9 @@ import {
   type Message,
   type Profile,
   type Reflection,
+  type ReflectionInput,
+  type ReflectionPatch,
+  withReflectionDefaults,
   type SafetyEvent,
   type Session,
   type SessionMode,
@@ -126,25 +129,35 @@ export class LocalStore implements DataStore {
     return all.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }
 
-  async saveReflection(input: Omit<Reflection, "id" | "createdAt">): Promise<Reflection> {
+  async saveReflection(input: ReflectionInput): Promise<Reflection> {
     const db = await this.dbPromise;
     const existing = await db.getFromIndex("reflections", "bySession", input.sessionId);
-    const reflection: Reflection = {
+    const reflection = withReflectionDefaults({
       ...input,
       id: existing?.id ?? newId(),
       createdAt: existing?.createdAt ?? nowIso(),
-    };
+    });
     await db.put("reflections", reflection);
     return reflection;
   }
 
   async getReflection(sessionId: string): Promise<Reflection | null> {
-    return (await (await this.dbPromise).getFromIndex("reflections", "bySession", sessionId)) ?? null;
+    const r = await (await this.dbPromise).getFromIndex("reflections", "bySession", sessionId);
+    return r ? withReflectionDefaults(r) : null;
+  }
+
+  async updateReflection(sessionId: string, patch: ReflectionPatch): Promise<Reflection> {
+    const db = await this.dbPromise;
+    const current = await db.getFromIndex("reflections", "bySession", sessionId);
+    if (!current) throw new Error(`Reflection for ${sessionId} not found`);
+    const next = withReflectionDefaults({ ...current, ...patch });
+    await db.put("reflections", next);
+    return next;
   }
 
   async listReflections(limit = 100): Promise<Reflection[]> {
     const all = await (await this.dbPromise).getAllFromIndex("reflections", "byCreatedAt");
-    return all.reverse().slice(0, limit);
+    return all.reverse().slice(0, limit).map(withReflectionDefaults);
   }
 
   async listMemories(): Promise<Memory[]> {

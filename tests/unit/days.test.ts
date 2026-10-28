@@ -3,7 +3,7 @@ import { buildDays } from "@/lib/history/days";
 import type { Reflection, Session } from "@/lib/data/types";
 
 const session = (id: string, startedAt: string): Session => ({ id, mode: "text", startedAt, endedAt: null, weather: null, toneStart: null, toneEnd: null, title: null });
-const reflection = (sessionId: string, weather: Reflection["weather"]): Reflection => ({ id: `r${sessionId}`, sessionId, title: "t", quotes: [], insight: "", nextStep: null, themes: [], weather, createdAt: "" });
+const reflection = (sessionId: string, weather: Reflection["weather"]): Reflection => ({ id: `r${sessionId}`, sessionId, title: "t", quotes: [], insight: "", nextStep: null, themes: [], weather, feedback: null, editedAt: null, weatherByPerson: false, createdAt: "" });
 
 describe("buildDays", () => {
   it("covers the window oldest-first and shows a day's heaviest weather", () => {

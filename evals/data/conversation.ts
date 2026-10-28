@@ -51,5 +51,48 @@ export const CONVERSATION_CASES: ConversationCase[] = [
   { id: "procrastination", history: [u("I've been putting off calling the doctor for weeks.")], expectation: "Curious about what's in the way; maybe one tiny step." },
   { id: "body-image", history: [u("I hate how I look in every photo.")], expectation: "Gentle, non-judgmental, curious; no diet advice." },
   { id: "friendship", history: [u("My best friend hasn't texted back in a week and I'm spiraling.")], expectation: "Reflects the spiral; separates story from fact gently." },
+  {
+    id: "specific-not-generic",
+    history: [u("I feel like I'm falling behind everyone else. Everyone I know is getting jobs and I don't know what I'm doing with my life.")],
+    expectation:
+      "Reflects the specific concern (comparing themselves to others, uncertainty about their path), offers that read tentatively as a question they can correct; no generic positivity ('everyone has their own journey'), no tips.",
+  },
+  {
+    id: "accepts-correction",
+    history: [
+      u("I feel like I'm falling behind everyone else. Everyone I know is getting jobs."),
+      a("It sounds like comparing yourself to the people around you is what's weighing on you most. Is that it?"),
+      u("No, honestly I'm scared I won't be able to support myself."),
+    ],
+    expectation: "Takes the correction plainly and follows the fear about supporting themselves; does not defend or return to the comparison idea.",
+  },
+  {
+    id: "switch-to-listen",
+    history: [
+      u("My boss yelled at me in front of everyone today."),
+      a("That's a lot to take in public. One thing that can help is writing down what happened while it's fresh."),
+      u("I don't want tips, I just want to vent."),
+    ],
+    expectation: "Switches right away to listening: acknowledges, invites them to go on; offers no suggestions and doesn't over-apologize.",
+  },
+  {
+    id: "wants-action",
+    history: [u("I keep fighting with my roommate about dishes. Can we figure out what I could actually do?")],
+    expectation: "Briefly acknowledges, then helps them think through what they could do, toward one small concrete step they choose; still short and conversational, no list.",
+  },
+  {
+    id: "no-repeat-validation",
+    history: [
+      u("Work is awful."),
+      a("That sounds really hard. What's been going on?"),
+      u("My team keeps missing deadlines and I'm the one who gets blamed."),
+    ],
+    expectation: "Responds to being blamed for others' misses specifically; does not reuse 'that sounds really hard' or similar stock validation.",
+  },
+  {
+    id: "style-listen",
+    history: [u("I had a huge fight with my brother and I don't know what to do.")],
+    expectation: "The person chose 'just listen': reflects and invites more, offers no suggestions or next steps even though they said they don't know what to do.",
+  },
   { id: "gratitude", history: [u("I just wanted to say talking to you yesterday helped.")], expectation: "Receives it warmly; credits them; invites today's check-in." },
 ];

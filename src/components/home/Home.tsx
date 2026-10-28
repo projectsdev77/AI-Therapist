@@ -114,7 +114,7 @@ export function Home() {
               Hello. I&apos;m here to <span className="accent">listen.</span>
             </h1>
             <p className="text-[17px] text-muted text-pretty">
-              Talk it through out loud, or write it down. Either way, I&apos;m here as long as you need.
+              Untangle a thought, get through a hard moment, or check in with yourself. Talk it out or write it down.
             </p>
           </div>
           <div className="grid w-full grid-cols-2 gap-2.5">

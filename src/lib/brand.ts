@@ -6,5 +6,5 @@ export const BRAND = {
   name: "Haven",
   tagline: "A calm place to talk",
   description:
-    "A voice-first companion for everyday conversations, emotional support, and self-reflection.",
+    "A calm companion to untangle a thought, get through a hard moment, or check in with yourself, by talking or writing.",
 } as const;

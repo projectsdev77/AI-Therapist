@@ -26,6 +26,12 @@ export async function buildCompanionContext(store: DataStore, profile: Profile, 
     recentReflections: reflections
       .filter((r) => r.sessionId !== excludeSessionId)
       .slice(0, LIMITS.reflections)
-      .map((r) => ({ date: dateFmt.format(new Date(r.createdAt)), title: r.title, insight: r.insight, nextStep: r.nextStep })),
+      .map((r) => ({
+        date: dateFmt.format(new Date(r.createdAt)),
+        title: r.title,
+        insight: r.insight,
+        nextStep: r.nextStep,
+        ...(r.feedback === "not_quite" ? { notQuite: true } : {}),
+      })),
   };
 }

@@ -18,6 +18,7 @@ import type { PresenceState, RiskLevel } from "@/lib/conversation/types";
 import { useConversation, type ConversationCallbacks } from "@/lib/conversation/useConversation";
 import { toneToWeather } from "@/lib/conversation/weather";
 import { useStore } from "@/lib/data/StoreProvider";
+import { finalizeSession } from "@/lib/reflection/finalize";
 import { riskAtLeast } from "@/lib/safety/keywords";
 import { useServiceStatus } from "@/lib/serviceStatus";
 import { useVoice, type Voice } from "@/lib/voice/useVoice";
@@ -28,7 +29,7 @@ import { VoiceBand, VoiceStart } from "./VoiceControls";
 
 export function TalkScreen({ initialMode }: { initialMode: SessionMode }) {
   const router = useRouter();
-  const { profile } = useStore();
+  const { store, profile } = useStore();
   const [mode, setMode] = useState<SessionMode>(initialMode);
   const [typing, setTyping] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -122,6 +123,8 @@ export function TalkScreen({ initialMode }: { initialMode: SessionMode }) {
     setEnding(true);
     voice.stop();
     const session = await convo.end();
+    // Start the card now, so it's made even if the tab closes before the card page loads.
+    if (session && profile && convo.userTurns > 0) void finalizeSession(store, profile, session.id).catch(() => undefined);
     router.push(session && convo.userTurns > 0 ? `/history/${session.id}?new=1` : "/");
   }
 

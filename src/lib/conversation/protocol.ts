@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { MEMORY_CATEGORIES } from "@/lib/data/types";
-import { RISK_LEVELS, TONES } from "./types";
+import { RISK_LEVELS, SUPPORT_STYLES, TONES } from "./types";
 
 /** Limits keep requests (and cost) bounded. */
 export const LIMITS = {
@@ -31,12 +31,16 @@ export const CompanionContextSchema = z.object({
         title: z.string().max(200),
         insight: z.string().max(600),
         nextStep: z.string().max(300).nullable(),
+        /** The person said this card wasn't quite right. */
+        notQuite: z.boolean().optional(),
       }),
     )
     .max(LIMITS.reflections),
   sessionCount: z.number().int().min(0),
   mode: z.enum(["voice", "text"]),
   localTime: z.string().max(80),
+  /** The kind of support the person chose for this conversation, if any. */
+  supportStyle: z.enum(SUPPORT_STYLES).nullable().optional(),
 });
 export type CompanionContext = z.infer<typeof CompanionContextSchema>;
 

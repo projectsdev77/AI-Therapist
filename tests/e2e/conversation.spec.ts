@@ -65,3 +65,23 @@ test("sending right away, or twice quickly, never duplicates replies", async ({ 
   // The last line is a complete reply to the last message.
   expect(lines.at(-1)).toMatch(/^Companion/);
 });
+
+test("a card that didn't get made is finished on the next visit", async ({ page }) => {
+  await startConversation(page, "Write");
+  await say(page, "Work has been so stressful lately.");
+  // Simulate the tab closing before the card is made: every attempt fails.
+  await page.route("**/api/reflect", (route) => route.abort());
+  await page.getByRole("button", { name: "End", exact: true }).click();
+  await page.waitForURL("**/history/**");
+  await expect(page.getByRole("button", { name: "Try again" })).toBeVisible({ timeout: 15_000 });
+  await page.unroute("**/api/reflect");
+
+  // Next visit: the app finishes it in the background.
+  const made = page.waitForResponse((r) => r.url().endsWith("/api/reflect") && r.ok(), { timeout: 15_000 });
+  await page.goto("/");
+  await made;
+  // Let the card and memories finish saving before leaving the page.
+  await page.waitForTimeout(2_000);
+  await page.goto("/history");
+  await expect(page.getByRole("link", { name: /Talking through work/ })).toBeVisible({ timeout: 10_000 });
+});
