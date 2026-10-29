@@ -1,5 +1,17 @@
 # Deploying
 
+## Quickest: a test site with Gemini only (free)
+
+You need no Supabase and no ElevenLabs for this. Everything is saved in each tester's browser, and voice uses the browser's own speech.
+
+1. Get a free key at **aistudio.google.com** → Get API key.
+2. On **vercel.com**, import the repository and add one environment variable: `GEMINI_API_KEY`.
+3. Deploy, and open the link on your phone.
+
+Limits: Gemini's free tier allows only a few requests a minute, and each message uses two. Google may use free-tier content to improve its products, so testers should know that (the privacy page says so). Switch to a paid key or Claude before real users.
+
+## Full setup
+
 The app is a standard Next.js app. The recommended setup is **Vercel** for the app and **Supabase** for accounts and data.
 
 ## 1. Supabase (accounts and data)
@@ -24,7 +36,7 @@ The app is a standard Next.js app. The recommended setup is **Vercel** for the a
 
 1. Import the repository.
 2. Set these environment variables:
-   - `ANTHROPIC_API_KEY`
+   - `ANTHROPIC_API_KEY` (or `GEMINI_API_KEY`)
    - `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, and optionally `ELEVENLABS_VOICES`
    - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 3. Deploy. Every pull request gets a preview deployment.

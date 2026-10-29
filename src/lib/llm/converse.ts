@@ -3,6 +3,7 @@ import type { ChatTurn, CompanionContext } from "@/lib/conversation/protocol";
 import { buildContextBlock, COMPANION_SYSTEM, SESSION_START } from "@/lib/prompts/companion";
 import { FALLBACK_BETA, getAnthropic, MODEL } from "./client";
 import { demoReply, streamText } from "./demo";
+import { GeminiBlocked, hasGemini, streamGemini } from "./gemini";
 
 const REFUSAL_REPLY =
   "I'm not able to go into that, but I'm still here with you. Would you like to tell me more about how you're feeling?";
@@ -16,6 +17,15 @@ export function toApiMessages(history: ChatTurn[]): BetaMessageParam[] {
 /** Streams the companion's reply as text chunks. Falls back to demo mode without an API key. */
 export async function* streamReply(history: ChatTurn[], ctx: CompanionContext, signal?: AbortSignal): AsyncGenerator<string> {
   const client = getAnthropic();
+  if (!client && hasGemini()) {
+    try {
+      yield* streamGemini(`${COMPANION_SYSTEM}\n\n${buildContextBlock(ctx)}`, toApiMessages(history) as { role: "user" | "assistant"; content: string }[], signal);
+    } catch (error) {
+      if (!(error instanceof GeminiBlocked)) throw error;
+      yield REFUSAL_REPLY;
+    }
+    return;
+  }
   if (!client) {
     yield* streamText(demoReply(history, ctx), signal);
     return;
@@ -50,4 +60,4 @@ export async function* streamReply(history: ChatTurn[], ctx: CompanionContext, s
   if (final.stop_reason === "refusal" && !emitted) yield REFUSAL_REPLY;
 }
 
-export const isDemoMode = () => getAnthropic() === null;
+export const isDemoMode = () => getAnthropic() === null && !hasGemini();

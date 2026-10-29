@@ -13,7 +13,7 @@ const GROUPS: { name: string; rows: [string, string][] }[] = [
       ["With an account", "It's stored in our database, encrypted at rest, and only your account can open it. Use it on any device."],
       [
         "To reply",
-        "Your words, and your notes if memory is on, go to our AI provider (Anthropic). When you talk out loud, your voice goes to our speech provider (ElevenLabs). We only use providers whose terms don't allow training on your conversations (to be confirmed with each provider before launch).",
+        "Your words, and your notes if memory is on, go to our AI provider (Anthropic, or Google's Gemini while we test). When you talk out loud, your voice goes to our speech provider (ElevenLabs). While we test on Gemini's free tier, Google may use what's sent to improve its products. Before launch we'll only use providers whose terms don't allow training on your conversations.",
       ],
       [
         "If voice falls back to your browser",

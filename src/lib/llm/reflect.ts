@@ -1,6 +1,7 @@
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { demoAnalysis } from "./demo";
 import { FALLBACK_BETA, getAnthropic, MODEL } from "./client";
+import { hasGemini, jsonGemini } from "./gemini";
 import { REFLECT_SYSTEM, SESSION_START } from "@/lib/prompts/companion";
 import { normalizeReflectOutput, ReflectOutputSchema, type ReflectOutput, type ReflectRequest } from "@/lib/reflection/protocol";
 
@@ -30,6 +31,10 @@ function renderRequest(req: ReflectRequest): string {
 
 export async function reflectOnSession(req: ReflectRequest, signal?: AbortSignal): Promise<ReflectOutput> {
   const client = getAnthropic();
+  if (!client && hasGemini()) {
+    const out = await jsonGemini(REFLECT_SYSTEM, renderRequest(req), ReflectOutputSchema, signal);
+    return normalizeReflectOutput(out ?? demoReflection(req), req);
+  }
   if (!client) return normalizeReflectOutput(demoReflection(req), req);
 
   const response = await client.beta.messages.parse(

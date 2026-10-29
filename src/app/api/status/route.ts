@@ -4,7 +4,7 @@ import { connection } from "next/server";
 export async function GET() {
   await connection(); // read env at request time, not build time
   return Response.json({
-    claude: Boolean(process.env.ANTHROPIC_API_KEY),
+    claude: Boolean(process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY),
     voice: Boolean(process.env.ELEVENLABS_API_KEY),
     accounts: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
   });

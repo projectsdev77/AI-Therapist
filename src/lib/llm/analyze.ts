@@ -5,6 +5,7 @@ import { ANALYSIS_SYSTEM, SESSION_START } from "@/lib/prompts/companion";
 import { keywordRisk, maxRisk } from "@/lib/safety/keywords";
 import { demoAnalysis } from "./demo";
 import { FALLBACK_BETA, getAnthropic, MODEL } from "./client";
+import { hasGemini, jsonGemini } from "./gemini";
 
 function transcript(history: ChatTurn[]): string {
   return history
@@ -23,8 +24,18 @@ export async function analyzeLatest(history: ChatTurn[], signal?: AbortSignal): 
   const backstop = keywordRisk(latest);
   const client = getAnthropic();
 
+  const neutral: Analysis = { tone: "neutral", risk: "none", themes: [] };
   let analysis: Analysis;
-  if (!client) {
+  if (!client && hasGemini()) {
+    try {
+      analysis =
+        (await jsonGemini(ANALYSIS_SYSTEM, `Recent conversation:\n${transcript(history)}\n\nLabel the person's latest message.`, AnalysisSchema, signal)) ?? neutral;
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      console.error("analysis failed", error);
+      analysis = neutral;
+    }
+  } else if (!client) {
     analysis = demoAnalysis(latest);
   } else {
     try {

@@ -45,6 +45,7 @@ Add keys to turn on each real service:
 | Key | Turns on |
 |---|---|
 | `ANTHROPIC_API_KEY` | Real conversations, analysis, reflections, and memory, using Claude |
+| `GEMINI_API_KEY` | The same using Google Gemini, if no Claude key is set (free tier works for testing). Optional `GEMINI_MODEL`. |
 | `ELEVENLABS_API_KEY` (+ `ELEVENLABS_VOICE_ID`) | Natural voice, transcription, and voice choice (`ELEVENLABS_VOICES`) |
 | `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Accounts and cloud storage (apply `supabase/migrations` first) |
 
@@ -68,7 +69,7 @@ src/app/            routes: / talk history patterns memory settings breathe sign
 src/components/     presence (orb), sky, captions, breathe, talk, reflection, history, patterns, safety, ...
 src/lib/
   conversation/     protocol, useConversation hook, context building, weather
-  llm/              Claude calls: reply streaming, analysis, reflection, demo mode
+  llm/              Claude or Gemini calls: reply streaming, analysis, reflection, demo mode
   prompts/          companion persona and system prompts (versioned)
   voice/            mic + VAD, recognizers, speakers, sentence chunker, useVoice
   ambient/          ambient sound: engine, generated loops, mixing rules, sources (your audio files)
