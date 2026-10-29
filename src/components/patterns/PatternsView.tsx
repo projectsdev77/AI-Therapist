@@ -12,6 +12,9 @@ import type { Reflection } from "@/lib/data/types";
 import { skyGradient } from "@/lib/design/skies";
 import { buildConstellation } from "@/lib/patterns/constellation";
 import { HOME } from "@/lib/routes";
+import { AppShell } from "@/components/shell/AppShell";
+import { CloseIcon } from "@/components/ui/icons";
+import { useIsWide } from "@/lib/useIsDesktop";
 
 const dateFmt = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -83,16 +86,10 @@ export function PatternsView() {
   // Stars sit in an 8%-padded box so labels stay on screen.
   const at = (v: number) => 8 + v * 84;
 
-  return (
-    <div className="relative flex min-h-dvh flex-col">
-      <Backdrop />
-      <TopBar title="Your patterns" />
-      <main className="relative z-[1] flex flex-1 flex-col">
-        <div className="mx-auto w-full max-w-[760px] px-5 pt-4">
-          <h1 className="t-page-h1 m-0 mb-1 hidden min-[720px]:block">Your patterns</h1>
-          <p className="m-0 text-muted">Things that keep coming up. Brighter means more often.</p>
-        </div>
-
+  const wide = useIsWide();
+  const ranked = [...stars].sort((x, y) => y.count - x.count).slice(0, 8);
+  const constellation = (
+    <>
         {reflections && stars.length === 0 ? (
           <div className="mx-auto mt-10 flex max-w-[420px] flex-col items-center gap-3 px-5 text-center">
             <h2 className="m-0 text-[20px] font-semibold">Your first stars are waiting</h2>
@@ -157,6 +154,9 @@ export function PatternsView() {
           </div>
         )}
 
+    </>
+  );
+  const footer = (
         <div className="mx-auto mb-12 flex w-full max-w-[760px] flex-col items-start gap-1 px-6">
           <p className="m-0 text-[14px] text-muted">Topics that came up when we talked. Only you can say what they mean.</p>
           {hidden.length > 0 && (
@@ -165,14 +165,9 @@ export function PatternsView() {
             </button>
           )}
         </div>
-      </main>
-
-      <Sheet
-        open={star !== undefined}
-        onClose={() => setSelected(null)}
-        title={star ? capitalize(star.id) : ""}
-        subtitle={star ? `Came up in ${star.count} conversation${star.count === 1 ? "" : "s"}` : undefined}
-      >
+  );
+  const topicBody = (
+    <>
         <div className="flex flex-col">
           {convos.map((r, i) => (
             <Link
@@ -203,6 +198,94 @@ export function PatternsView() {
             </Button>
           </div>
         )}
+    </>
+  );
+
+  if (wide) {
+    const panel =
+      reflections && stars.length > 0 ? (
+        star ? (
+          <>
+            <div className="flex items-start gap-2.5">
+              <div className="flex flex-1 flex-col gap-0.5">
+                <h2 className="m-0 text-[26px] font-semibold tracking-[-0.03em]">{capitalize(star.id)}</h2>
+                <p className="m-0 text-[14px] text-muted">
+                  Came up in {star.count} conversation{star.count === 1 ? "" : "s"}
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close topic"
+                onClick={() => setSelected(null)}
+                className="press flex size-10 shrink-0 items-center justify-center rounded-full border border-edge-lo bg-glass text-text hover:bg-glass-strong"
+              >
+                <CloseIcon size={16} />
+              </button>
+            </div>
+            <div className="[&>div:first-child]:overflow-hidden [&>div:first-child]:rounded-md [&>div:first-child]:border [&>div:first-child]:border-edge-hi [&>div:first-child]:bg-glass [&>div:first-child>a]:px-3.5">
+              {topicBody}
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 className="m-0 text-[12px] font-semibold tracking-[.06em] text-faint uppercase">Most often</h2>
+            <ol className="m-0 flex list-none flex-col gap-0.5 p-0">
+              {ranked.map((r) => (
+                <li key={r.id}>
+                  <button
+                    type="button"
+                    onClick={() => setSelected(r.id)}
+                    className="press grid min-h-12 w-full grid-cols-[minmax(0,1fr)_90px_28px] items-center gap-2.5 rounded-[12px] px-3 text-left text-[14px] text-text hover:bg-glass"
+                  >
+                    <span className="truncate">{capitalize(r.id)}</span>
+                    <span aria-hidden className="h-1.5 overflow-hidden rounded-[3px] bg-[rgba(255,255,255,.08)]">
+                      <span className="block h-full bg-accent" style={{ width: `${(r.count / maxCount) * 100}%` }} />
+                    </span>
+                    <span className="text-right text-[13px] text-muted">{r.count}</span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+            <p className="m-0 mx-0.5 text-[12px] text-faint">Select a star or a topic to see where it came up.</p>
+          </>
+        )
+      ) : undefined;
+    return (
+      <AppShell panel={panel} panelLabel={star ? capitalize(star.id) : "Most often"}>
+        <div className="flex min-h-full flex-col px-10 pt-8 pb-6">
+          <div className="mx-auto flex w-full max-w-[880px] flex-col gap-1">
+            <h1 className="m-0 text-[40px] leading-[1.1] font-semibold tracking-[-0.04em]">Your patterns</h1>
+            <p className="m-0 text-muted">Things that keep coming up. Brighter means more often.</p>
+          </div>
+          <div className="mx-auto mt-3 flex min-h-[480px] w-full max-w-[880px] flex-1 flex-col">{constellation}</div>
+          <div className="mx-auto w-full max-w-[880px] [&>div]:mb-0 [&>div]:px-0">{footer}</div>
+        </div>
+      </AppShell>
+    );
+  }
+
+  return (
+    <div className="relative flex min-h-dvh flex-col">
+      <Backdrop />
+      <TopBar title="Your patterns" />
+      <main className="relative z-[1] flex flex-1 flex-col">
+        <div className="mx-auto w-full max-w-[760px] px-5 pt-4">
+          <h1 className="t-page-h1 m-0 mb-1 hidden min-[720px]:block">Your patterns</h1>
+          <p className="m-0 text-muted">Things that keep coming up. Brighter means more often.</p>
+        </div>
+
+        {constellation}
+
+        {footer}
+      </main>
+
+      <Sheet
+        open={star !== undefined}
+        onClose={() => setSelected(null)}
+        title={star ? capitalize(star.id) : ""}
+        subtitle={star ? `Came up in ${star.count} conversation${star.count === 1 ? "" : "s"}` : undefined}
+      >
+        {topicBody}
       </Sheet>
     </div>
   );

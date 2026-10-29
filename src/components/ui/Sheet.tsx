@@ -130,7 +130,7 @@ export function Sheet({
   }[mode];
 
   return createPortal(
-    <div className="fixed inset-0 z-[60]" data-state={closing ? "closing" : "open"}>
+    <div className={`fixed inset-0 z-[60] ${closing ? "pointer-events-none" : ""}`} data-state={closing ? "closing" : "open"} inert={closing}>
       <div aria-hidden onClick={() => dismissible && onClose()} className="sheet-scrim absolute inset-0 bg-scrim" />
       <div className={`pointer-events-none absolute inset-0 flex ${layout}`}>
         <div

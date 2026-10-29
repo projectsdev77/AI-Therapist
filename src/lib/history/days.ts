@@ -30,8 +30,13 @@ export function buildDays(sessions: Session[], reflections: Reflection[], days =
     const key = dayKey(date);
     const daySessions = (grouped.get(key) ?? []).sort((a, b) => b.session.startedAt.localeCompare(a.session.startedAt));
     const weathers = daySessions.map((d) => d.reflection?.weather ?? d.session.weather).filter((w): w is Weather => w !== null);
-    const weather = weathers.length ? weathers.reduce((a, b) => (WEIGHT[b] > WEIGHT[a] ? b : a)) : null;
+    const weather = heaviest(weathers);
     out.push({ key, date, sessions: daySessions, weather });
   }
   return out;
+}
+
+/** The day's sky: the heaviest of its conversations' skies, so hard days aren't hidden. */
+export function heaviest(weathers: Weather[]): Weather | null {
+  return weathers.length ? weathers.reduce((a, b) => (WEIGHT[b] > WEIGHT[a] ? b : a)) : null;
 }

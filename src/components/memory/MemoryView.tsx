@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { PageShell } from "@/components/shell/PageShell";
+import { useIsWide } from "@/lib/useIsDesktop";
 import { Button } from "@/components/ui/Button";
 import { PlusIcon } from "@/components/ui/icons";
 import { Sheet } from "@/components/ui/Sheet";
@@ -70,8 +71,9 @@ export function MemoryView() {
   const grouped = MEMORY_CATEGORIES.map((c) => ({ category: c, items: (memories ?? []).filter((m) => m.category === c) })).filter((g) => g.items.length);
   const hasAnything = (memories?.length ?? 0) > 0 || Boolean(profile?.clientSummary);
 
-  return (
-    <PageShell title="What I remember" width={640}>
+  const wide = useIsWide();
+  const memorySwitch = (
+    <>
       {profile && (
         <div className="flex items-center gap-3 rounded-md border border-edge-hi bg-glass py-3 pr-1.5 pl-[18px]">
           <span className="flex flex-1 flex-col">
@@ -81,14 +83,9 @@ export function MemoryView() {
           <Switch checked={on} onChange={(v) => void updateProfile({ memoryEnabled: v })} label="Remember our conversations" />
         </div>
       )}
-
-      {!on && (
-        <p role="status" className="m-0 rounded-md border border-dashed border-edge-hi px-4 py-3.5 text-[15px] text-muted">
-          Remembering is off. I&apos;m not adding notes or using the ones below. They stay until you delete them.
-        </p>
-      )}
-
-      <div className={`flex flex-col gap-[22px] ${on ? "" : "opacity-60"}`}>
+    </>
+  );
+  const summary = (
         <div className="flex flex-col gap-1 rounded-md bg-glass-strong px-[18px] py-4">
           <div className="flex items-center justify-between">
             <span className="text-[13px] font-semibold text-accent-strong">In short</span>
@@ -126,7 +123,48 @@ export function MemoryView() {
             </p>
           )}
         </div>
+  );
+  const forgetAll = (
+    <>
+          {hasAnything && (
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              onClick={() => setConfirmAll(true)}
+              className="min-h-11 rounded-pill bg-transparent px-3 text-[14px] text-muted underline underline-offset-[3px] hover:text-text"
+            >
+              Forget everything
+            </button>
+          )}
+    </>
+  );
+  const panel = (
+    <>
+      {memorySwitch}
+      {on && summary}
+      <p className="m-0 text-[13px] text-muted">I use these notes so you don&apos;t have to start over. Only you can see them, and I never share them.</p>
+      <div className="mt-auto">{forgetAll}</div>
+    </>
+  );
 
+  return (
+    <PageShell
+      title="What I remember"
+      width={640}
+      subtitle={wide ? "Short notes I keep between conversations. Edit or forget anything." : undefined}
+      panel={panel}
+      panelLabel="Memory settings"
+    >
+      {!wide && memorySwitch}
+
+      {!on && (
+        <p role="status" className="m-0 rounded-md border border-dashed border-edge-hi px-4 py-3.5 text-[15px] text-muted">
+          Remembering is off. I&apos;m not adding notes or using the ones below. They stay until you delete them.
+        </p>
+      )}
+
+      <div className={`flex flex-col gap-[22px] ${on ? "" : "opacity-60"}`}>
+        {!wide && summary}
         {memories && memories.length === 0 && (
           <p className="m-0 text-muted">I don&apos;t remember anything specific yet. As we talk, the things that matter to you will show up here.</p>
         )}
@@ -193,16 +231,7 @@ export function MemoryView() {
               Add something
             </Button>
           )}
-          {hasAnything && (
-            <button
-              type="button"
-              aria-haspopup="dialog"
-              onClick={() => setConfirmAll(true)}
-              className="min-h-11 rounded-pill bg-transparent px-3 text-[14px] text-muted underline underline-offset-[3px] hover:text-text"
-            >
-              Forget everything
-            </button>
-          )}
+          {!wide && forgetAll}
         </div>
       </div>
 

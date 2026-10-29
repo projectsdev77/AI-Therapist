@@ -11,6 +11,8 @@ import type { Reflection, Session } from "@/lib/data/types";
 import { SKY_COLORS, skyGradient, skyLine } from "@/lib/design/skies";
 import { buildDays, dayKey } from "@/lib/history/days";
 import { HOME } from "@/lib/routes";
+import { useIsWide } from "@/lib/useIsDesktop";
+import { DesktopSkies } from "./DesktopSkies";
 
 const short = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
 const rowDay = new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" });
@@ -65,6 +67,8 @@ export function HistoryView() {
     : "30 days of skies, no conversations yet.";
   // Only read the clock once data has loaded (never during prerender).
   const today = data ? dayKey(new Date()) : "";
+  const wide = useIsWide();
+  if (wide && data) return <DesktopSkies items={items} />;
 
   return (
     <PageShell title="Your skies" subtitle="How the last 30 days of conversations sounded." width={720}>

@@ -7,7 +7,12 @@ export function shortcutBlocked(e: KeyboardEvent): boolean {
   if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return true;
   const t = e.target as HTMLElement | null;
   if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return true;
-  return Boolean(document.querySelector('[aria-modal="true"]'));
+  return modalOpen();
+}
+
+/** An open dialog (one still fading out, or left behind by a hidden route, doesn't count). */
+function modalOpen(): boolean {
+  return Boolean(document.querySelector('[data-state="open"] [aria-modal="true"]'));
 }
 
 /**
@@ -23,7 +28,7 @@ export function useShortcuts(map: Record<string, (() => void | boolean) | undefi
     if (!enabled) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape" && shortcutBlocked(e)) return;
-      if (e.key === "Escape" && document.querySelector('[aria-modal="true"]')) return;
+      if (e.key === "Escape" && modalOpen()) return;
       const fn = ref.current[e.key === " " ? "Space" : e.key];
       if (!fn) return;
       if (fn() !== false) e.preventDefault();

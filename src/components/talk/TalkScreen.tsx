@@ -278,7 +278,7 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
           refreshKey={convo.session?.id}
         >
           {breathing ? (
-            <BreatheMode onDone={() => setBreathing(false)} />
+            <BreatheMode onDone={() => setBreathing(false)} backLabel="Back to conversation" />
           ) : (
             <div
               className="flex min-h-0 flex-1 flex-col"

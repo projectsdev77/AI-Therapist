@@ -21,10 +21,31 @@ export function SkyPicker({
   byPerson: boolean;
   onChoose: (w: Weather) => void;
 }) {
-  const [picked, setPicked] = useState<Weather>(current);
   return (
     <Sheet open={open} onClose={onClose} title="Choose a sky" subtitle="How did this conversation feel to you?">
-      <div role="radiogroup" aria-label="Choose a sky" className="grid grid-cols-3 gap-2">
+      <SkyChoices current={current} byPerson={byPerson} onChoose={onChoose} onClose={onClose} />
+    </Sheet>
+  );
+}
+
+/** The sky choices themselves: in the phone sheet, or inline in the desktop panel (`compact`). */
+export function SkyChoices({
+  current,
+  byPerson,
+  onChoose,
+  onClose,
+  compact = false,
+}: {
+  current: Weather;
+  byPerson: boolean;
+  onChoose: (w: Weather) => void;
+  onClose: () => void;
+  compact?: boolean;
+}) {
+  const [picked, setPicked] = useState<Weather>(current);
+  return (
+    <>
+      <div role="radiogroup" aria-label="Choose a sky" className={`grid grid-cols-3 ${compact ? "gap-1.5" : "gap-2"}`}>
         {WEATHERS.map((w) => {
           const on = w === picked;
           return (
@@ -34,37 +55,37 @@ export function SkyPicker({
               role="radio"
               aria-checked={on}
               onClick={() => setPicked(w)}
-              className={`press flex flex-col items-stretch gap-2 rounded-md border-[1.5px] bg-glass px-2 pt-2 pb-2.5 text-[14px] text-text ${
-                on ? "border-[#8ff0e8] font-semibold" : "border-transparent"
-              }`}
+              className={`press flex flex-col items-stretch border-[1.5px] bg-glass text-text ${
+                compact ? "gap-1.5 rounded-[12px] px-[5px] pt-[5px] pb-[7px] text-[12px] leading-[1.2]" : "gap-2 rounded-md px-2 pt-2 pb-2.5 text-[14px]"
+              } ${on ? "border-[#8ff0e8] font-semibold" : "border-transparent"}`}
             >
-              <span aria-hidden className="h-16 rounded-[12px]" style={{ background: skyGradient(w) }} />
+              <span aria-hidden className={compact ? "h-[38px] rounded-[8px]" : "h-16 rounded-[12px]"} style={{ background: skyGradient(w) }} />
               {WEATHER_LABELS[w]}
             </button>
           );
         })}
       </div>
-      <p className="m-0 text-sm text-muted">
+      <p className={`m-0 text-muted ${compact ? "text-[13px]" : "text-sm"}`}>
         {byPerson
           ? `You chose ${WEATHER_LABELS[current]}. Choose whatever feels truer.`
           : `I picked ${WEATHER_LABELS[current]} because ${SKY_REASONS[current]}. Choose whatever feels truer.`}
       </p>
-      <div className="flex gap-2">
+      <div className={`flex ${compact ? "gap-1.5" : "gap-2"}`}>
         <Button
           variant="primary"
           onClick={() => {
             onChoose(picked);
             onClose();
           }}
-          className="min-h-[52px] flex-1 text-base"
+          className={compact ? "min-h-10 flex-1 text-[14px]" : "min-h-[52px] flex-1 text-base"}
         >
           Use this sky
         </Button>
-        <Button variant="outline" onClick={onClose} className="min-h-[52px] px-5 text-base">
+        <Button variant="outline" onClick={onClose} className={compact ? "min-h-10 px-3.5 text-[14px]" : "min-h-[52px] px-5 text-base"}>
           Cancel
         </Button>
       </div>
-    </Sheet>
+    </>
   );
 }
 
