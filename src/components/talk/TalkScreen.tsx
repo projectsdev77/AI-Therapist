@@ -27,10 +27,8 @@ import { HOME } from "@/lib/routes";
 import { riskAtLeast } from "@/lib/safety/keywords";
 import { useServiceStatus } from "@/lib/serviceStatus";
 import { useShortcuts } from "@/lib/shortcuts";
-import { useIsFull, useIsWide } from "@/lib/useIsDesktop";
+import { useIsDesktop } from "@/lib/useIsDesktop";
 import { useVoice, type Voice } from "@/lib/voice/useVoice";
-import { AppShell } from "@/components/shell/AppShell";
-import { DesktopCarePanel, DesktopTalkHeader, DesktopTalkPanel, DesktopVoice, DesktopWriting, type DesktopTalkProps } from "./DesktopTalk";
 import { StyleSheet, TranscriptSheet, WrapUpSheet } from "./TalkSheets";
 import { TextComposer } from "./TextComposer";
 import { ToolButton, VoiceDock } from "./VoiceControls";
@@ -210,8 +208,8 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
           { label: "Wrap up", aria: "Wrap up this conversation", icon: <CheckIcon size={18} strokeWidth={1.8} />, onClick: askToWrapUp, popup: true, active: wrapOpen },
         ];
 
-  const wide = useIsWide();
-  const full = useIsFull();
+  // The conversation keeps its simple, distraction-free layout at every size; keyboard shortcuts on larger screens.
+  const desktop = useIsDesktop();
 
   function starter(s: (typeof STARTERS)[number]) {
     void (async () => {
@@ -242,62 +240,8 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
       "4": () => chooseStyle(SUPPORT_STYLE_OPTIONS[3].id),
       Escape: () => (breathing ? setBreathing(false) : askToWrapUp()),
     },
-    wide && consented,
+    desktop && consented,
   );
-
-  if (wide) {
-    const d: DesktopTalkProps = {
-      convo,
-      voice,
-      mode,
-      presence,
-      status: breathing ? "Breathing" : voiceOff ? "Ready" : status === "In conversation" || status === "Ready" ? "Your turn" : status,
-      weather,
-      voiceActive,
-      voiceOff,
-      voiceBlocked,
-      showPill,
-      showStarters,
-      ack,
-      onStartVoice: () => void startVoice(),
-      onSwitchMode: switchMode,
-      onSend: (t) => void send(t),
-      onWrapUp: askToWrapUp,
-      onBreathe: () => setBreathing(true),
-      onChooseStyle: chooseStyle,
-      onStarter: starter,
-    };
-    return (
-      <>
-        <AppShell
-          scroll={false}
-          panel={breathing ? undefined : acuteOpen ? <DesktopCarePanel onSafe={imSafe} /> : <DesktopTalkPanel {...d} />}
-          panelLabel={acuteOpen ? "Get help" : "This conversation"}
-          panelCare={acuteOpen}
-          currentSessionId={convo.session?.id}
-          refreshKey={convo.session?.id}
-        >
-          {breathing ? (
-            <BreatheMode onDone={() => setBreathing(false)} backLabel="Back to conversation" />
-          ) : (
-            <div
-              className="flex min-h-0 flex-1 flex-col"
-              data-phase={convo.phase}
-              data-replies={convo.lines.filter((l) => l.speaker === "companion" && !l.pending).length}
-            >
-              <DesktopTalkHeader {...d} compact={!full} />
-              {convo.demo && (
-                <p className="relative mx-auto mt-2 mb-0 rounded-pill bg-glass px-3 py-0.5 text-[12px] text-faint">Demo mode · replies are scripted</p>
-              )}
-              {mode === "text" ? <DesktopWriting {...d} /> : <DesktopVoice {...d} />}
-            </div>
-          )}
-        </AppShell>
-        <WrapUpSheet open={wrapOpen} onClose={() => setWrapOpen(false)} onWrapUp={() => void wrapUp()} onLater={later} busy={ending} />
-        <ConsentSheet open={profile !== null && !consented} onAccept={() => undefined} onCancel={() => router.push(HOME)} />
-      </>
-    );
-  }
 
   return (
     <div className="relative flex h-dvh flex-col overflow-hidden">
@@ -310,7 +254,7 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
 
       {breathing ? (
         <main className="relative z-[1] flex min-h-0 flex-1 flex-col">
-          <BreatheMode onDone={() => setBreathing(false)} />
+          <BreatheMode onDone={() => setBreathing(false)} simple />
         </main>
       ) : (
         <main
@@ -406,7 +350,7 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
 
           <div className="h-4 shrink-0" />
           <div className="mb-[max(28px,env(safe-area-inset-bottom))] flex w-[min(640px,calc(100%-32px))] shrink-0 flex-col gap-3">
-            {mode === "text" && <TextComposer onSend={send} onSwitchToVoice={() => switchMode("voice")} />}
+            {mode === "text" && <TextComposer onSend={send} onSwitchToVoice={() => switchMode("voice")} spaceToTalk={desktop} />}
             <div className="grid grid-cols-4 gap-1.5">
               {tools.map((t) => (
                 <ToolButton

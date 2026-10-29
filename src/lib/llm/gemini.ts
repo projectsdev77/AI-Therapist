@@ -6,11 +6,18 @@ import { z } from "zod";
  */
 
 const BASE = "https://generativelanguage.googleapis.com/v1beta/models";
-/** Used when the configured model isn't available to this key. */
-const FALLBACK_MODEL = "gemini-2.5-flash";
+/** Tried in order when a model isn't available to this key or its free quota is used up. */
+const FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
 
-export const geminiModel = () => process.env.GEMINI_MODEL || "gemini-3.8-flash";
-export const hasGemini = () => Boolean(process.env.GEMINI_API_KEY);
+export const geminiModel = () => process.env.GEMINI_MODEL?.trim() || "gemini-3.8-flash";
+/** The key, under the name in our docs or the names Google's own docs use. */
+const geminiKey = () => (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || "").trim();
+export const hasGemini = () => Boolean(geminiKey());
+
+/** Worth trying the next model: not found, quota or rate limit, overloaded, or a model-specific 400. */
+function tryNext(status: number, text: string) {
+  return status === 404 || status === 429 || status === 503 || (status === 400 && /model/i.test(text) && !/API key/i.test(text));
+}
 
 // A support companion has to be able to hear about self-harm and abuse; the app's own
 // safety layer (analysis + keyword backstop) handles risk, so only block the most severe content.
@@ -45,17 +52,34 @@ function body(system: string, turns: GeminiTurn[], json = false) {
 }
 
 async function call(method: "generateContent" | "streamGenerateContent", payload: string, signal?: AbortSignal): Promise<Response> {
-  const go = (model: string) =>
-    fetch(`${BASE}/${model}:${method}${method === "streamGenerateContent" ? "?alt=sse" : ""}`, {
+  const models = [geminiModel(), ...FALLBACK_MODELS.filter((m) => m !== geminiModel())];
+  let last = "";
+  for (const model of models) {
+    const res = await fetch(`${BASE}/${model}:${method}${method === "streamGenerateContent" ? "?alt=sse" : ""}`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY ?? "" },
+      headers: { "content-type": "application/json", "x-goog-api-key": geminiKey() },
       body: payload,
       signal,
     });
-  let res = await go(geminiModel());
-  if (res.status === 404 && geminiModel() !== FALLBACK_MODEL) res = await go(FALLBACK_MODEL);
-  if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  return res;
+    if (res.ok) return res;
+    const text = await res.text();
+    last = `Gemini ${res.status} (${model}): ${text.slice(0, 400)}`;
+    if (!tryNext(res.status, text)) break;
+    console.warn(last);
+  }
+  throw new Error(last);
+}
+
+/** A tiny request to see whether the key and model work. Never includes the key in the result. */
+export async function checkGemini(): Promise<{ ok: boolean; model?: string; error?: string }> {
+  if (!hasGemini()) return { ok: false, error: "No GEMINI_API_KEY is set on the server." };
+  try {
+    const res = await call("generateContent", body("Reply with the single word: ok", [{ role: "user", content: "Say ok." }]));
+    const r = (await res.json()) as GeminiResponse & { modelVersion?: string };
+    return { ok: true, model: r.modelVersion };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 const textOf = (r: GeminiResponse) =>

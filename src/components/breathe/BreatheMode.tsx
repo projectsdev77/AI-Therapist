@@ -14,18 +14,20 @@ export interface BreatheModeProps {
   initialPatternId?: string;
   /** Desktop header button ("Back to conversation" inside a conversation). */
   backLabel?: string;
+  /** Always the simple centred layout (inside a conversation). */
+  simple?: boolean;
 }
 
 const noop = () => () => {};
 const canVibrate = () => typeof navigator !== "undefined" && "vibrate" in navigator;
 
 /** The orb paces the breath (README "breathe"): phase, count and round, pattern, vibration, I'm done. */
-export function BreatheMode({ onDone, initialPatternId = "calm", backLabel = "Back" }: BreatheModeProps) {
+export function BreatheMode({ onDone, initialPatternId = "calm", backLabel = "Back", simple = false }: BreatheModeProps) {
   const [patternId, setPatternId] = useState(initialPatternId);
   const [haptics, setHaptics] = useState(true);
   const [sound, setSound] = useState(true);
   const vibrates = useSyncExternalStore(noop, canVibrate, () => false);
-  const wide = useIsWide();
+  const wide = useIsWide() && !simple;
   const pattern = BREATH_PATTERNS.find((p) => p.id === patternId) ?? BREATH_PATTERNS[0];
   const sample = useBreathCycle(pattern, true, haptics && vibrates && !wide, sound && wide);
 

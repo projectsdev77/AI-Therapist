@@ -26,6 +26,9 @@ The designer's desktop screens (`Haven Desktop.dc.html`, all 33 states at 1440 Ã
   - **Settings, Sign in, Privacy:** Your controls in the panel.
 - **Tests:** Playwright now runs three projects: mobile, tablet (900px), and desktop (1440px, `tests/e2e/desktop.spec.ts`, including the compact layout). Each test gets its own client address so the server's rate limit doesn't trip under parallel runs.
 
+## Changed after testing
+- **The conversation screen keeps its simple layout at every size**, with no sidebar and no side panel, at the client's request. The design's desktop conversation screens (header, writing view with bubbles, panel with orb, style, transcript and care) are not used. The keyboard shortcuts still work there.
+
 ## Where the design went against what we'd agreed (our version kept)
 | Design | Built | Why |
 | --- | --- | --- |

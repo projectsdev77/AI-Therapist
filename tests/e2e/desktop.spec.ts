@@ -31,43 +31,25 @@ test("writing from Home starts the conversation with those words", async ({ page
   await expect(page.getByText("Work has been so stressful lately.")).toBeVisible();
   // No greeting first: the person's words open the conversation.
   await expect(page.getByRole("group", { name: "Ways to start" })).toHaveCount(0);
-  await expect(page.getByRole("complementary", { name: "Sidebar" }).getByRole("link", { name: /Unfinished conversation/ })).toBeVisible();
   await expectAccessible(page);
 });
 
-test("the side panel holds reply style, Get help, and the care panel", async ({ page }) => {
-  await startConversation(page, "Write");
-  await say(page, "Work has been so stressful.");
-
-  const panel = page.getByRole("complementary", { name: "This conversation" });
-  await panel.getByRole("radio", { name: /Just listen/ }).click();
-  await expect(panel.getByRole("radio", { name: /Just listen/ })).toHaveAttribute("aria-checked", "true");
-  await expect(page.getByText("Okay. I'll just listen.")).toBeVisible();
-
-  // Get help replaces the panel, and the conversation stays beside it.
-  await panel.getByRole("button", { name: "Get help" }).click();
-  const help = page.getByRole("complementary", { name: "Get help" });
-  await expect(help.getByRole("heading", { name: "Talk to a person now" })).toBeVisible();
-  await expect(page.getByLabel("Write to your companion")).toBeVisible();
-  await help.getByRole("button", { name: "Close help" }).click();
-  await expect(page.getByRole("complementary", { name: "This conversation" })).toBeVisible();
-
-  // Acute risk turns the panel into the care panel by itself.
-  await say(page, "I think I want to kill myself");
-  const care = page.getByRole("complementary", { name: "Get help" });
-  await expect(care.getByRole("heading", { name: "You don't have to carry this alone" })).toBeVisible();
-  await expect(page.getByLabel("Write to your companion")).toBeEnabled();
-  await expectAccessible(page);
-  await care.getByRole("button", { name: "I'm safe right now" }).click();
-  await expect(page.getByRole("button", { name: "Support options" })).toBeVisible();
-});
-
-test("keyboard: 1–4 choose a style, Esc asks to wrap up", async ({ page }) => {
+test("the conversation stays simple on desktop: no sidebar or panel, keyboard shortcuts work", async ({ page }) => {
   await startConversation(page, "Write");
   await say(page, "Something happened today.");
+  await expect(page.getByRole("complementary", { name: "Sidebar" })).toHaveCount(0);
+  await expectAccessible(page);
+
   await page.getByLabel("Write to your companion").blur();
   await page.keyboard.press("4");
-  await expect(page.getByRole("radio", { name: /Help me find a next step/ })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByText("Okay. Let's look for one small next step.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reply style: Help me find a next step" })).toBeVisible();
+
+  // Acute risk opens the care panel; the conversation stays usable.
+  await say(page, "I think I want to kill myself");
+  await expect(page.getByRole("region", { name: "You don't have to carry this alone" })).toBeVisible();
+  await expect(page.getByLabel("Write to your companion")).toBeEnabled();
+
   await page.keyboard.press("Escape");
   await expect(page.getByRole("alertdialog", { name: "Wrap up and make your card?" })).toBeVisible();
   await expect(page.getByRole("button", { name: "I'll be back" })).toBeVisible();

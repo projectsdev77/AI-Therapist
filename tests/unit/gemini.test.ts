@@ -50,3 +50,21 @@ test("JSON answers are validated against the schema", async () => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(say('{"mood":1}'))));
   expect(await jsonGemini("s", "u", schema)).toBeNull();
 });
+
+test("moves on to the next model when the free quota is used up", async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce(new Response("quota", { status: 429 }))
+    .mockResolvedValueOnce(new Response("quota", { status: 429 }))
+    .mockResolvedValueOnce(sse([say("ok")]));
+  vi.stubGlobal("fetch", fetchMock);
+  expect(await collect(streamGemini("s", [{ role: "user", content: "x" }]))).toBe("ok");
+  expect(fetchMock.mock.calls[2][0]).toContain("/gemini-2.5-flash-lite:");
+});
+
+test("a bad key fails at once with Google's message", async () => {
+  const fetchMock = vi.fn().mockResolvedValue(new Response('{"error":{"message":"API key not valid."}}', { status: 400 }));
+  vi.stubGlobal("fetch", fetchMock);
+  await expect(collect(streamGemini("s", [{ role: "user", content: "x" }]))).rejects.toThrow(/API key not valid/);
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+});

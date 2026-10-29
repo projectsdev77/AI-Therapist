@@ -7,6 +7,7 @@ You need no Supabase and no ElevenLabs for this. Everything is saved in each tes
 1. Get a free key at **aistudio.google.com** → Get API key.
 2. On **vercel.com**, import the repository and add one environment variable: `GEMINI_API_KEY`.
 3. Deploy, and open the link on your phone.
+4. If replies fail, open `https://your-site/api/status?check=ai`. It makes one tiny request to Gemini and shows Google's answer, such as an invalid key or a used-up quota. If a model isn't available or its free quota runs out, the app tries `gemini-2.5-flash`, then `gemini-2.5-flash-lite`.
 
 Limits: Gemini's free tier allows only a few requests a minute, and each message uses two. Google may use free-tier content to improve its products, so testers should know that (the privacy page says so). Switch to a paid key or Claude before real users.
 
