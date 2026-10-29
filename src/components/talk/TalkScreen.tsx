@@ -26,7 +26,11 @@ import { finalizeSession } from "@/lib/reflection/finalize";
 import { HOME } from "@/lib/routes";
 import { riskAtLeast } from "@/lib/safety/keywords";
 import { useServiceStatus } from "@/lib/serviceStatus";
+import { useShortcuts } from "@/lib/shortcuts";
+import { useIsFull, useIsWide } from "@/lib/useIsDesktop";
 import { useVoice, type Voice } from "@/lib/voice/useVoice";
+import { AppShell } from "@/components/shell/AppShell";
+import { DesktopCarePanel, DesktopTalkHeader, DesktopTalkPanel, DesktopVoice, DesktopWriting, type DesktopTalkProps } from "./DesktopTalk";
 import { StyleSheet, TranscriptSheet, WrapUpSheet } from "./TalkSheets";
 import { TextComposer } from "./TextComposer";
 import { ToolButton, VoiceDock } from "./VoiceControls";
@@ -206,6 +210,95 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
           { label: "Wrap up", aria: "Wrap up this conversation", icon: <CheckIcon size={18} strokeWidth={1.8} />, onClick: askToWrapUp, popup: true, active: wrapOpen },
         ];
 
+  const wide = useIsWide();
+  const full = useIsFull();
+
+  function starter(s: (typeof STARTERS)[number]) {
+    void (async () => {
+      if (voiceOff && !voiceBlocked) await startVoice();
+      setAck(null);
+      void convo.sendStarter(s);
+    })();
+  }
+
+  // Desktop keyboard (desktop handoff): Space talk/pause, W write, M mute, B breathe, 1–4 style, Esc wrap up.
+  useShortcuts(
+    {
+      Space: () => {
+        if (mode === "text") switchMode("voice");
+        else if (!voiceActive) void startVoice();
+        else if (voice.status === "speaking") voice.interrupt();
+        else voice.setMuted(!voice.muted);
+      },
+      w: () => (mode === "voice" ? switchMode("text") : false),
+      W: () => (mode === "voice" ? switchMode("text") : false),
+      m: () => (voiceActive ? voice.setMuted(!voice.muted) : false),
+      M: () => (voiceActive ? voice.setMuted(!voice.muted) : false),
+      b: () => setBreathing(true),
+      B: () => setBreathing(true),
+      "1": () => chooseStyle(SUPPORT_STYLE_OPTIONS[0].id),
+      "2": () => chooseStyle(SUPPORT_STYLE_OPTIONS[1].id),
+      "3": () => chooseStyle(SUPPORT_STYLE_OPTIONS[2].id),
+      "4": () => chooseStyle(SUPPORT_STYLE_OPTIONS[3].id),
+      Escape: () => (breathing ? setBreathing(false) : askToWrapUp()),
+    },
+    wide && consented,
+  );
+
+  if (wide) {
+    const d: DesktopTalkProps = {
+      convo,
+      voice,
+      mode,
+      presence,
+      status: breathing ? "Breathing" : voiceOff ? "Ready" : status === "In conversation" || status === "Ready" ? "Your turn" : status,
+      weather,
+      voiceActive,
+      voiceOff,
+      voiceBlocked,
+      showPill,
+      showStarters,
+      ack,
+      onStartVoice: () => void startVoice(),
+      onSwitchMode: switchMode,
+      onSend: (t) => void send(t),
+      onWrapUp: askToWrapUp,
+      onBreathe: () => setBreathing(true),
+      onChooseStyle: chooseStyle,
+      onStarter: starter,
+    };
+    return (
+      <>
+        <AppShell
+          scroll={false}
+          panel={breathing ? undefined : acuteOpen ? <DesktopCarePanel onSafe={imSafe} /> : <DesktopTalkPanel {...d} />}
+          panelLabel={acuteOpen ? "Get help" : "This conversation"}
+          panelCare={acuteOpen}
+          currentSessionId={convo.session?.id}
+          refreshKey={convo.session?.id}
+        >
+          {breathing ? (
+            <BreatheMode onDone={() => setBreathing(false)} />
+          ) : (
+            <div
+              className="flex min-h-0 flex-1 flex-col"
+              data-phase={convo.phase}
+              data-replies={convo.lines.filter((l) => l.speaker === "companion" && !l.pending).length}
+            >
+              <DesktopTalkHeader {...d} compact={!full} />
+              {convo.demo && (
+                <p className="relative mx-auto mt-2 mb-0 rounded-pill bg-glass px-3 py-0.5 text-[12px] text-faint">Demo mode · replies are scripted</p>
+              )}
+              {mode === "text" ? <DesktopWriting {...d} /> : <DesktopVoice {...d} />}
+            </div>
+          )}
+        </AppShell>
+        <WrapUpSheet open={wrapOpen} onClose={() => setWrapOpen(false)} onWrapUp={() => void wrapUp()} onLater={later} busy={ending} />
+        <ConsentSheet open={profile !== null && !consented} onAccept={() => undefined} onCancel={() => router.push(HOME)} />
+      </>
+    );
+  }
+
   return (
     <div className="relative flex h-dvh flex-col overflow-hidden">
       <Backdrop />
@@ -295,11 +388,7 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
                   <button
                     key={s.id}
                     type="button"
-                    onClick={async () => {
-                      if (voiceOff && !voiceBlocked) await startVoice();
-                      setAck(null);
-                      void convo.sendStarter(s);
-                    }}
+                    onClick={() => starter(s)}
                     className="press min-h-11 rounded-pill border border-edge-lo bg-transparent px-3.5 text-[14px] text-muted hover:bg-glass hover:text-text"
                   >
                     {s.label}

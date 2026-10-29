@@ -9,13 +9,15 @@ export interface TextComposerProps {
   onSwitchToVoice?: () => void;
   disabled?: boolean;
   autoFocus?: boolean;
+  /** Desktop: Space in an empty box switches to talking. */
+  spaceToTalk?: boolean;
 }
 
 /**
  * One glass composer (README "Composer"): the round aqua button is the mic while the box is
  * empty (switch to voice) and becomes Send once there is text.
  */
-export function TextComposer({ onSend, onTypingChange, onSwitchToVoice, disabled = false, autoFocus = true }: TextComposerProps) {
+export function TextComposer({ onSend, onTypingChange, onSwitchToVoice, disabled = false, autoFocus = true, spaceToTalk = false }: TextComposerProps) {
   const [value, setValue] = useState("");
   const ref = useRef<HTMLTextAreaElement>(null);
   const hasText = value.trim().length > 0;
@@ -63,6 +65,11 @@ export function TextComposer({ onSend, onTypingChange, onSwitchToVoice, disabled
         placeholder="Write what's on your mind"
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
+          if (spaceToTalk && e.key === " " && !value && onSwitchToVoice) {
+            e.preventDefault();
+            onSwitchToVoice();
+            return;
+          }
           if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
             e.preventDefault();
             submit();

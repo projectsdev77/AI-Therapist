@@ -331,7 +331,7 @@ export function AppShell({ children, panel, panelLabel = "Details", panelCare = 
             className={`z-[4] flex min-h-0 min-w-0 flex-col gap-[22px] overflow-y-auto border-l border-edge-lo px-5 py-[22px] ${
               compact ? "absolute top-0 right-0 bottom-0 w-[340px] shadow-[-24px_0_60px_rgba(0,0,0,.45)]" : "relative"
             }`}
-            style={{ background: care ? CARE_PANEL_BG : PANEL_BG, backgroundColor: PANEL_BG }}
+            style={{ backgroundColor: PANEL_BG, backgroundImage: care ? CARE_PANEL_BG : "none" }}
           >
             {panelBody}
           </aside>
