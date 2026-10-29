@@ -93,7 +93,20 @@ const blocked = (r: GeminiResponse) =>
 
 /** Streams reply text. Throws GeminiBlocked if nothing was said before a safety block. */
 export async function* streamGemini(system: string, turns: GeminiTurn[], signal?: AbortSignal): AsyncGenerator<string> {
-  const res = await call("streamGenerateContent", body(system, turns), signal);
+  let res: Response;
+  try {
+    res = await call("streamGenerateContent", body(system, turns), signal);
+  } catch (error) {
+    if (signal?.aborted || /API key/i.test(String(error))) throw error;
+    // Streaming refused: ask for the whole reply at once instead.
+    console.warn("Gemini streaming failed, trying without streaming", error);
+    const whole = (await (await call("generateContent", body(system, turns), signal)).json()) as GeminiResponse;
+    if (blocked(whole) && !textOf(whole)) throw new GeminiBlocked();
+    const text = textOf(whole);
+    if (!text) throw new Error(`Gemini returned no text (finish: ${whole.candidates?.[0]?.finishReason ?? "none"})`);
+    yield text;
+    return;
+  }
   const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader();
   let buffer = "";
   let emitted = false;
@@ -119,6 +132,7 @@ export async function* streamGemini(system: string, turns: GeminiTurn[], signal?
       if (blocked(chunk) && !emitted) throw new GeminiBlocked();
     }
   }
+  if (!emitted && !signal?.aborted) throw new Error(`Gemini stream ended without text: ${buffer.slice(0, 300)}`);
 }
 
 /**
