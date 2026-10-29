@@ -9,15 +9,27 @@ import { useRegion } from "@/lib/safety/useRegion";
 const act =
   "press flex min-h-11 items-center justify-center rounded-pill border border-[rgba(220,207,255,.45)] px-3 text-center text-[14px] font-semibold text-care no-underline hover:bg-care-surface hover:text-care";
 
+export const HELP_TITLE = "Talk to a person now";
+export const HELP_SUBTITLE = "You deserve support. These are free and confidential.";
+
 /** "Talk to a person now": the emergency number first, then the region's lines, then the region picker. */
 export function HelpSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <Sheet open={open} onClose={onClose} title={HELP_TITLE} subtitle={HELP_SUBTITLE} care>
+      <HelpContent />
+    </Sheet>
+  );
+}
+
+/** The help body, shared by the phone sheet and the desktop side panel. */
+export function HelpContent({ footer = "Free, confidential, any time. Closing this keeps our conversation right where it was." }: { footer?: string }) {
   const { updateProfile } = useStore();
   const region = useRegion();
   const res = resourcesFor(region);
   const emergencyNumber = /^\d+$/.test(res.emergency);
 
   return (
-    <Sheet open={open} onClose={onClose} title="Talk to a person now" subtitle="You deserve support. These are free and confidential." care>
+    <>
       {emergencyNumber ? (
         <a
           href={`tel:${res.emergency}`}
@@ -72,7 +84,7 @@ export function HelpSheet({ open, onClose }: { open: boolean; onClose: () => voi
           ))}
         </select>
       </label>
-      <p className="m-0 text-sm text-muted">Free, confidential, any time. Closing this keeps our conversation right where it was.</p>
-    </Sheet>
+      <p className="m-0 text-sm text-muted">{footer}</p>
+    </>
   );
 }

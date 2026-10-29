@@ -15,7 +15,8 @@ import { AlertIcon, BreatheIcon, CheckIcon, StyleIcon, TranscriptIcon, WriteIcon
 import { useAmbientSettings, weatherToAmbient } from "@/lib/ambient/settings";
 import { useAmbient } from "@/lib/ambient/useAmbient";
 import { markPaused } from "@/lib/conversation/paused";
-import { STARTERS } from "@/lib/conversation/starters";
+import { takeOpening } from "@/lib/conversation/opening";
+import { STARTERS, starterById } from "@/lib/conversation/starters";
 import { SUPPORT_STYLE_LABELS, SUPPORT_STYLE_OPTIONS, type PresenceState, type RiskLevel, type SupportStyle } from "@/lib/conversation/types";
 import { useConversation, type ConversationCallbacks } from "@/lib/conversation/useConversation";
 import { toneToWeather } from "@/lib/conversation/weather";
@@ -80,9 +81,15 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
 
   // Write starts right away; voice waits for a tap so the greeting can be heard.
   const { start } = convo;
+  const { setSupportStyle } = convo;
   useEffect(() => {
-    if (consented && mode === "text") void start(resumeId, topic ? `I'd like to talk about ${topic}.` : undefined);
-  }, [consented, mode, start, resumeId, topic]);
+    if (!consented || mode !== "text") return;
+    const opening = resumeId ? null : takeOpening();
+    const starter = opening && "starterId" in opening ? starterById(opening.starterId) : undefined;
+    if (starter?.supportStyle) setSupportStyle(starter.supportStyle);
+    const first = starter?.message ?? (opening && "text" in opening ? opening.text : undefined) ?? (topic ? `I'd like to talk about ${topic}.` : undefined);
+    void start(resumeId, first);
+  }, [consented, mode, start, resumeId, topic, setSupportStyle]);
 
   async function startVoice() {
     await voice.start();

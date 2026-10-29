@@ -173,6 +173,14 @@
     font-weight: 600;
     color: var(--lg-text-muted);
   }
+  /* Desktop shell: small caps-style group labels (desktop handoff). */
+  @media (min-width: 1024px) {
+    .t-group {
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+  }
 
   /* Kept so older markup still renders while screens move over; no serif in Deep lagoon. */
   .heading {

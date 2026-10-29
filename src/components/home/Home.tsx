@@ -16,6 +16,8 @@ import { useStore } from "@/lib/data/StoreProvider";
 import type { Reflection, Session } from "@/lib/data/types";
 import { skyGradient } from "@/lib/design/skies";
 import { timeOfDayGreeting } from "@/lib/greeting";
+import { useIsWide } from "@/lib/useIsDesktop";
+import { DesktopHome } from "./DesktopHome";
 
 const weekday = new Intl.DateTimeFormat(undefined, { weekday: "long" });
 
@@ -25,7 +27,12 @@ const PROMISES = [
   { t: "Private, never sold", Icon: LockIcon },
 ];
 
+/** Phone and tablet Home; 1024px and up uses the desktop shell. */
 export function Home() {
+  return useIsWide() ? <DesktopHome /> : <PhoneHome />;
+}
+
+function PhoneHome() {
   const router = useRouter();
   const { store, profile } = useStore();
   const { start, consentProps } = useStartConversation();

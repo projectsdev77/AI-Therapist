@@ -179,3 +179,19 @@ export const TalkNavIcon = (p: IconProps) => (
     <path d="M12 3.5a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0v-5a3 3 0 0 1 3-3M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5" />
   </Svg>
 );
+export const PanelIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3.5" y="4.5" width="17" height="15" rx="3" />
+    <path d="M14.5 4.5v15" />
+  </Svg>
+);
+export const KeyboardIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M4 7h16v10H4zM7 10h.01M11 10h.01M15 10h.01M8 14h8" />
+  </Svg>
+);
+export const ChevronUpIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M7 15l5-5 5 5" />
+  </Svg>
+);

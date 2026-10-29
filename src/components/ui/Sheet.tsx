@@ -24,6 +24,8 @@ export interface SheetProps {
   wide?: boolean;
   /** Lilac title (Get help). */
   care?: boolean;
+  /** Desktop dialog width in px, overriding the default/wide widths (e.g. 760 for consent). */
+  maxWidth?: number;
 }
 
 const CLOSE_MS = 320;
@@ -46,6 +48,7 @@ export function Sheet({
   placement = "center",
   wide = false,
   care = false,
+  maxWidth,
 }: SheetProps) {
   const desktop = useIsDesktop();
   const [mounted, setMounted] = useState(open);
@@ -122,7 +125,7 @@ export function Sheet({
   }[mode];
   const panel = {
     bottom: "w-full max-h-full rounded-t-lg px-5 pt-2.5 pb-[max(34px,env(safe-area-inset-bottom))]",
-    center: `w-full max-h-full rounded-lg px-6 pt-6 pb-7 ${wide ? "max-w-[640px]" : "max-w-[520px]"}`,
+    center: `w-full max-h-full rounded-lg px-6 pt-6 pb-7 ${maxWidth ? "" : wide ? "max-w-[640px]" : "max-w-[520px]"}`,
     side: "w-full max-w-[380px] rounded-lg px-6 pt-6 pb-7",
   }[mode];
 
@@ -138,6 +141,7 @@ export function Sheet({
           tabIndex={-1}
           data-placement={mode}
           className={`sheet-panel pointer-events-auto relative flex flex-col gap-4 overflow-y-auto border border-edge-hi bg-sheet text-text shadow-raised outline-none ${panel}`}
+          style={mode === "center" && maxWidth ? { maxWidth } : undefined}
         >
           {mode === "bottom" && <span aria-hidden className="-mb-1 h-1 w-10 shrink-0 self-center rounded-[2px] bg-edge-hi" />}
           <div className="flex items-start gap-3">
