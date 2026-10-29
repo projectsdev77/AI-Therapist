@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PrivacyActions } from "@/components/settings/PrivacyActions";
+import { PrivacyActionsFoot, PrivacyPanel } from "@/components/settings/PrivacyActions";
 import { PageShell } from "@/components/shell/PageShell";
 import { BRAND } from "@/lib/brand";
 
@@ -44,9 +44,9 @@ const GROUPS: { name: string; rows: [string, string][] }[] = [
 
 export default function PrivacyPage() {
   return (
-    <PageShell title="Privacy" heading={false} width={680}>
+    <PageShell title="Privacy" heading={false} width={680} panel={<PrivacyPanel />} panelLabel="Your controls">
       <div className="flex flex-col gap-2">
-        <h1 className="t-page-h1 m-0 hidden min-[720px]:block">Privacy, in plain words</h1>
+        <h1 className="t-page-h1 m-0 hidden min-[720px]:block min-[1024px]:text-[40px]">Privacy, in plain words</h1>
         <p className="m-0 text-[17px] text-muted">What you share here is personal. Here is exactly what happens to it.</p>
         <p className="m-0 text-[13px] text-faint">Draft, to be finalized with legal review before launch.</p>
       </div>
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
           </div>
         </section>
       ))}
-      <PrivacyActions />
+      <PrivacyActionsFoot />
     </PageShell>
   );
 }

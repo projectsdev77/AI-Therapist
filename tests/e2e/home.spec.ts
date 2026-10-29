@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { expectAccessible } from "./helpers";
 
 test("the landing page says what it is, offers Talk and Write, and keeps help in reach", async ({ page }) => {

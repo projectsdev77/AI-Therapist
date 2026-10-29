@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { expectAccessible, say, startConversation, waitForReply, wrapUp } from "./helpers";
 
 test("a written conversation becomes a reflection, a sky, and memories", async ({ page }) => {
@@ -54,7 +54,7 @@ test("sending right away, or twice quickly, never duplicates replies", async ({ 
   await box.fill("And I can't sleep.");
   await box.press("Enter");
   await page.waitForTimeout(4000);
-  await expect(page.locator("main[data-phase]")).toHaveAttribute("data-phase", "idle", { timeout: 15_000 });
+  await expect(page.locator("[data-phase]")).toHaveAttribute("data-phase", "idle", { timeout: 15_000 });
 
   await page.getByRole("button", { name: "Transcript" }).click();
   const lines = await page.getByRole("list", { name: "Conversation transcript" }).locator("li").allInnerTexts();
@@ -70,7 +70,7 @@ test("a starter opens the conversation, and starters then go away", async ({ pag
   await startConversation(page, "Write");
   const starters = page.getByRole("group", { name: "Ways to start" });
   await expect(starters).toBeVisible();
-  await expect(page.locator("main[data-phase]")).toHaveAttribute("data-phase", "idle", { timeout: 15_000 });
+  await expect(page.locator("[data-phase]")).toHaveAttribute("data-phase", "idle", { timeout: 15_000 });
   await starters.getByRole("button", { name: "I just need to vent" }).click();
   await waitForReply(page, 1);
   await expect(page.getByText("I just need to vent.")).toBeVisible();

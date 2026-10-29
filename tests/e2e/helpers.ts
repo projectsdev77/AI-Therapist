@@ -10,18 +10,18 @@ export async function startConversation(page: Page, mode: "Talk" | "Write") {
   await page.waitForURL(`**/talk?mode=${mode === "Talk" ? "voice" : "text"}`);
 }
 
-const replies = (page: Page) => page.locator("main[data-replies]").getAttribute("data-replies").then(Number);
+const replies = (page: Page) => page.locator("[data-replies]").getAttribute("data-replies").then(Number);
 
 /** Waits until the companion has finished its next reply. */
 export async function waitForReply(page: Page, before: number) {
   await expect.poll(() => replies(page), { timeout: 15_000 }).toBeGreaterThan(before);
-  await expect(page.locator("main[data-phase]")).toHaveAttribute("data-phase", "idle", { timeout: 15_000 });
+  await expect(page.locator("[data-phase]")).toHaveAttribute("data-phase", "idle", { timeout: 15_000 });
 }
 
 /** Writes a message and waits for the companion's whole reply. */
 export async function say(page: Page, text: string) {
   // Let the greeting finish first so the reply count is stable.
-  await expect(page.locator("main[data-phase]")).toHaveAttribute("data-phase", "idle", { timeout: 15_000 });
+  await expect(page.locator("[data-phase]")).toHaveAttribute("data-phase", "idle", { timeout: 15_000 });
   const before = await replies(page);
   const box = page.getByLabel("Write to your companion");
   await box.fill(text);

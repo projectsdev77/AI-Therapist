@@ -172,25 +172,30 @@ export function DesktopWriting(p: DesktopTalkProps) {
             );
           })}
           {failed && (
-            <li role="alert" className="-mt-3 flex items-center gap-1.5 self-end text-[13px] text-danger">
+            <li className="-mt-3 self-end">
+              <div role="alert" className="flex items-center gap-1.5 self-end text-[13px] text-danger">
               <AlertIcon size={15} />
               Didn&apos;t send. Your words are safe.
               <button type="button" onClick={convo.retry} className="press min-h-9 rounded-pill bg-mic px-3 text-[13px] font-semibold text-mic-fg hover:bg-mic-hover">
                 Try again
               </button>
+            </div>
             </li>
           )}
           {convo.error && !failed && convo.phase === "idle" && (
-            <li role="alert" className="flex items-center gap-2 text-[14px] text-danger">
+            <li>
+              <div role="alert" className="flex items-center gap-2 text-[14px] text-danger">
               <AlertIcon size={15} />
               Something went wrong.
               <button type="button" onClick={convo.retry} className="press min-h-9 rounded-pill bg-mic px-3 text-[13px] font-semibold text-mic-fg hover:bg-mic-hover">
                 Try again
               </button>
+            </div>
             </li>
           )}
           {convo.slow && (
-            <li role="status" className="flex flex-wrap items-center gap-3">
+            <li>
+              <div role="status" className="flex flex-wrap items-center gap-3">
               <span aria-hidden className="pulse-dot-slow size-2 rounded-full bg-accent" />
               <span className="text-[17px] text-muted">Taking a little longer than usual…</span>
               <button
@@ -200,6 +205,7 @@ export function DesktopWriting(p: DesktopTalkProps) {
               >
                 Stop waiting
               </button>
+            </div>
             </li>
           )}
           {typing && (
@@ -210,9 +216,11 @@ export function DesktopWriting(p: DesktopTalkProps) {
             </li>
           )}
           {p.ack && (
-            <li role="status" className="flex items-center gap-2 text-[14px] text-muted">
+            <li>
+              <div role="status" className="flex items-center gap-2 text-[14px] text-muted">
               <StyleIcon size={16} className="text-accent-strong" />
               {p.ack}
+            </div>
             </li>
           )}
           {p.showPill && (
@@ -221,7 +229,8 @@ export function DesktopWriting(p: DesktopTalkProps) {
             </li>
           )}
           {p.showStarters && (
-            <li role="group" aria-label="Ways to start" className="flex flex-wrap gap-1.5">
+            <li>
+              <div role="group" aria-label="Ways to start" className="flex flex-wrap gap-1.5">
               {STARTERS.map((s) => (
                 <button
                   key={s.id}
@@ -232,6 +241,7 @@ export function DesktopWriting(p: DesktopTalkProps) {
                   {s.label}
                 </button>
               ))}
+            </div>
             </li>
           )}
         </ol>

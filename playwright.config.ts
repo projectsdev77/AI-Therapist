@@ -14,8 +14,11 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [
-    { name: "mobile", use: { ...devices["Pixel 7"] } },
-    { name: "desktop", use: { ...devices["Desktop Chrome"] } },
+    { name: "mobile", use: { ...devices["Pixel 7"] }, testIgnore: /desktop\.spec/ },
+    // 720–1023px: the phone design widened, with the top bar's pill nav.
+    { name: "tablet", use: { ...devices["Desktop Chrome"], viewport: { width: 900, height: 800 } }, testIgnore: /desktop\.spec/ },
+    // 1024px and up: the desktop app shell (sidebar, page, side panel).
+    { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } }, testMatch: /desktop\.spec/ },
   ],
   webServer: {
     command: `npm run start -- -p ${PORT}`,

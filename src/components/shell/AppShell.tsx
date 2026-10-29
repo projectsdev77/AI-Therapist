@@ -43,6 +43,7 @@ import { useIsFull } from "@/lib/useIsDesktop";
 
 interface ShellApi {
   openHelp: () => void;
+  openShortcuts: () => void;
   closeHelp: () => void;
   helpOpen: boolean;
   compact: boolean;
@@ -137,7 +138,8 @@ export function AppShell({ children, panel, panelLabel = "Details", panelCare = 
     setMenuOpen(false);
   }, []);
   const closeHelp = useCallback(() => setHelpOpen(false), []);
-  const api = useMemo(() => ({ openHelp, closeHelp, helpOpen, compact }), [openHelp, closeHelp, helpOpen, compact]);
+  const openShortcuts = useCallback(() => setShortcutsOpen(true), []);
+  const api = useMemo(() => ({ openHelp, openShortcuts, closeHelp, helpOpen, compact }), [openHelp, openShortcuts, closeHelp, helpOpen, compact]);
 
   const newConversation = useCallback(() => start(startIn), [start, startIn]);
   useShortcuts({

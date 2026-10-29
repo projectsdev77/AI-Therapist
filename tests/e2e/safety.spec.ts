@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { say, startConversation } from "./helpers";
 
 test("acute risk opens support without ending the conversation", async ({ page }) => {

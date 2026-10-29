@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Backdrop } from "@/components/shell/Backdrop";
 import { TopBar } from "@/components/shell/TopBar";
+import { AppShell } from "@/components/shell/AppShell";
+import { useIsWide } from "@/lib/useIsDesktop";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { MailIcon } from "@/components/ui/icons";
 import { useStore } from "@/lib/data/StoreProvider";
@@ -69,6 +71,7 @@ export function SignIn() {
     await getSupabase()?.auth.signInWithOAuth({ provider: "google", options: { redirectTo: redirectTo() } });
   }
 
+  const wide = useIsWide();
   const h1 = "m-0 mt-[clamp(8px,4vw,48px)] text-[clamp(30px,3vw,38px)] leading-[1.1] font-semibold tracking-[-0.04em]";
   const wait = Math.max(0, Math.ceil((resendAt - now) / 1000));
 
@@ -164,6 +167,22 @@ export function SignIn() {
           No password. We&apos;ll only use your email to sign you in. <Link href="/privacy">Privacy</Link>
         </p>
       </>
+    );
+  }
+
+  if (wide) {
+    // Desktop handoff "signin": a centred card in the shell.
+    return (
+      <AppShell>
+        <div className="flex flex-1 items-center justify-center p-10">
+          <div
+            className="flex w-full max-w-[440px] flex-col gap-4 rounded-lg border border-edge-hi p-8 shadow-[0_30px_80px_rgba(0,0,0,.3)] backdrop-blur-[18px] [&_h1]:mt-0"
+            style={{ background: "rgba(10,34,44,.75)" }}
+          >
+            {body}
+          </div>
+        </div>
+      </AppShell>
     );
   }
 

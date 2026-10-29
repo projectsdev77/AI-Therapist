@@ -17,6 +17,21 @@ import { useStore } from "@/lib/data/StoreProvider";
 import { INTERNATIONAL, REGIONS, resourcesFor } from "@/lib/safety/resources";
 import { useRegion } from "@/lib/safety/useRegion";
 import { accountsEnabled } from "@/lib/supabase/config";
+import { useShell } from "@/components/shell/AppShell";
+import { setStartIn, useStartIn } from "@/lib/startIn";
+import { useIsWide } from "@/lib/useIsDesktop";
+
+/** Opens the side-panel help in the desktop shell, or the help sheet on phone. */
+function HelpRow({ onPhone }: { onPhone: () => void }) {
+  const shell = useShell();
+  return <RowButton title="Help and crisis lines" haspopup={!shell} onClick={() => (shell ? shell.openHelp() : onPhone())} />;
+}
+
+/** Desktop only: keyboard shortcuts live in the shell. */
+function ShortcutsRow() {
+  const shell = useShell();
+  return <RowButton title="Shortcuts" subtitle="N new · Space talk · B breathe · Esc wrap up · 1–4 style" haspopup onClick={() => shell?.openShortcuts()} />;
+}
 
 /** A row backed by a native select (accessible, platform picker), styled as a link row. */
 function SelectRow({ title, subtitle, value, options, onChange }: { title: string; subtitle?: string; value: string; options: { value: string; label: string }[]; onChange: (v: string) => void }) {
@@ -51,6 +66,8 @@ export function SettingsView() {
   const [voices, setVoices] = useState<{ id: string; name: string }[]>([]);
   const [sheet, setSheet] = useState<null | "name" | "delete" | "help">(null);
   const [nameDraft, setNameDraft] = useState("");
+  const wide = useIsWide();
+  const startIn = useStartIn();
 
   useEffect(() => {
     fetch("/api/voices")
@@ -103,6 +120,18 @@ export function SettingsView() {
 
       <Group title="Conversations">
         <RowLink href="/memory" title="Remember our conversations" subtitle="See or change everything in What I remember" value={profile.memoryEnabled ? "On" : "Off"} />
+        {wide && (
+          <SelectRow
+            title="Start in"
+            subtitle="What opens when you press New conversation"
+            value={startIn}
+            options={[
+              { value: "text", label: "Writing" },
+              { value: "voice", label: "Talking" },
+            ]}
+            onChange={(v) => setStartIn(v === "voice" ? "voice" : "text")}
+          />
+        )}
         <Row title="Ambient sound" subtitle="Soft rain, room tone or a low hum while you talk">
           <Switch checked={ambient.enabled} label="Ambient sound" onChange={(on) => writeAmbient({ enabled: on })} />
         </Row>
@@ -129,6 +158,12 @@ export function SettingsView() {
         )}
       </Group>
 
+      {wide && (
+        <Group title="Keyboard">
+          <ShortcutsRow />
+        </Group>
+      )}
+
       <Group title="Your data">
         <RowButton title="Export everything" subtitle="Your conversations, cards and notes as one file" onClick={() => void exportData(store)} />
         <RowButton
@@ -142,7 +177,7 @@ export function SettingsView() {
 
       <Group title="About">
         <RowLink href="/terms" title="Terms" />
-        <RowButton title="Help and crisis lines" haspopup onClick={() => setSheet("help")} />
+        <HelpRow onPhone={() => setSheet("help")} />
       </Group>
 
       <p className="m-0 mx-1 text-[13px] text-faint">{BRAND.name} · Made for everyday reflection, not emergencies.</p>

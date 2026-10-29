@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { expectAccessible, say, startConversation } from "./helpers";
 
 test("settings are grouped and accessible", async ({ page }) => {
