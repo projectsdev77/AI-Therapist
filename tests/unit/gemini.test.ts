@@ -36,11 +36,11 @@ test("a safety block before any words throws GeminiBlocked", async () => {
   await expect(collect(streamGemini("s", [{ role: "user", content: "x" }]))).rejects.toBeInstanceOf(GeminiBlocked);
 });
 
-test("falls back to gemini-2.5-flash when the configured model is missing", async () => {
+test("falls back to gemini-3.6-flash when the configured model is missing", async () => {
   const fetchMock = vi.fn().mockResolvedValueOnce(new Response("not found", { status: 404 })).mockResolvedValueOnce(sse([say("ok")]));
   vi.stubGlobal("fetch", fetchMock);
   expect(await collect(streamGemini("s", [{ role: "user", content: "x" }]))).toBe("ok");
-  expect(fetchMock.mock.calls[1][0]).toContain("/gemini-2.5-flash:");
+  expect(fetchMock.mock.calls[1][0]).toContain("/gemini-3.6-flash:");
 });
 
 test("JSON answers are validated against the schema", async () => {
@@ -59,7 +59,7 @@ test("moves on to the next model when the free quota is used up", async () => {
     .mockResolvedValueOnce(sse([say("ok")]));
   vi.stubGlobal("fetch", fetchMock);
   expect(await collect(streamGemini("s", [{ role: "user", content: "x" }]))).toBe("ok");
-  expect(fetchMock.mock.calls[2][0]).toContain("/gemini-2.5-flash-lite:");
+  expect(fetchMock.mock.calls[2][0]).toContain("/gemini-3.5-flash-lite:");
 });
 
 test("a bad key fails at once with Google's message", async () => {

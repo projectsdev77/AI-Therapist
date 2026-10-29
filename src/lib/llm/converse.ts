@@ -5,6 +5,8 @@ import { FALLBACK_BETA, getAnthropic, MODEL } from "./client";
 import { demoReply, streamText } from "./demo";
 import { GeminiBlocked, hasGemini, streamGemini } from "./gemini";
 
+const GEMINI_SESSION_START = "(new conversation opened)";
+
 const REFUSAL_REPLY =
   "I'm not able to go into that, but I'm still here with you. Would you like to tell me more about how you're feeling?";
 
@@ -19,7 +21,13 @@ export async function* streamReply(history: ChatTurn[], ctx: CompanionContext, s
   const client = getAnthropic();
   if (!client && hasGemini()) {
     try {
-      yield* streamGemini(`${COMPANION_SYSTEM}\n\n${buildContextBlock(ctx)}`, toApiMessages(history) as { role: "user" | "assistant"; content: string }[], signal);
+      // Gemini gets the session marker in plain words; markup-like tokens can be refused.
+      const system = `${COMPANION_SYSTEM}\n\n${buildContextBlock(ctx)}`.replaceAll(SESSION_START, GEMINI_SESSION_START);
+      const turns = toApiMessages(history).map((t) => ({
+        role: t.role === "assistant" ? ("assistant" as const) : ("user" as const),
+        content: t.content === SESSION_START ? GEMINI_SESSION_START : String(t.content),
+      }));
+      yield* streamGemini(system, turns, signal);
     } catch (error) {
       if (!(error instanceof GeminiBlocked)) throw error;
       yield REFUSAL_REPLY;

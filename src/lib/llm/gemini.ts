@@ -7,7 +7,8 @@ import { z } from "zod";
 
 const BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 /** Tried in order when a model isn't available to this key or its free quota is used up. */
-const FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
+// (Google retired the 2.5 models for new keys; it recommends 3.5 Flash-Lite.)
+const FALLBACK_MODELS = ["gemini-3.6-flash", "gemini-3.5-flash-lite"];
 
 export const geminiModel = () => process.env.GEMINI_MODEL?.trim() || "gemini-3.8-flash";
 /** The key, under the name in our docs or the names Google's own docs use. */
@@ -53,7 +54,7 @@ function body(system: string, turns: GeminiTurn[], json = false) {
 
 async function call(method: "generateContent" | "streamGenerateContent", payload: string, signal?: AbortSignal): Promise<Response> {
   const models = [geminiModel(), ...FALLBACK_MODELS.filter((m) => m !== geminiModel())];
-  let last = "";
+  const errors: string[] = [];
   for (const model of models) {
     const res = await fetch(`${BASE}/${model}:${method}${method === "streamGenerateContent" ? "?alt=sse" : ""}`, {
       method: "POST",
@@ -63,11 +64,12 @@ async function call(method: "generateContent" | "streamGenerateContent", payload
     });
     if (res.ok) return res;
     const text = await res.text();
-    last = `Gemini ${res.status} (${model}): ${text.slice(0, 400)}`;
+    errors.push(`Gemini ${res.status} (${model}): ${text.replace(/\s+/g, " ").slice(0, 400)}`);
+    console.warn(errors.at(-1));
     if (!tryNext(res.status, text)) break;
-    console.warn(last);
   }
-  throw new Error(last);
+  // Every model's answer, first one first: the configured model's error is usually the real cause.
+  throw new Error(errors.join(" | "));
 }
 
 /** A tiny request to see whether the key and model work. Never includes the key in the result. */
