@@ -223,6 +223,7 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
               state={presence}
               size={acuteOpen ? 104 : mode === "voice" ? 180 : 130}
               desktopSize={acuteOpen ? 130 : mode === "voice" ? 230 : 170}
+              getLevel={voiceActive ? voice.getLevel : undefined}
             />
           </div>
 

@@ -17,7 +17,7 @@ export function useBreathCycle(pattern: BreathPattern, running: boolean, haptics
       const next = sampleBreath(pattern, (now - startRef.current) / 1000);
       if (next.phase !== phaseRef.current) {
         phaseRef.current = next.phase;
-        if (haptics && "vibrate" in navigator) navigator.vibrate(30);
+        if (haptics && "vibrate" in navigator && navigator.userActivation?.hasBeenActive !== false) navigator.vibrate(30);
       }
       setSample(next);
       frame = requestAnimationFrame(tick);

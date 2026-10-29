@@ -63,10 +63,16 @@ export interface PresenceProps {
    * pattern. Without it, the orb uses the design's own 4s in / 6s out cycle.
    */
   breath?: number;
+  /**
+   * Speaking and listening: a live audio level 0..1 (the companion's voice, or the mic).
+   * When given, the speaking pulse follows it instead of the design's simulated one,
+   * and listening swells a little with the person's voice.
+   */
+  getLevel?: () => number;
   className?: string;
 }
 
-export function Presence({ state, size, desktopSize, breath, className }: PresenceProps) {
+export function Presence({ state, size, desktopSize, breath, getLevel, className }: PresenceProps) {
   const desktop = useIsDesktop();
   const px = desktop && desktopSize ? desktopSize : size;
   const host = useRef<HTMLDivElement>(null);
@@ -80,9 +86,11 @@ export function Presence({ state, size, desktopSize, breath, className }: Presen
   const lidsRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef(state);
   const breathRef = useRef(breath);
+  const levelRef = useRef(getLevel);
   useEffect(() => {
     stateRef.current = state;
     breathRef.current = breath;
+    levelRef.current = getLevel;
   });
 
   useEffect(() => {
@@ -109,8 +117,12 @@ export function Presence({ state, size, desktopSize, breath, className }: Presen
         tg.pitch = 2 * Math.sin(t * 0.4);
       } else if (st === "thinking") {
         tg.yaw = 14 * Math.sin(t * 0.45);
+      } else if (st === "listening" && levelRef.current) {
+        const v = Math.min(1, levelRef.current() * 6);
+        tg.s += 0.03 * v;
+        tg.g += 0.4 * v;
       } else if (st === "speaking") {
-        const v = Math.abs(Math.sin(t * 7.3) * Math.sin(t * 2.9 + 1));
+        const v = levelRef.current ? Math.min(1, levelRef.current() * 1.4) : Math.abs(Math.sin(t * 7.3) * Math.sin(t * 2.9 + 1));
         tg.yaw = 8 * Math.sin(t * 0.9) + 3 * Math.sin(t * 2.3);
         tg.pitch = 2 * Math.sin(t * 1.7);
         tg.s = 1 + 0.04 * v;

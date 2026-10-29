@@ -17,8 +17,8 @@ const PAD = 96;
 
 // Deep lagoon values (src/styles/tokens.css).
 const TEXT = "#effcfa";
-const MUTED = "#b3d4d3";
-const ACCENT = "#8ff0e8";
+const MUTED = "#d3eae9";
+const ACCENT = "#a8f5ee";
 
 function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
   const lines: string[] = [];
@@ -62,8 +62,8 @@ export async function renderCardImage(reflection: Reflection, opts: CardOptions)
 
   // Background: the --lg-bg gradient and two soft light streaks.
   const bg = ctx.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, "#15726c");
-  bg.addColorStop(0.3, "#10565c");
+  bg.addColorStop(0, "#0d4643");
+  bg.addColorStop(0.3, "#0b3a40");
   bg.addColorStop(0.66, "#0b2a35");
   bg.addColorStop(1, "#081822");
   ctx.fillStyle = bg;

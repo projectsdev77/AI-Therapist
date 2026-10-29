@@ -50,20 +50,16 @@ The designer's handoff in this folder (`README.md`, `Haven App v2.dc.html`, `Hav
 - **Transcript:** Copy text.
 - **Desktop:** a pill nav (Talk, Your skies, Patterns, What I remember); the menu opens as a side panel.
 
-## Open design issues
-- **Contrast at the top of the screen.** The gradient's lightest stop is #15726c. On it:
-  - muted text (#b3d4d3) measures 3.6:1, and 3.0:1 on glass;
-  - faint text (#9cc0bf) measures 2.9:1;
-  - accent-strong (#8ff0e8) measures 4.3:1.
+## Fixed after the handoff (product calls)
+- **Contrast at the top of the screen.** The gradient's top stops were darkened (#15726c → #0d4643, #10565c → #0b3a40). Muted, faint, accent-strong and care text were lightened (#d3eae9, #c2dedd, #a8f5ee, #e6dcff). Every text colour now passes 4.5:1 at the lightest point of the gradient, including on glass, except faint text on strong glass (about 4.2:1).
+- **The orb follows the real voice.** In voice mode, the speaking pulse follows the companion's actual audio level and listening swells with the mic. Write mode keeps the design's simulated pulse.
+- **App icons, favicon and link preview** were redrawn in the lagoon style from the orb (`src/app/icon.svg`, `public/icons/*`, `src/app/opengraph-image.png`).
+- **Breathe** no longer tries to vibrate before the first tap.
+- **Decided, to revisit after testing:**
+  - Keep "Talk about this", "Hide this topic" and "Forget everything".
+  - Deleting a card forgets its notes by default.
+  - Keep the skies for now.
 
-  WCAG AA needs 4.5:1 for normal text. The README says muted text is "≥5.3:1 anywhere", which holds only from about 30% of the height down. Affected:
-  - phone page subtitles and group labels near the top;
-  - the talk status pill;
-  - the demo label;
-  - the landing hero subtitle;
-  - the Home greeting line when the orb is small.
-
-  This needs a designer's decision: a darker top stop, lighter muted text, or keeping muted text off the top band.
-- **App icons and favicon** weren't in this handoff; the old Sage & lamplight icons are still in `public/icons` and `src/app/icon.svg`.
-- **The link-preview image** (1200×630) is still to be produced.
+## Still open
 - **The share-card image** wasn't designed this round. It's drawn in the lagoon style from the reflection card (`src/lib/reflection/cardImage.ts`).
+- **Home dock:** Talk is bigger than Write. Revisit if testers who prefer writing miss it.

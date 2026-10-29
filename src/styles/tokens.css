@@ -8,18 +8,22 @@
 :root {
   color-scheme: dark;
 
-  /* ---------- Lagoon (as delivered) ---------- */
-  --lg-bg: linear-gradient(180deg, #15726c 0%, #10565c 30%, #0b2a35 66%, #081822 100%);
+  /* ---------- Lagoon ----------
+     Changed from the delivered values so every text colour passes WCAG AA (4.5:1) at the
+     lightest point of the gradient, on glass too: the top stops are darker and muted, faint,
+     accent-strong and care text are lighter. Delivered: #15726c / #10565c, #b3d4d3, #9cc0bf,
+     #8ff0e8, #dccfff. */
+  --lg-bg: linear-gradient(180deg, #0d4643 0%, #0b3a40 30%, #0b2a35 66%, #081822 100%);
   --lg-ink: #0b2a35;
   --lg-ink-deep: #081822;
   --lg-text: #effcfa;
-  --lg-text-muted: #b3d4d3;
-  --lg-text-faint: #9cc0bf;
+  --lg-text-muted: #d3eae9;
+  --lg-text-faint: #c2dedd;
   --lg-accent: #3fd6cd;
-  --lg-accent-strong: #8ff0e8;
+  --lg-accent-strong: #a8f5ee;
   --lg-on-accent: #032a2a;
   --lg-focus: #e6f59a;
-  --lg-care: #dccfff;
+  --lg-care: #e6dcff;
   --lg-care-surface: rgba(10, 20, 50, 0.32);
   --lg-glass: rgba(150, 240, 230, 0.1);
   --lg-glass-strong: rgba(150, 240, 230, 0.17);
