@@ -150,7 +150,7 @@ export function SessionDetail() {
                         <span className="text-base">Edit this card</span>
                         <span className="text-sm text-muted">Change any words that don&apos;t fit</span>
                       </span>
-                      {desktop ? <kbd className="font-mono text-[11px] text-faint">E</kbd> : <WriteIcon size={18} className="text-accent-strong" />}
+                      <WriteIcon size={18} className="text-accent-strong" />
                     </button>
                     <button
                       type="button"
@@ -261,12 +261,6 @@ export function SessionDetail() {
                   </div>
                   <p className="m-0 text-sm text-muted">
                     Empty fields keep their old words. The saved image uses your changes.
-                    {wide && (
-                      <>
-                        {" "}
-                        <kbd className="font-mono text-[12px]">⌘ Enter</kbd> to save.
-                      </>
-                    )}
                   </p>
                 </div>
               ) : (

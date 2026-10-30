@@ -53,11 +53,11 @@ const ShellContext = createContext<ShellApi | null>(null);
 /** Shell controls for pages inside the desktop shell (null on phone layouts). */
 export const useShell = () => useContext(ShellContext);
 
-const NAV: { href: string; label: string; Icon: ComponentType<{ size?: number }>; match: string[]; count?: boolean }[] = [
+const NAV: { href: string; label: string; Icon: ComponentType<{ size?: number }>; match: string[] }[] = [
   { href: HOME, label: "Talk", Icon: TalkNavIcon, match: [HOME, "/talk", "/breathe"] },
   { href: "/history", label: "Your skies", Icon: SkiesIcon, match: ["/history"] },
   { href: "/patterns", label: "Patterns", Icon: PatternsIcon, match: ["/patterns"] },
-  { href: "/memory", label: "What I remember", Icon: MemoryIcon, match: ["/memory"], count: true },
+  { href: "/memory", label: "What I remember", Icon: MemoryIcon, match: ["/memory"] },
 ];
 
 export const PANEL_BG = "#0a1f2a";
@@ -81,11 +81,10 @@ type Recent = { session: Session; title: string; weather: Weather | null; open: 
 function useRecent(limit: number, refreshKey: string) {
   const { store } = useStore();
   const [recent, setRecent] = useState<Recent[] | null>(null);
-  const [notes, setNotes] = useState<number | null>(null);
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [sessions, reflections, memories] = await Promise.all([store.listSessions(limit), store.listReflections(limit * 2), store.listMemories()]);
+      const [sessions, reflections] = await Promise.all([store.listSessions(limit), store.listReflections(limit * 2)]);
       if (cancelled) return;
       const byId = new Map(reflections.map((r) => [r.sessionId, r]));
       setRecent(
@@ -94,13 +93,12 @@ function useRecent(limit: number, refreshKey: string) {
           return { session: s, title: r?.title ?? s.title ?? (!r && !s.endedAt ? "Unfinished conversation" : "A conversation"), weather: r?.weather ?? s.weather, open: !r && !s.endedAt };
         }),
       );
-      setNotes(memories.length);
     })().catch(() => undefined);
     return () => {
       cancelled = true;
     };
   }, [store, limit, refreshKey]);
-  return { recent, notes };
+  return { recent };
 }
 
 export interface AppShellProps {
@@ -131,7 +129,7 @@ export function AppShell({ children, panel, panelLabel = "Details", panelCare = 
   const [panelOpen, setPanelOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  const { recent, notes } = useRecent(8, `${pathname}|${refreshKey}`);
+  const { recent } = useRecent(4, `${pathname}|${refreshKey}`);
 
   const openHelp = useCallback(() => {
     setHelpOpen(true);
@@ -208,12 +206,11 @@ export function AppShell({ children, panel, panelLabel = "Details", panelCare = 
             {!compact && (
               <>
                 <span className="flex-1 text-left">New conversation</span>
-                <kbd className="rounded-[6px] bg-[rgba(3,42,42,.14)] px-1.5 py-0.5 font-mono text-[11px]">N</kbd>
               </>
             )}
           </button>
           <nav aria-label="Main" className="flex w-full flex-col gap-0.5">
-            {NAV.map(({ href, label, Icon, match, count }) => {
+            {NAV.map(({ href, label, Icon, match }) => {
               const current = match.some((m) => pathname === m || pathname.startsWith(`${m}/`));
               return (
                 <Link
@@ -230,7 +227,6 @@ export function AppShell({ children, panel, panelLabel = "Details", panelCare = 
                   {!compact && (
                     <>
                       <span className="flex-1">{label}</span>
-                      {count && notes ? <span className="text-[13px] font-normal text-faint">{notes}</span> : null}
                     </>
                   )}
                 </Link>

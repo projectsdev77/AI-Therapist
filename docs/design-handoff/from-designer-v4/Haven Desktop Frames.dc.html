@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#c9dcda!important}a{color:#0a6e63}a:hover{color:#06302c}</style>
+</helmet>
+<div style="padding:64px;display:flex;flex-direction:column;gap:64px;font-family:'Geist',sans-serif;color:#06302c">
+<header style="max-width:980px;display:flex;flex-direction:column;gap:12px">
+<span style="font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#3b625e">Haven · desktop · every screen</span>
+<h1 style="margin:0;font-weight:500;font-size:52px;letter-spacing:-.035em;line-height:1.05">Desktop, built for desktop</h1>
+<p style="margin:0;font-size:17px;line-height:1.55;color:#3b625e;text-wrap:pretty">This covers all 33 states from the phone app, side by side at 1440 × 900, plus a 1024 px compact layout. The phone designs (<a href="Haven Site v2.dc.html">Haven Site v2</a>) are unchanged. Desktop reuses the same buttons, rows, orb, skies and words; only the layout changes. Phone popups become desktop panels: Style, Transcript, Get help, sky picker, pattern topic, and the menu, which becomes an account menu in the sidebar. Only decisions remain as dialogs: consent, End and Delete. Calmer pass: Home and Breathe now have no right panel, so there is just the orb, one question and one text box. Recent is trimmed to 4. Shortcut hints, badges, the status pill and "Noticing so far" are removed, and Get help appears once, in the sidebar. The previous version is kept as <code>Haven Desktop v1.dc.html</code>. The component is <code>Haven Desktop.dc.html</code>, with the props <code>screen</code> and <code>compact</code>.</p>
+<nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px"><sc-for list="{{ groups }}" as="g" hint-placeholder-count="7"><a href="#{{ g.id }}" style="padding:6px 12px;border-radius:999px;background:#eef6f5;text-decoration:none;font-size:14px">{{ g.name }}</a></sc-for></nav>
+</header>
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
+<section id="{{ g.id }}" style="display:flex;flex-direction:column;gap:40px">
+<h2 style="margin:0;font-size:40px;font-weight:500;letter-spacing:-.03em;border-top:2px solid #06302c;padding-top:20px">{{ g.name }}</h2>
+<div style="display:flex;flex-wrap:wrap;gap:48px 40px;width:max-content;max-width:2980px">
+<sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="2">
+<div id="{{ r.s }}" style="width:{{ r.w }}px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:4px"><h3 style="margin:0;font-size:24px;font-weight:500;letter-spacing:-.02em">{{ r.name }}</h3><p style="margin:0;max-width:960px;font-size:15px;line-height:1.55;color:#3b625e;text-wrap:pretty">{{ r.note }}</p></div>
+<div style="width:{{ r.w }}px;height:900px;border-radius:18px;overflow:hidden;box-shadow:0 30px 70px rgba(4,40,36,.3)"><dc-import name="Haven Desktop" screen="{{ r.s }}" compact="{{ r.compact }}" hint-size="1440px,900px" style="width:100%;height:100%"></dc-import></div>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const R = (s, name, note, compact) => ({ s, name, note, compact: !!compact, w: compact ? 1024 : 1440 });
+    return { groups: [
+      { id: 'd-home', name: 'Home & onboarding', rows: [
+        R('home-first', 'Home · first visit', 'Recent shows a dashed empty state. The right panel explains what to expect in three lines, with a not-for-emergencies note at the bottom.'),
+        R('consent', 'Consent', 'A wide dialog with the four rules as a 2×2 grid, so it reads at a glance. Memory is a real switch. The 18+ check sits beside Not now and Let\'s begin.'),
+        R('home-return', 'Home · returning', 'A wide text box with Talk, Breathe and starters. The right panel shows: pick up where you left off, the last 14 days, and what I remember.'),
+        R('menu', 'Account menu', 'Phone\'s Menu becomes a small account menu above the sidebar\'s account button: Settings, Privacy, Keyboard shortcuts, Help, and Sign in.'),
+        R('home-return', 'Compact · 1024 px', 'Between tablet and small-laptop widths: the sidebar shrinks to icons and the right panel folds away behind a toggle (top right, shortcut ]).', true),
+      ] },
+      { id: 'd-write', name: 'Writing', rows: [
+        R('talk-start', 'Start of a conversation', 'Haven greets you first, and the starters sit inline under the greeting.'),
+        R('talk-text', 'Writing', 'A readable conversation with the newest reply largest. Send turns aqua once there\'s text. Shortcuts are listed under the text box.'),
+        R('talk-style', 'Choosing a style', 'There\'s no popup: the radio buttons live in the panel. Keys 1–4 switch style (keyboard focus shown). It applies from the next reply.'),
+        R('talk-styled', 'Style confirmed', 'A quiet acknowledgement in the conversation, and the header subtitle shows the active style.'),
+        R('talk-slow', 'Slow reply', 'The orb in the panel thinks. After 8 seconds, an inline "Taking a little longer…" appears with Stop waiting.'),
+        R('talk-error', "Didn't send", 'The failed message gets a dashed outline and a line right under it with Try again and Edit. Nothing is lost.'),
+        R('end-confirm', 'End conversation', 'A small dialog with the main choice on the right and End without a card as a quiet option on the left.'),
+      ] },
+      { id: 'd-voice', name: 'Talking (voice)', rows: [
+        R('talk-off', 'Voice ready', 'A large orb and captions in the middle, with a floating control bar: Mute (off until live), the mic, and Breathe. The hint names the shortcuts.'),
+        R('talk-listening', 'Listening', 'The orb leans in, and the mic shows live level bars.'),
+        R('talk-speaking', 'Speaking', 'The caption streams in. Speaking or pressing Space interrupts.'),
+        R('transcript', 'Transcript', 'There\'s no popup: the panel has a Transcript tab, so you can read back while it keeps talking.'),
+      ] },
+      { id: 'd-care', name: 'Safety & breathing', rows: [
+        R('safety-elevated', 'Something sounds heavy', 'A Support options pill appears inline. The orb softens to concerned.'),
+        R('safety-acute', 'Acute', 'The right panel switches to a care panel by itself: 911, then crisis lines, then "I\'m safe right now". The conversation and text box stay usable beside it.'),
+        R('help', 'Get help', 'Opened from the sidebar at any time. It replaces the panel instead of covering your conversation. Close returns you to the conversation panel.'),
+        R('breathe', 'Breathe', 'The orb at full size with the phase and count, and the pattern and sound controls to the side. Esc goes back to the conversation.'),
+      ] },
+      { id: 'd-refl', name: 'Reflection', rows: [
+        R('reflection', 'Reflection card', 'A large card with Save image, Read conversation, and "Feel right?" in one row. The panel holds Your say, memory with Undo, and Delete.'),
+        R('reflection-edit', 'Edit card', 'The panel hides so editing gets full focus. Every field is editable, and ⌘ Enter saves.'),
+        R('sky-picker', 'Choose a sky', 'There\'s no popup: the Sky row opens inline in the panel with six skies and my reason for the pick.'),
+        R('delete-confirm', 'Delete reflection', 'A destructive dialog. The optional forget-notes checkbox comes first, and Keep it sits next to Delete.'),
+      ] },
+      { id: 'd-look', name: 'Skies, patterns & memory', rows: [
+        R('skies', 'Your skies', 'A month calendar where each day is its sky. The selected day\'s conversations show in the panel.'),
+        R('skies-empty', 'Your skies · empty', 'The calendar shows what\'s coming, with today outlined, plus one clear way to start.'),
+        R('patterns', 'Your patterns', 'A large constellation, with a ranked topic list in the panel for people who prefer lists.'),
+        R('patterns-topic', 'Pattern topic', 'The selected star is ringed. The panel shows its conversations, with Talk about this and Hide this topic.'),
+        R('memory', 'What I remember', 'Notes grouped as People, What\'s going on and What helps, each with Edit and Forget. Undo appears in place. The switch, In short and Forget everything sit in the panel.'),
+        R('memory-off', 'Memory off', 'A plain notice, dimmed notes, and the switch off in the panel.'),
+      ] },
+      { id: 'd-acct', name: 'Account & settings', rows: [
+        R('settings', 'Settings', 'The same row pattern as phone, at a readable 720 px width. It adds a Keyboard group and a "Start in" preference.'),
+        R('signin', 'Sign in', 'A centred card. It says anything on this device moves into your account.'),
+        R('signin-sent', 'Check your email', 'Tells you that you can keep this tab open, with Send it again and Use a different email.'),
+        R('privacy', 'Privacy', 'Plain-words groups in the centre, with your controls always visible in the panel.'),
+      ] },
+    ] };
+  }
+}
+</script>
+</body>
+</html>

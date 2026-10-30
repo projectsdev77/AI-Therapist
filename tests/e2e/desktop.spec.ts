@@ -9,7 +9,9 @@ test("first visit: Home in the shell, with what to expect and the consent grid",
   await expect(sidebar.getByRole("button", { name: /New conversation/ })).toBeVisible();
   await expect(sidebar.getByText("Your conversations will appear here")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Somewhere quiet to think out loud" })).toBeVisible();
-  await expect(page.getByRole("complementary", { name: "What to expect" })).toBeVisible();
+  // Calmer Home: no side panel, three starters.
+  await expect(page.getByRole("complementary", { name: "What to expect" })).toHaveCount(0);
+  await expect(page.getByRole("group", { name: "Or start with" }).getByRole("button")).toHaveCount(3);
   await expectAccessible(page);
 
   await page.getByRole("button", { name: "Talk", exact: true }).click();
@@ -68,6 +70,11 @@ test("the card page: Your say in the panel, inline sky picker, edit with E", asy
   await expect(panel.getByText("Quiet · chosen by you")).toBeVisible();
   await expectAccessible(page);
 
+  // Home shows a quiet "Last time … Pick up" link once there's a conversation.
+  await page.goto("/home");
+  await expect(page.getByRole("link", { name: /Last time .* Pick up/ })).toBeVisible();
+  await page.goBack();
+  await expect(page.locator("#reflection-card")).toBeVisible({ timeout: 15_000 });
   await page.keyboard.press("e");
   await page.getByLabel(/^Title/).fill("A long week at work");
   await page.keyboard.press("Control+Enter");

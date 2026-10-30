@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./lagoon.css">
+<style>button{font-family:inherit;cursor:pointer}button:disabled{cursor:default}button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid #e6f59a;outline-offset:3px}a{color:#8ff0e8}a:hover{color:#effcfa}kbd{font-family:'Geist Mono',monospace;font-size:11px}</style>
+</helmet>
+<div data-screen-label="{{ label }}" style="position:relative;width:100%;height:100%;min-height:700px;overflow:hidden;display:grid;grid-template-columns:{{ cols }};background:#081822;color:var(--lg-text);font-family:var(--lg-font);font-size:15px;line-height:1.5">
+
+<aside aria-label="Sidebar" style="position:relative;z-index:2;display:flex;flex-direction:column;gap:20px;padding:20px {{ sidePad }} 16px;border-right:1px solid var(--lg-edge-lo);background:#0a1f2a;min-height:0;align-items:{{ sideAlign }}">
+<a href="#" aria-label="Haven home" style="display:flex;align-items:center;gap:10px;min-height:40px;padding:0 8px;color:var(--lg-text);text-decoration:none;font-size:18px;font-weight:600;letter-spacing:-.025em"><span aria-hidden="true" style="width:24px;height:24px;flex:none;border-radius:50%;background:radial-gradient(circle at 50% 42%, #1a8c84, #0b3c44 62%, #04141a);box-shadow:0 0 0 2px rgba(111,240,230,.55), 0 0 12px rgba(63,214,205,.5)"></span><sc-if value="{{ full }}" hint-placeholder-val="{{ true }}"><span>Haven</span></sc-if></a>
+<button aria-label="New conversation" title="New conversation (N)" style="min-height:44px;min-width:44px;padding:0 {{ newPad }};border-radius:var(--lg-radius-sm);border:0;background:var(--lg-mic);color:var(--lg-mic-fg);font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px" style-hover="background:#8ff0e8"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg><sc-if value="{{ full }}" hint-placeholder-val="{{ true }}"><span style="flex:1;text-align:left">New conversation</span></sc-if></button>
+<nav aria-label="Main" style="display:flex;flex-direction:column;gap:2px;width:100%">
+<sc-for list="{{ nav }}" as="n" hint-placeholder-count="4">
+<a href="#" aria-current="{{ n.cur }}" aria-label="{{ n.t }}" title="{{ n.t }}" style="min-height:44px;padding:0 10px;border-radius:12px;display:flex;align-items:center;justify-content:{{ navJustify }};gap:12px;background:{{ n.bg }};color:{{ n.fg }};text-decoration:none;font-size:15px;font-weight:{{ n.w }}" style-hover="background:var(--lg-glass);color:var(--lg-text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:var(--lg-accent-strong)"><path d="{{ n.icon }}"></path></svg><sc-if value="{{ full }}" hint-placeholder-val="{{ true }}"><span style="flex:1">{{ n.t }}</span></sc-if></a>
+</sc-for>
+</nav>
+<div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:4px;overflow:hidden;width:100%">
+<sc-if value="{{ full }}" hint-placeholder-val="{{ true }}">
+<h2 style="margin:0 10px 4px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--lg-text-faint)">Recent</h2>
+<sc-if value="{{ hasRecent }}" hint-placeholder-val="{{ true }}">
+<sc-for list="{{ recent }}" as="r" hint-placeholder-count="6">
+<a href="#" aria-current="{{ r.cur }}" style="min-height:52px;padding:6px 10px;border-radius:12px;display:flex;align-items:center;gap:12px;background:{{ r.bg }};color:var(--lg-text);text-decoration:none" style-hover="background:var(--lg-glass)"><span aria-hidden="true" style="width:22px;height:22px;flex:none;border-radius:50%;background:{{ r.sky }};box-shadow:0 0 10px {{ r.glow }}"></span><span style="flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3"><span style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.t }}</span><span style="font-size:12px;color:var(--lg-text-faint)">{{ r.d }}</span></span></a>
+</sc-for>
+</sc-if>
+<sc-if value="{{ noRecent }}" hint-placeholder-val="{{ false }}"><p style="margin:0 10px;padding:14px;border-radius:12px;border:1px dashed var(--lg-edge-hi);font-size:13px;color:var(--lg-text-muted);text-wrap:pretty">Your conversations will appear here, each with its sky.</p></sc-if>
+</sc-if>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--lg-edge-lo);width:100%">
+<a href="#" aria-label="Get help, crisis lines" title="Get help" style="min-height:44px;padding:0 12px;border-radius:12px;background:var(--lg-care-surface);color:var(--lg-care);text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:{{ navJustify }};gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg><sc-if value="{{ full }}" hint-placeholder-val="{{ true }}"><span>Get help · crisis lines</span></sc-if></a>
+<button aria-haspopup="menu" aria-expanded="{{ menuOpen }}" aria-label="Account and settings" style="min-height:48px;padding:0 10px;border-radius:12px;border:0;background:{{ acctBg }};display:flex;align-items:center;justify-content:{{ navJustify }};gap:10px;color:var(--lg-text);text-align:left" style-hover="background:var(--lg-glass)"><span aria-hidden="true" style="width:30px;height:30px;flex:none;border-radius:50%;background:var(--lg-glass-strong);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">{{ acctInitial }}</span><sc-if value="{{ full }}" hint-placeholder-val="{{ true }}"><span style="flex:1;display:flex;flex-direction:column;line-height:1.25"><span style="font-size:14px">{{ acctName }}</span><span style="font-size:12px;color:var(--lg-text-faint)">{{ acctSub }}</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="color:var(--lg-text-faint)"><path d="M7 15l5-5 5 5"></path></svg></sc-if></button>
+</div>
+</aside>
+
+<main style="position:relative;z-index:1;min-width:0;min-height:0;display:flex;flex-direction:column;background:var(--lg-bg);overflow:hidden">
+<div aria-hidden="true" style="position:absolute;inset:0;pointer-events:none;overflow:hidden">
+<div style="position:absolute;width:140%;height:180px;left:-30%;top:160px;border-radius:50%;background:var(--lg-streak-a);filter:blur(64px);transform:rotate(-14deg)"></div>
+<div style="position:absolute;width:110%;height:180px;right:-40%;top:48%;border-radius:50%;background:var(--lg-streak-b);filter:blur(70px);transform:rotate(12deg)"></div>
+<div style="position:absolute;width:110%;height:220px;left:-10%;bottom:-110px;border-radius:50%;background:var(--lg-streak-c);filter:blur(70px)"></div>
+</div>
+<sc-if value="{{ compact }}" hint-placeholder-val="{{ false }}"><button aria-label="Show side panel" title="Side panel (])" style="position:absolute;z-index:3;top:16px;right:16px;width:44px;height:44px;border-radius:var(--lg-radius-sm);background:var(--lg-glass);border:1px solid var(--lg-edge-hi);color:var(--lg-text);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3"></rect><path d="M14.5 4.5v15"></path></svg></button></sc-if>
+
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<div style="position:relative;flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 48px;text-align:center">
+<x-import component-from-global-scope="haven-orb" from="./haven-orb.js" size="200" state="idle" hint-size="200px,200px"></x-import>
+<p style="margin:18px 0 0;font-size:15px;color:var(--lg-text-muted)">{{ homeKicker }}</p>
+<h1 style="margin:4px 0 0;max-width:640px;font-size:46px;font-weight:600;line-height:1.06;letter-spacing:-.04em;text-wrap:balance">{{ homeTitle }}</h1>
+<sc-if value="{{ homeSub }}" hint-placeholder-val="{{ false }}"><p style="margin:10px 0 0;max-width:520px;font-size:17px;color:var(--lg-text-muted);text-wrap:pretty">{{ homeSub }}</p></sc-if>
+<div style="margin-top:28px;width:100%;max-width:680px;display:flex;flex-direction:column;gap:12px">
+<div style="min-height:64px;padding:8px 8px 8px 22px;box-sizing:border-box;border-radius:32px;background:rgba(8,30,40,.55);border:1px solid var(--lg-edge-hi);backdrop-filter:blur(18px);display:flex;align-items:center;gap:10px;box-shadow:0 18px 50px rgba(0,0,0,.25)">
+<span style="flex:1;text-align:left;font-size:17px;color:var(--lg-text-faint)">Write what's on your mind, or press Space to talk</span>
+<button aria-label="Help me slow down" title="Breathe (B)" style="width:48px;height:48px;flex:none;border-radius:50%;background:var(--lg-glass);border:1px solid var(--lg-edge-lo);color:var(--lg-text);display:flex;align-items:center;justify-content:center" style-hover="background:var(--lg-glass-strong)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3.5"></circle></svg></button>
+<button title="Talk (Space)" style="height:48px;padding:0 20px 0 16px;flex:none;border-radius:24px;border:0;background:var(--lg-mic);color:var(--lg-mic-fg);font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 6px 18px var(--lg-mic-shadow)" style-hover="background:#8ff0e8"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3.5" width="6" height="11" rx="3"></rect><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5"></path></svg>Talk</button>
+</div>
+<div role="group" aria-label="Or start with" style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px">
+<sc-for list="{{ starters }}" as="s" hint-placeholder-count="3"><button style="min-height:40px;padding:0 14px;border-radius:var(--lg-pill);border:0;background:transparent;color:var(--lg-text-muted);font-size:14px" style-hover="background:var(--lg-glass);color:var(--lg-text)">{{ s }}</button></sc-for>
+</div>
+<sc-if value="{{ homePick }}" hint-placeholder-val="{{ false }}"><a href="#" style="align-self:center;margin-top:18px;min-height:52px;padding:6px 18px 6px 8px;border-radius:var(--lg-pill);display:flex;align-items:center;gap:12px;background:var(--lg-glass);border:1px solid var(--lg-edge-lo);color:var(--lg-text);text-decoration:none;font-size:14px" style-hover="background:var(--lg-glass-strong)"><span aria-hidden="true" style="width:36px;height:36px;border-radius:50%;background:{{ lastSky }}"></span><span style="color:var(--lg-text-muted)">Last time</span><span style="font-weight:500">A better conversation with Maya</span><span style="color:var(--lg-accent-strong);font-weight:600">Pick up</span></a></sc-if>
+</div>
+</div>
+<p style="position:relative;margin:0;padding:0 48px 18px;text-align:center;font-size:13px;color:var(--lg-text-faint)">Haven is an AI companion, not a clinician or an emergency service. If you're in danger, call 911.</p>
+</sc-if>
+
+<sc-if value="{{ isTalk }}" hint-placeholder-val="{{ false }}">
+<header style="position:relative;flex:none;display:flex;align-items:center;gap:14px;padding:14px {{ headPadR }} 14px 28px;border-bottom:1px solid var(--lg-edge-lo)">
+<span aria-hidden="true" style="width:28px;height:28px;flex:none;border-radius:50%;background:{{ convSky }}"></span>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3"><span style="font-size:16px;font-weight:600">{{ convTitle }}</span><span style="font-size:13px;color:var(--lg-text-muted)">{{ convSub }}</span></div>
+<sc-if value="{{ textMode }}" hint-placeholder-val="{{ true }}"><button title="Switch to talking (Space)" style="min-height:40px;padding:0 14px;border-radius:var(--lg-pill);background:transparent;border:1px solid var(--lg-edge-hi);color:var(--lg-text);font-size:14px;display:flex;align-items:center;gap:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3.5" width="6" height="11" rx="3"></rect><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5"></path></svg>Talk</button></sc-if>
+<sc-if value="{{ voiceMode }}" hint-placeholder-val="{{ false }}"><button title="Switch to writing (W)" style="min-height:40px;padding:0 14px;border-radius:var(--lg-pill);background:transparent;border:1px solid var(--lg-edge-hi);color:var(--lg-text);font-size:14px;display:flex;align-items:center;gap:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"></path></svg>Write</button></sc-if>
+<button aria-haspopup="dialog" title="End (Esc)" style="min-height:40px;padding:0 16px;border-radius:var(--lg-pill);background:var(--lg-glass-strong);border:1px solid var(--lg-edge-hi);color:var(--lg-text);font-size:14px;font-weight:500;white-space:nowrap">End &amp; make card</button>
+</header>
+
+<sc-if value="{{ textMode }}" hint-placeholder-val="{{ true }}">
+<div style="position:relative;flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:24px 40px 0">
+<ol aria-live="polite" style="margin:0;padding:0;list-style:none;width:100%;max-width:680px;display:flex;flex-direction:column;gap:20px">
+<sc-for list="{{ turns }}" as="t" hint-placeholder-count="5">
+<li style="display:flex;flex-direction:column;gap:4px;align-items:{{ t.align }}">
+<span style="font-size:12px;font-weight:600;color:{{ t.whoFg }}">{{ t.who }}</span>
+<p style="margin:0;max-width:{{ t.max }};padding:{{ t.pad }};border-radius:{{ t.rad }};background:{{ t.bg }};border:{{ t.bd }};font-size:{{ t.size }};font-weight:{{ t.w }};line-height:1.45;letter-spacing:{{ t.ls }};color:{{ t.fg }};text-wrap:pretty">{{ t.text }}</p>
+</li>
+</sc-for>
+<sc-if value="{{ errorRow }}" hint-placeholder-val="{{ false }}">
+<li role="alert" style="align-self:flex-end;margin-top:-12px;display:flex;align-items:center;gap:6px;font-size:13px;color:#ffc4b8"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5h.01"></path></svg>Didn't send. Your words are safe.<button style="min-height:36px;padding:0 12px;border-radius:var(--lg-pill);border:0;background:var(--lg-mic);color:var(--lg-mic-fg);font-size:13px;font-weight:600">Try again</button><button style="min-height:36px;padding:0 10px;border:0;border-radius:var(--lg-pill);background:transparent;color:var(--lg-text-muted);font-size:13px">Edit</button></li>
+</sc-if>
+<sc-if value="{{ slowRow }}" hint-placeholder-val="{{ false }}">
+<li role="status" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span aria-hidden="true" style="width:8px;height:8px;border-radius:50%;background:var(--lg-accent);animation:lgPulse 4s var(--lg-ease) infinite"></span><span style="font-size:17px;color:var(--lg-text-muted)">Taking a little longer than usual…</span><button style="min-height:36px;padding:0 14px;border-radius:var(--lg-pill);background:var(--lg-glass-strong);border:1px solid var(--lg-edge-hi);color:var(--lg-text);font-size:13px;font-weight:500">Stop waiting</button></li>
+</sc-if>
+<sc-if value="{{ typingRow }}" hint-placeholder-val="{{ false }}"><li aria-hidden="true" style="display:flex;gap:6px;padding:4px 0"><span style="width:8px;height:8px;border-radius:50%;background:var(--lg-accent);animation:lgPulse 1.4s var(--lg-ease) infinite"></span><span style="width:8px;height:8px;border-radius:50%;background:var(--lg-accent);animation:lgPulse 1.4s var(--lg-ease) .2s infinite"></span><span style="width:8px;height:8px;border-radius:50%;background:var(--lg-accent);animation:lgPulse 1.4s var(--lg-ease) .4s infinite"></span></li></sc-if>
+<sc-if value="{{ ack }}" hint-placeholder-val="{{ false }}"><li role="status" style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--lg-text-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="color:var(--lg-accent-strong)"><path d="M4 8h9M17 8h3M4 16h3M11 16h9"></path></svg>{{ ack }}</li></sc-if>
+<sc-if value="{{ elevated }}" hint-placeholder-val="{{ false }}"><li><button aria-haspopup="dialog" style="min-height:40px;padding:0 16px;border-radius:var(--lg-pill);background:var(--lg-care-surface);border:1px solid rgba(220,207,255,.35);color:var(--lg-care);font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg>Support options</button></li></sc-if>
+<sc-if value="{{ starterRow }}" hint-placeholder-val="{{ false }}"><li role="group" aria-label="Ways to start" style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ starters }}" as="s" hint-placeholder-count="4"><button style="min-height:40px;padding:0 14px;border-radius:var(--lg-pill);border:1px solid var(--lg-edge-lo);background:transparent;color:var(--lg-text-muted);font-size:14px" style-hover="background:var(--lg-glass);color:var(--lg-text)">{{ s }}</button></sc-for></li></sc-if>
+</ol>
+</div>
+<div style="position:relative;flex:none;display:flex;justify-content:center;padding:16px 40px 20px">
+<div style="width:100%;max-width:720px;display:flex;flex-direction:column;gap:8px">
+<div style="min-height:60px;padding:7px 7px 7px 20px;box-sizing:border-box;border-radius:30px;background:rgba(8,30,40,.6);border:1px solid {{ composerBd }};backdrop-filter:blur(18px);display:flex;align-items:center;gap:8px">
+<span style="flex:1;font-size:16px;color:{{ draftFg }}">{{ draftText }}</span>
+<button aria-label="Switch to talking" title="Talk (Space)" style="width:46px;height:46px;flex:none;border-radius:50%;background:var(--lg-glass);border:1px solid var(--lg-edge-lo);color:var(--lg-text);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3.5" width="6" height="11" rx="3"></rect><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5"></path></svg></button>
+<button aria-label="Send" disabled="{{ noDraft }}" style="width:46px;height:46px;flex:none;border-radius:50%;border:0;background:{{ sendBg }};color:{{ sendFg }};display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"></path></svg></button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ voiceMode }}" hint-placeholder-val="{{ false }}">
+<div style="position:relative;flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px 48px;text-align:center">
+<x-import component-from-global-scope="haven-orb" from="./haven-orb.js" size="250" state="{{ orbState }}" hint-size="250px,250px"></x-import>
+<div aria-live="polite" style="width:100%;max-width:720px;display:flex;flex-direction:column;gap:12px;align-items:center">
+<sc-if value="{{ vPrev }}" hint-placeholder-val="{{ false }}"><p aria-hidden="true" style="margin:0;font-size:17px;opacity:.3;filter:blur(1px)">{{ vPrev }}</p></sc-if>
+<sc-if value="{{ vPerson }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:19px;color:var(--lg-text-muted)">{{ vPerson }}</p></sc-if>
+<sc-if value="{{ vCompanion }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:30px;font-weight:500;line-height:1.3;letter-spacing:-.02em;text-wrap:balance">{{ vCompanion }}</p></sc-if>
+</div>
+</div>
+<div style="position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 40px 24px">
+<div style="display:flex;align-items:center;gap:18px;padding:12px 18px;border-radius:var(--lg-pill);background:var(--lg-glass);border:1px solid var(--lg-edge-hi);backdrop-filter:blur(18px)">
+<button aria-label="Mute microphone" title="Mute (M)" disabled="{{ micIdle }}" style="width:52px;height:52px;border-radius:50%;background:var(--lg-glass-strong);border:1px solid var(--lg-edge-hi);color:var(--lg-text);opacity:{{ muteOp }};display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="9" y="3.5" width="6" height="11" rx="3"></rect><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5M4 4l16 16"></path></svg></button>
+<button aria-label="{{ micAria }}" title="Space" style="width:72px;height:72px;border-radius:50%;border:0;background:var(--lg-mic);color:var(--lg-mic-fg);display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 0 0 8px rgba(160,250,240,.12), 0 8px 22px var(--lg-mic-shadow)">
+<sc-if value="{{ micIdle }}" hint-placeholder-val="{{ true }}"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3.5" width="6" height="11" rx="3"></rect><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5"></path></svg></sc-if>
+<sc-if value="{{ micListening }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ bars }}" as="b" hint-placeholder-count="5"><span style="width:4px;height:22px;border-radius:2px;background:currentColor;animation:lgBar 1s ease-in-out {{ b }}s infinite"></span></sc-for></sc-if>
+<sc-if value="{{ micSpeaking }}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="6" width="3.5" height="12" rx="1.2"></rect><rect x="13.5" y="6" width="3.5" height="12" rx="1.2"></rect></svg></sc-if>
+</button>
+<button aria-label="Help me slow down" title="Breathe (B)" style="width:52px;height:52px;border-radius:50%;background:var(--lg-glass-strong);border:1px solid var(--lg-edge-hi);color:var(--lg-text);display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3.5"></circle></svg></button>
+</div>
+<p style="margin:0;font-size:13px;color:var(--lg-text-muted)">{{ micHint }}</p>
+</div>
+</sc-if>
+</sc-if>
+
+<sc-if value="{{ isBreathe }}" hint-placeholder-val="{{ false }}">
+<header style="position:relative;flex:none;display:flex;align-items:center;gap:12px;padding:14px 28px;border-bottom:1px solid var(--lg-edge-lo)"><button style="min-height:40px;padding:0 14px 0 8px;border-radius:var(--lg-pill);border:0;background:transparent;color:var(--lg-text);font-size:14px;display:flex;align-items:center;gap:4px" style-hover="background:var(--lg-glass)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M15 6l-6 6 6 6"></path></svg>Back to conversation</button><span style="flex:1"></span><span style="font-size:13px;color:var(--lg-text-faint)"><kbd>Esc</kbd> to leave</span></header>
+<div style="position:relative;flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:48px;align-items:center;padding:24px 64px;max-width:1080px;width:100%;margin:0 auto;box-sizing:border-box">
+<div style="display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center">
+<x-import component-from-global-scope="haven-orb" from="./haven-orb.js" size="300" state="breathing" hint-size="300px,300px"></x-import>
+<div role="status" aria-live="polite" style="display:flex;flex-direction:column;gap:2px"><span style="font-size:44px;font-weight:600;letter-spacing:-.035em">Breathe in</span><span style="font-size:17px;color:var(--lg-text-muted);font-variant-numeric:tabular-nums">3 of 4 · round 2 of 5</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<h2 id="bpat" style="margin:0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--lg-text-faint)">Pattern</h2>
+<div role="radiogroup" aria-labelledby="bpat" style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ patterns }}" as="p" hint-placeholder-count="3"><button role="radio" aria-checked="{{ p.on }}" style="min-height:56px;padding:0 16px;border-radius:var(--lg-radius-md);border:1px solid {{ p.bd }};background:{{ p.bg }};color:var(--lg-text);display:flex;align-items:center;gap:12px;text-align:left"><span aria-hidden="true" style="width:18px;height:18px;flex:none;border-radius:50%;box-sizing:border-box;border:{{ p.ring }};background:{{ p.fill }}"></span><span style="flex:1;font-size:16px;font-weight:{{ p.w }}">{{ p.name }}</span><span style="font-size:13px;color:var(--lg-text-muted)">{{ p.beat }}</span></button></sc-for>
+</div>
+<div style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 6px 0 16px;border-radius:var(--lg-radius-md);background:var(--lg-glass);border:1px solid var(--lg-edge-lo)"><span style="flex:1;font-size:15px">Soft sound on each step</span><button role="switch" aria-checked="true" aria-label="Soft sound" style="width:52px;height:44px;border:0;background:transparent;display:flex;align-items:center;justify-content:center"><span style="width:44px;height:26px;border-radius:13px;background:var(--lg-mic);position:relative;display:block"><span style="position:absolute;top:3px;left:21px;width:20px;height:20px;border-radius:50%;background:var(--lg-mic-fg)"></span></span></button></div>
+<button style="margin-top:6px;min-height:52px;border-radius:var(--lg-pill);background:var(--lg-glass-strong);border:1px solid var(--lg-edge-hi);color:var(--lg-text);font-size:16px;font-weight:600">I'm done</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isRefl }}" hint-placeholder-val="{{ false }}">
+<div style="position:relative;flex:1;min-height:0;overflow:auto;padding:28px 40px 40px">
+<div style="max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+<p style="margin:0;font-size:13px;color:var(--lg-text-muted)"><a href="#" style="text-decoration:none;color:var(--lg-text-muted)">Your skies</a> / Wednesday, Oct 28</p>
+<article aria-labelledby="cardT" style="border-radius:var(--lg-radius-lg);background:var(--lg-glass);border:1px solid {{ cardBd }};backdrop-filter:blur(18px);overflow:hidden">
+<div style="position:relative;height:170px;background:{{ cardSky }}">
+<div aria-hidden="true" style="position:absolute;inset:0;background:radial-gradient(60% 80% at 80% 0%, rgba(255,255,255,.3), transparent 60%), linear-gradient(180deg, transparent 30%, rgba(8,24,34,.6))"></div>
+<div style="position:absolute;left:24px;right:24px;bottom:16px;display:flex;justify-content:space-between;gap:12px;font-size:14px;font-weight:500"><span>Wed, Oct 28 · 7:56 AM</span><span>{{ cardSkyName }}</span></div>
+<sc-if value="{{ editing }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:16px;left:20px;padding:4px 10px;border-radius:var(--lg-pill);background:rgba(8,24,34,.7);font-size:13px;font-weight:600">Editing</span></sc-if>
+</div>
+<sc-if value="{{ viewing }}" hint-placeholder-val="{{ true }}">
+<div style="padding:26px 28px 28px;display:flex;flex-direction:column;gap:20px">
+<h1 id="cardT" style="margin:0;font-size:36px;font-weight:600;line-height:1.1;letter-spacing:-.035em;text-wrap:balance">A better conversation with Maya</h1>
+<div style="display:flex;flex-direction:column;gap:10px;padding-left:16px;border-left:2px solid rgba(143,240,232,.4)"><p style="margin:0;font-size:19px;line-height:1.4">“I always assume she's judging me.”</p><p style="margin:0;font-size:19px;line-height:1.4">“Honestly it felt good to just say it.”</p></div>
+<p style="margin:0;font-size:17px;color:var(--lg-text-muted);text-wrap:pretty">You came in expecting a fight and found a way to say what you needed. That took courage.</p>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;border-radius:var(--lg-radius-md);background:var(--lg-glass-strong);padding:14px 16px"><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:600;color:var(--lg-accent-strong)">A small next step</span><span style="font-size:16px">Text Maya something kind tonight</span></span><span style="display:flex;gap:6px"><span style="font-size:13px;padding:5px 12px;border-radius:var(--lg-pill);background:var(--lg-glass);color:var(--lg-text-muted)">Sister</span><span style="font-size:13px;padding:5px 12px;border-radius:var(--lg-pill);background:var(--lg-glass);color:var(--lg-text-muted)">Family</span></span></div>
+</div>
+</sc-if>
+<sc-if value="{{ editing }}" hint-placeholder-val="{{ false }}">
+<div style="padding:22px 24px 26px;display:flex;flex-direction:column;gap:16px">
+<sc-for list="{{ editFields }}" as="e" hint-placeholder-count="5">
+<label style="display:flex;flex-direction:column;gap:6px"><span style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:var(--lg-text-muted)">{{ e.label }}<span style="font-weight:400;color:var(--lg-text-faint)">{{ e.count }}</span></span>
+<span style="display:flex;gap:4px;align-items:flex-start"><span tabindex="0" style="flex:1;min-height:48px;padding:11px 14px;box-sizing:border-box;border-radius:var(--lg-radius-sm);background:rgba(4,16,22,.45);border:1px solid {{ e.bd }};font-size:{{ e.size }};font-weight:{{ e.w }};line-height:1.35">{{ e.value }}</span><sc-if value="{{ e.removable }}" hint-placeholder-val="{{ false }}"><button aria-label="{{ e.removeAria }}" style="width:44px;height:48px;flex:none;border:0;border-radius:var(--lg-radius-sm);background:transparent;color:var(--lg-text-muted);display:flex;align-items:center;justify-content:center" style-hover="background:var(--lg-glass)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></sc-if></span></label>
+</sc-for>
+</div>
+</sc-if>
+</article>
+<sc-if value="{{ viewing }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<button style="min-height:48px;padding:0 20px;border-radius:var(--lg-pill);border:0;background:var(--lg-mic);color:var(--lg-mic-fg);font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg>Save image</button>
+<button style="min-height:48px;padding:0 20px;border-radius:var(--lg-pill);background:var(--lg-glass-strong);border:1px solid var(--lg-edge-hi);color:var(--lg-text);font-size:15px">Read the conversation</button>
+<span style="flex:1"></span>
+<span role="group" aria-label="Does this feel right?" style="display:flex;align-items:center;gap:6px"><span style="font-size:14px;color:var(--lg-text-muted);margin-right:4px">Feel right?</span><button aria-pressed="true" style="min-height:40px;padding:0 14px;border-radius:var(--lg-pill);border:0;background:var(--lg-mic);color:var(--lg-mic-fg);font-size:14px;font-weight:600">Yes</button><button aria-pressed="false" style="min-height:40px;padding:0 14px;border-radius:var(--lg-pill);background:var(--lg-glass);border:1px solid var(--lg-edge-hi);color:var(--lg-text);font-size:14px">Not quite</button></span>
+</div>
+<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 16px;border-radius:var(--lg-radius-md);border:1px dashed var(--lg-edge-hi)"><span style="flex:1;min-width:240px;display:flex;flex-direction:column"><strong style="font-size:15px;font-weight:600">Want to keep this?</strong><span style="font-size:14px;color:var(--lg-text-muted)">Your cards live only on this device right now. Sign in to keep them safe.</span></span><button style="min-height:40px;padding:0 16px;border-radius:var(--lg-pill);background:var(--lg-glass-strong);border:1px solid var(--lg-edge-hi);color:var(--lg-text);font-size:14px;font-weight:500">Sign in</button><button style="min-height:40px;padding:0 10px;border:0;background:transparent;color:var(--lg-text-muted);font-size:14px">Not now</button></div>
+</sc-if>
+<sc-if value="{{ editing }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button style="min-height:48px;padding:0 22px;border-radius:var(--lg-pill);border:0;background:var(--lg-mic);color:var(--lg-mic-fg);font-size:15px;font-weight:600">Save changes</button><button style="min-height:48px;padding:0 16px;border:0;border-radius:var(--lg-pill);background:transparent;color:var(--lg-text-muted);font-size:15px">Cancel</button><span style="flex:1"></span><span style="font-size:13px;color:var(--lg-text-faint)">Empty fields keep their old words</span></div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSkies }}" hint-placeholder-val="{{ false }}">
+<div style="position:relative;flex:1;min-height:0;overflow:auto;padding:32px 40px">
+<div style="max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:22px">
+<div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap"><div style="flex:1;display:flex;flex-direction:column;gap:4px"><h1 style="margin:0;font-size:40px;font-weight:600;letter-spacing:-.04em">Your skies</h1><p style="margin:0;color:var(--lg-text-muted)">How each day's conversations sounded. Not a measure of you.</p></div>
+<div role="group" aria-label="Month" style="display:flex;align-items:center;gap:4px;padding:4px;border-radius:var(--lg-pill);background:var(--lg-glass);border:1px solid var(--lg-edge-hi)"><button aria-label="Previous month" style="width:36px;height:36px;border-radius:50%;border:0;background:transparent;color:var(--lg-text);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M15 6l-6 6 6 6"></path></svg></button><span style="min-width:120px;text-align:center;font-size:15px;font-weight:600">October 2026</span><button aria-label="Next month" disabled="{{ true }}" style="width:36px;height:36px;border-radius:50%;border:0;background:transparent;color:var(--lg-text-faint);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M9 6l6 6-6 6"></path></svg></button></div></div>
+<sc-if value="{{ skiesEmpty }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 20px;border-radius:var(--lg-radius-md);background:var(--lg-glass-strong);border:1px solid var(--lg-edge-hi)"><span style="flex:1;min-width:260px;display:flex;flex-direction:column"><strong style="font-size:18px;font-weight:600">Your first sky is waiting</strong><span style="font-size:15px;color:var(--lg-text-muted);text-wrap:pretty">After each conversation, its sky fills in a day here, so you can look back and notice how things have felt.</span></span><button style="min-height:48px;padding:0 20px;border-radius:var(--lg-pill);border:0;background:var(--lg-mic);color:var(--lg-mic-fg);font-size:15px;font-weight:600">Start a conversation</button></div></sc-if>
+<div style="padding:18px;border-radius:var(--lg-radius-lg);background:rgba(8,30,40,.45);border:1px solid var(--lg-edge-hi);display:flex;flex-direction:column;gap:10px">
+<div aria-hidden="true" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;font-size:12px;font-weight:600;color:var(--lg-text-faint);text-align:center"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+<div role="grid" aria-label="October 2026" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px">
+<sc-for list="{{ cal }}" as="c" hint-placeholder-count="35"><button aria-label="{{ c.aria }}" aria-pressed="{{ c.pressed }}" disabled="{{ c.empty }}" style="aspect-ratio:1.3;border-radius:14px;border:{{ c.bd }};background:{{ c.bg }};color:{{ c.fg }};padding:8px 10px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;font-size:13px;font-weight:600;opacity:{{ c.op }};box-shadow:{{ c.sh }}" style-hover="filter:brightness(1.12)"><span>{{ c.n }}</span><span style="font-size:11px;font-weight:500;opacity:.85">{{ c.count }}</span></button></sc-for>
+</div>
+<ul style="margin:6px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px 18px"><sc-for list="{{ legend }}" as="l" hint-placeholder-count="6"><li style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--lg-text-muted)"><span aria-hidden="true" style="width:12px;height:12px;border-radius:4px;background:{{ l.bg }}"></span>{{ l.name }}</li></sc-for></ul>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isPatterns }}" hint-placeholder-val="{{ false }}">
+<div style="position:relative;flex:1;min-height:0;display:flex;flex-direction:column;padding:32px 40px 24px">
+<div style="max-width:880px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:4px"><h1 style="margin:0;font-size:40px;font-weight:600;letter-spacing:-.04em">Your patterns</h1><p style="margin:0;color:var(--lg-text-muted)">Things that keep coming up in October. Brighter means more often.</p></div>
+<div style="position:relative;flex:1;min-height:0;width:100%;max-width:880px;margin:12px auto 0">
+<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"><path d="M27 23L14 48L12 78 M62 40L86 20 M62 40L76 56L48 66L62 40" fill="none" stroke="#8ff0e8" stroke-width=".3" opacity=".35" vector-effect="non-scaling-stroke"></path></svg>
+<sc-for list="{{ stars }}" as="st" hint-placeholder-count="8"><button aria-label="{{ st.aria }}" aria-pressed="{{ st.pressed }}" style="position:absolute;left:{{ st.x }}%;top:{{ st.y }}%;transform:translate(-22px,-22px);min-width:44px;min-height:44px;border:0;background:transparent;padding:0;display:flex;flex-direction:column;align-items:flex-start"><span style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><span style="width:{{ st.size }}px;height:{{ st.size }}px;border-radius:50%;background:#effcfa;box-shadow:0 0 {{ st.glow }}px {{ st.halo }}px rgba(111,240,230,.55);outline:{{ st.ring }};outline-offset:6px"></span></span><span style="font-size:14px;font-weight:{{ st.weight }};color:{{ st.fg }};white-space:nowrap;margin-top:-8px">{{ st.name }}</span></button></sc-for>
+</div>
+<p style="max-width:880px;width:100%;margin:0 auto;font-size:13px;color:var(--lg-text-muted)">Topics that came up when we talked. Only you can say what they mean.</p>
+</div>
+</sc-if>
+
+<sc-if value="{{ isList }}" hint-placeholder-val="{{ false }}">
+<div style="position:relative;flex:1;min-height:0;overflow:auto;padding:32px 40px 40px">
+<div style="max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;flex-direction:column;gap:6px"><h1 style="margin:0;font-size:40px;font-weight:600;letter-spacing:-.04em">{{ pageTitle }}</h1><sc-if value="{{ pageSub }}" hint-placeholder-val="{{ true }}"><p style="margin:0;font-size:16px;color:var(--lg-text-muted);text-wrap:pretty">{{ pageSub }}</p></sc-if></div>
+<sc-if value="{{ memOffNote }}" hint-placeholder-val="{{ false }}"><p role="status" style="margin:0;padding:14px 16px;border-radius:var(--lg-radius-md);border:1px dashed var(--lg-edge-hi);font-size:15px;color:var(--lg-text-muted);text-wrap:pretty">Remembering is off. I'm not adding notes or using the ones below. They stay until you delete them.</p></sc-if>
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+<section style="display:flex;flex-direction:column;gap:8px;opacity:{{ g.op }}">
+<h2 style="margin:0 0 0 4px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--lg-text-faint)">{{ g.name }}</h2>
+<div style="border-radius:var(--lg-radius-md);background:var(--lg-glass);border:1px solid var(--lg-edge-hi);overflow:hidden">
+<sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 8px 8px 18px;border-top:{{ r.bt }};opacity:{{ r.op }}" style-hover="background:rgba(150,240,230,.04)">
+<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;padding:4px 0"><span style="font-size:{{ r.tsize }};font-weight:{{ r.tw }};color:{{ r.fg }};text-wrap:pretty">{{ r.t }}</span><sc-if value="{{ r.d }}" hint-placeholder-val="{{ true }}"><span style="font-size:14px;color:var(--lg-text-muted);text-wrap:pretty">{{ r.d }}</span></sc-if></span>
+<sc-if value="{{ r.isSwitch }}" hint-placeholder-val="{{ false }}"><button role="switch" aria-checked="{{ r.on }}" aria-label="{{ r.t }}" disabled="{{ r.disabled }}" style="width:52px;height:44px;flex:none;border:0;background:transparent;display:flex;align-items:center;justify-content:center"><span style="width:44px;height:26px;border-radius:13px;background:{{ r.swBg }};border:1px solid {{ r.swBd }};box-sizing:border-box;position:relative;display:block"><span style="position:absolute;top:2px;left:{{ r.swX }};width:20px;height:20px;border-radius:50%;background:{{ r.swKnob }}"></span></span></button></sc-if>
+<sc-if value="{{ r.isLink }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:6px;min-height:44px;padding:0 6px;font-size:14px;color:var(--lg-text-muted);white-space:nowrap">{{ r.v }}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="color:var(--lg-text-faint)"><path d="M9 5l7 7-7 7"></path></svg></span></sc-if>
+<sc-if value="{{ r.isButton }}" hint-placeholder-val="{{ false }}"><button style="min-height:40px;padding:0 16px;border-radius:var(--lg-pill);background:var(--lg-glass-strong);border:1px solid var(--lg-edge-hi);color:var(--lg-text);font-size:14px;font-weight:600;white-space:nowrap">{{ r.v }}</button></sc-if>
+<sc-if value="{{ r.isActions }}" hint-placeholder-val="{{ false }}"><span style="display:flex;gap:2px"><button aria-label="{{ r.editAria }}" style="min-height:40px;padding:0 12px;border:0;border-radius:var(--lg-pill);background:transparent;color:var(--lg-text-muted);font-size:14px" style-hover="background:var(--lg-glass);color:var(--lg-text)">Edit</button><button aria-label="{{ r.forgetAria }}" style="min-height:40px;padding:0 12px;border:0;border-radius:var(--lg-pill);background:transparent;color:var(--lg-text-muted);font-size:14px" style-hover="background:var(--lg-glass);color:var(--lg-text)">Forget</button></span></sc-if>
+<sc-if value="{{ r.isUndo }}" hint-placeholder-val="{{ false }}"><button style="min-height:40px;padding:0 14px;border:0;border-radius:var(--lg-pill);background:var(--lg-glass-strong);color:var(--lg-text);font-size:14px;font-weight:600">Undo</button></sc-if>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-for>
+<sc-if value="{{ listFoot }}" hint-placeholder-val="{{ false }}"><p style="margin:0 4px;font-size:13px;color:var(--lg-text-faint)">{{ listFoot }}</p></sc-if>
+<sc-if value="{{ memAdd }}" hint-placeholder-val="{{ false }}"><button style="align-self:flex-start;min-height:48px;padding:0 18px;border-radius:var(--lg-pill);background:var(--lg-glass-strong);border:1px solid var(--lg-edge-hi);color:var(--lg-text);font-size:15px;font-weight:500;display:flex;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Add something I should know</button></sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSignin }}" hint-placeholder-val="{{ false }}">
+<div style="position:relative;flex:1;min-height:0;overflow:auto;display:flex;align-items:center;justify-content:center;padding:40px">
+<div style="width:100%;max-width:440px;padding:32px;border-radius:var(--lg-radius-lg);background:rgba(10,34,44,.75);border:1px solid var(--lg-edge-hi);backdrop-filter:blur(18px);display:flex;flex-direction:column;gap:16px;box-shadow:0 30px 80px rgba(0,0,0,.3)">
+<sc-if value="{{ signinForm }}" hint-placeholder-val="{{ true }}">
+<h1 style="margin:0;font-size:32px;font-weight:600;letter-spacing:-.04em;line-height:1.1">Keep your conversations safe</h1>
+<p style="margin:0;font-size:16px;color:var(--lg-text-muted);text-wrap:pretty">An account keeps your cards, skies and notes private, on any device. You don't need one to talk.</p>
+<button style="margin-top:4px;min-height:52px;border-radius:var(--lg-pill);border:0;background:#effcfa;color:#0b2a35;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z"></path><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z"></path><path fill="#FBBC05" d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1a10 10 0 0 0 0 9.2z"></path><path fill="#EA4335" d="M12 6c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.4L6.4 10C7.2 7.7 9.4 6 12 6z"></path></svg>Continue with Google</button>
+<div aria-hidden="true" style="display:flex;align-items:center;gap:12px;font-size:13px;color:var(--lg-text-faint)"><span style="flex:1;height:1px;background:var(--lg-edge-hi)"></span>or<span style="flex:1;height:1px;background:var(--lg-edge-hi)"></span></div>
+<label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:14px;font-weight:600;color:var(--lg-text-muted)">Email</span><span tabindex="0" style="min-height:52px;padding:0 16px;box-sizing:border-box;border-radius:var(--lg-radius-sm);background:rgba(4,16,22,.45);border:1px solid var(--lg-edge-hi);display:flex;align-items:center;font-size:16px;color:var(--lg-text-faint)">you@example.com</span></label>
+<button style="min-height:52px;border-radius:var(--lg-pill);border:0;background:var(--lg-mic);color:var(--lg-mic-fg);font-size:16px;font-weight:600">Email me a sign-in link</button>
+<p style="margin:0;font-size:13px;color:var(--lg-text-faint);text-wrap:pretty">No password. We only use your email to sign you in. Anything on this device moves into your account. <a href="#">Privacy</a></p>
+</sc-if>
+<sc-if value="{{ signinSent }}" hint-placeholder-val="{{ false }}">
+<div role="status" style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px">
+<span aria-hidden="true" style="width:64px;height:64px;border-radius:50%;background:var(--lg-glass-strong);display:flex;align-items:center;justify-content:center;color:var(--lg-accent-strong)"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"></rect><path d="M4 7l8 6 8-6"></path></svg></span>
+<h1 style="margin:0;font-size:30px;font-weight:600;letter-spacing:-.035em">Check your email</h1>
+<p style="margin:0;font-size:16px;color:var(--lg-text-muted);text-wrap:pretty">I sent a sign-in link to <strong style="color:var(--lg-text);font-weight:600">sam@example.com</strong>. It works for 15 minutes. You can keep this tab open.</p>
+<div style="display:flex;gap:8px;margin-top:6px"><button style="min-height:44px;padding:0 18px;border-radius:var(--lg-pill);background:var(--lg-glass-strong);border:1px solid var(--lg-edge-hi);color:var(--lg-text);font-size:15px;font-weight:500">Send it again</button><button style="min-height:44px;padding:0 12px;border:0;background:transparent;color:var(--lg-text-muted);font-size:15px">Use a different email</button></div>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+</main>
+
+<sc-if value="{{ hasPanel }}" hint-placeholder-val="{{ true }}">
+<aside aria-label="{{ panelLabel }}" style="position:relative;z-index:2;min-width:0;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:22px;padding:22px 20px;border-left:1px solid var(--lg-edge-lo);background:{{ panelBg }}">
+<sc-if value="{{ pHome }}" hint-placeholder-val="{{ true }}">
+<section style="display:flex;flex-direction:column;gap:10px">
+<h2 style="margin:0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--lg-text-faint)">Pick up where you left off</h2>
+<a href="#" style="display:flex;flex-direction:column;border-radius:var(--lg-radius-md);overflow:hidden;background:var(--lg-glass);border:1px solid var(--lg-edge-hi);color:inherit;text-decoration:none" style-hover="background:var(--lg-glass-strong)"><span aria-hidden="true" style="height:64px;background:{{ lastSky }}"></span><span style="padding:12px 14px 14px;display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:var(--lg-text-muted)">Wednesday · Rain, then clearing</span><span style="font-size:16px;font-weight:600;letter-spacing:-.01em">A better conversation with Maya</span><span style="margin-top:6px;font-size:13px;color:var(--lg-text-muted)">Next step: text Maya something kind</span></span></a>
+</section>
+<section style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--lg-text-faint)">Last 14 days</h2><a href="#" style="font-size:13px;text-decoration:none">All skies</a></div>
+<div role="img" aria-label="Last 14 days of skies, stormier mid-week, clearing now" style="display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:3px"><sc-for list="{{ fortnight }}" as="f" hint-placeholder-count="14"><span style="height:36px;border-radius:5px;background:{{ f }}"></span></sc-for></div>
+</section>
+<section style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--lg-text-faint)">What I remember</h2><a href="#" style="font-size:13px;text-decoration:none">See all</a></div>
+<sc-for list="{{ notesShort }}" as="n" hint-placeholder-count="3"><p style="margin:0;padding:10px 12px;border-radius:12px;background:var(--lg-glass);font-size:14px;text-wrap:pretty">{{ n }}</p></sc-for>
+</section>
+</sc-if>
+<sc-if value="{{ pFirst }}" hint-placeholder-val="{{ false }}">
+<h2 style="margin:0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--lg-text-faint)">What to expect</h2>
+<sc-for list="{{ expect }}" as="e" hint-placeholder-count="3">
+<div style="display:flex;gap:12px"><span aria-hidden="true" style="width:36px;height:36px;flex:none;border-radius:50%;background:var(--lg-glass-strong);display:flex;align-items:center;justify-content:center;color:var(--lg-accent-strong)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ e.icon }}"></path></svg></span><span style="display:flex;flex-direction:column"><strong style="font-size:15px;font-weight:600">{{ e.t }}</strong><span style="font-size:14px;color:var(--lg-text-muted);text-wrap:pretty">{{ e.d }}</span></span></div>
+</sc-for>
+<p style="margin:auto 0 0;padding:12px 14px;border-radius:12px;background:var(--lg-care-surface);font-size:13px;color:var(--lg-text);text-wrap:pretty">Not for emergencies. If you might be in danger, call or text <strong style="color:var(--lg-care)">988</strong>, or call 911.</p>
+</sc-if>
+<sc-if value="{{ pTalk }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ voiceMode }}" hint-placeholder-val="{{ false }}">
+<div role="tablist" aria-label="Panel" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:var(--lg-pill);background:var(--lg-glass);border:1px solid var(--lg-edge-lo)">
+<sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="2"><button role="tab" aria-selected="{{ tb.on }}" style="min-height:36px;border-radius:var(--lg-pill);border:0;background:{{ tb.bg }};color:{{ tb.fg }};font-size:14px;font-weight:{{ tb.w }}">{{ tb.t }}</button></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ panelOrb }}" hint-placeholder-val="{{ true }}"><div style="display:flex;justify-content:center;padding:4px 0 0"><x-import component-from-global-scope="haven-orb" from="./haven-orb.js" size="150" state="{{ orbState }}" hint-size="150px,150px"></x-import></div></sc-if>
+<sc-if value="{{ showConvoTab }}" hint-placeholder-val="{{ true }}">
+<section style="display:flex;flex-direction:column;gap:8px">
+<h2 id="dStyle" style="margin:0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--lg-text-faint)">What would help right now?</h2>
+<div role="radiogroup" aria-labelledby="dStyle" style="display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ styles }}" as="o" hint-placeholder-count="4"><button role="radio" aria-checked="{{ o.on }}" style="min-height:48px;padding:0 12px;border-radius:12px;border:1px solid {{ o.bd }};background:{{ o.bg }};color:var(--lg-text);display:flex;align-items:center;gap:10px;text-align:left;outline:{{ o.focus }};outline-offset:2px" style-hover="background:var(--lg-glass)"><span aria-hidden="true" style="width:16px;height:16px;flex:none;border-radius:50%;box-sizing:border-box;border:{{ o.ring }};background:{{ o.fill }}"></span><span style="flex:1;display:flex;flex-direction:column;line-height:1.3"><span style="font-size:14px;font-weight:{{ o.w }}">{{ o.t }}</span><span style="font-size:12px;color:var(--lg-text-muted)">{{ o.d }}</span></span></button></sc-for>
+</div>
+<p style="margin:0 2px;font-size:12px;color:var(--lg-text-faint)">Applies from my next reply. You can also just ask.</p>
+</section>
+</sc-if>
+<sc-if value="{{ showTranscriptTab }}" hint-placeholder-val="{{ false }}">
+<ol style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px">
+<sc-for list="{{ transcript }}" as="t" hint-placeholder-count="5"><li style="display:flex;flex-direction:column;gap:2px;padding-left:12px;border-left:2px solid {{ t.rule }}"><span style="font-size:12px;font-weight:600;color:{{ t.whoFg }}">{{ t.who }} · {{ t.time }}</span><span style="font-size:14px;color:{{ t.fg }};text-wrap:pretty">{{ t.text }}</span></li></sc-for>
+</ol>
+<button style="align-self:flex-start;min-height:40px;padding:0 16px;border-radius:var(--lg-pill);background:var(--lg-glass-strong);border:1px solid var(--lg-edge-hi);color:var(--lg-text);font-size:14px;font-weight:500">Copy text</button>
+</sc-if>
+<div style="margin-top:auto;display:flex">
+<button title="Breathe" style="flex:1;min-height:44px;border-radius:12px;background:var(--lg-glass);border:1px solid var(--lg-edge-lo);color:var(--lg-text);font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="color:var(--lg-accent-strong)"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3.5"></circle></svg>Help me slow down</button>
+</div>
+</sc-if>
+<sc-if value="{{ pHelp }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:flex-start;gap:10px"><div style="flex:1;display:flex;flex-direction:column;gap:4px"><h2 style="margin:0;font-size:22px;font-weight:600;letter-spacing:-.03em;line-height:1.2;color:var(--lg-care);text-wrap:balance">{{ helpTitle }}</h2><p style="margin:0;font-size:14px;color:var(--lg-text-muted);text-wrap:pretty">{{ helpSub }}</p></div><sc-if value="{{ helpClose }}" hint-placeholder-val="{{ true }}"><button aria-label="Close help" style="width:40px;height:40px;flex:none;border-radius:50%;background:var(--lg-glass);border:1px solid var(--lg-edge-lo);color:var(--lg-text);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></sc-if></div>
+<a href="tel:911" style="min-height:52px;padding:0 16px;border-radius:var(--lg-radius-md);background:var(--lg-care);color:#1b1433;text-decoration:none;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"></path></svg>In immediate danger? Call 911</a>
+<sc-for list="{{ lines }}" as="l" hint-placeholder-count="3">
+<div style="padding:14px;border-radius:var(--lg-radius-md);background:var(--lg-glass);border:1px solid var(--lg-edge-hi);display:flex;flex-direction:column;gap:10px"><span style="display:flex;flex-direction:column"><strong style="font-size:15px;font-weight:600">{{ l.name }}</strong><span style="font-size:13px;color:var(--lg-text-muted)">{{ l.d }}</span></span><span style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ l.acts }}" as="a" hint-placeholder-count="2"><a href="#" style="min-height:40px;padding:0 12px;border-radius:var(--lg-pill);border:1px solid rgba(220,207,255,.45);color:var(--lg-care);text-decoration:none;font-size:13px;font-weight:600;display:flex;align-items:center">{{ a }}</a></sc-for></span></div>
+</sc-for>
+<button style="min-height:48px;padding:0 14px;border-radius:12px;background:transparent;border:1px solid var(--lg-edge-lo);color:var(--lg-text);display:flex;align-items:center;justify-content:space-between;font-size:14px"><span>Lines for <strong style="font-weight:600">United States</strong></span><span style="color:var(--lg-accent-strong);font-weight:500">Change</span></button>
+<sc-if value="{{ helpSafe }}" hint-placeholder-val="{{ false }}"><button style="min-height:44px;border:0;background:transparent;color:var(--lg-text);font-size:14px;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(239,252,250,.35)">I'm safe right now</button></sc-if>
+<p style="margin:0;font-size:12px;color:var(--lg-text-faint);text-wrap:pretty">Free and confidential. Your conversation stays open beside this.</p>
+</sc-if>
+<sc-if value="{{ pRefl }}" hint-placeholder-val="{{ false }}">
+<section style="display:flex;flex-direction:column;gap:8px">
+<h2 style="margin:0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--lg-text-faint)">Your say</h2>
+<div style="border-radius:var(--lg-radius-md);background:var(--lg-glass);border:1px solid var(--lg-edge-hi);overflow:hidden">
+<button style="width:100%;min-height:60px;padding:8px 14px;border:0;background:transparent;color:var(--lg-text);display:flex;align-items:center;gap:12px;text-align:left" style-hover="background:var(--lg-glass)"><span style="flex:1;display:flex;flex-direction:column"><span style="font-size:15px">Edit this card</span><span style="font-size:13px;color:var(--lg-text-muted)">Change any words that don't fit</span></span></button>
+<button aria-expanded="{{ skyOpen }}" style="width:100%;min-height:60px;padding:8px 14px;border:0;border-top:1px solid var(--lg-edge-lo);background:{{ skyRowBg }};color:var(--lg-text);display:flex;align-items:center;gap:12px;text-align:left" style-hover="background:var(--lg-glass)"><span style="flex:1;display:flex;flex-direction:column"><span style="font-size:15px">Sky</span><span style="font-size:13px;color:var(--lg-text-muted)">Rain, then clearing</span></span><span aria-hidden="true" style="width:28px;height:28px;border-radius:50%;background:{{ cardSky }}"></span></button>
+<sc-if value="{{ skyPicker }}" hint-placeholder-val="{{ false }}">
+<div style="padding:12px 14px 14px;border-top:1px solid var(--lg-edge-lo);display:flex;flex-direction:column;gap:10px">
+<div role="radiogroup" aria-label="Choose a sky" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px"><sc-for list="{{ skyOpts }}" as="k" hint-placeholder-count="6"><button role="radio" aria-checked="{{ k.on }}" style="padding:5px 5px 7px;border-radius:12px;border:1.5px solid {{ k.bd }};background:var(--lg-glass);color:var(--lg-text);display:flex;flex-direction:column;gap:6px;align-items:stretch;font-size:12px;font-weight:{{ k.w }};line-height:1.2"><span aria-hidden="true" style="height:38px;border-radius:8px;background:{{ k.bg }}"></span>{{ k.name }}</button></sc-for></div>
+<p style="margin:0;font-size:13px;color:var(--lg-text-muted);text-wrap:pretty">I picked this because it started heavy and ended lighter. Choose whatever feels truer.</p>
+<div style="display:flex;gap:6px"><button style="flex:1;min-height:40px;border-radius:var(--lg-pill);border:0;background:var(--lg-mic);color:var(--lg-mic-fg);font-size:14px;font-weight:600">Use this sky</button><button style="min-height:40px;padding:0 14px;border-radius:var(--lg-pill);background:transparent;border:1px solid var(--lg-edge-hi);color:var(--lg-text);font-size:14px">Cancel</button></div>
+</div>
+</sc-if>
+</div>
+<p style="margin:0 2px;font-size:12px;color:var(--lg-text-faint);text-wrap:pretty">Your sky is how our conversation sounded to me, not a measure of you.</p>
+</section>
+<section style="display:flex;flex-direction:column;gap:6px">
+<h2 style="margin:0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--lg-text-faint)">What I'll remember from this</h2>
+<sc-for list="{{ reflNotes }}" as="n" hint-placeholder-count="3">
+<sc-if value="{{ n.live }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:center;gap:6px;min-height:48px;padding:4px 4px 4px 12px;border-radius:12px;background:var(--lg-glass)"><span style="flex:1;font-size:14px;text-wrap:pretty">{{ n.t }}</span><button aria-label="{{ n.aria }}" style="min-height:40px;padding:0 10px;border:0;border-radius:var(--lg-pill);background:transparent;color:var(--lg-text-muted);font-size:13px" style-hover="background:var(--lg-glass);color:var(--lg-text)">Forget</button></div></sc-if>
+<sc-if value="{{ n.gone }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:center;gap:6px;min-height:48px;padding:4px 4px 4px 12px;border-radius:12px;border:1px dashed var(--lg-edge-hi)"><span style="flex:1;font-size:14px;color:var(--lg-text-muted)">Forgotten.</span><button style="min-height:40px;padding:0 12px;border:0;border-radius:var(--lg-pill);background:var(--lg-glass-strong);color:var(--lg-text);font-size:13px;font-weight:600">Undo</button></div></sc-if>
+</sc-for>
+<a href="#" style="align-self:flex-start;min-height:40px;display:flex;align-items:center;font-size:14px;text-decoration:none">See everything I remember</a>
+</section>
+<button aria-haspopup="dialog" style="margin-top:auto;align-self:flex-start;min-height:40px;padding:0 4px;border:0;background:transparent;color:var(--lg-text-muted);font-size:14px;display:flex;align-items:center;gap:8px" style-hover="color:#ffc4b8"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"></path></svg>Delete this reflection</button>
+</sc-if>
+<sc-if value="{{ pSkies }}" hint-placeholder-val="{{ false }}">
+<section style="display:flex;flex-direction:column;gap:12px">
+<div style="height:120px;border-radius:var(--lg-radius-md);background:{{ selSky }};position:relative;overflow:hidden"><span aria-hidden="true" style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.2),transparent 50%,rgba(8,24,34,.55))"></span><span style="position:absolute;left:14px;bottom:10px;font-size:14px;font-weight:600">Tue, Oct 27 · Storm</span></div>
+<h2 style="margin:0;font-size:22px;font-weight:600;letter-spacing:-.03em">2 conversations</h2>
+</section>
+<sc-for list="{{ dayConvos }}" as="d" hint-placeholder-count="2">
+<a href="#" style="display:flex;flex-direction:column;gap:6px;padding:14px;border-radius:var(--lg-radius-md);background:var(--lg-glass);border:1px solid var(--lg-edge-hi);color:inherit;text-decoration:none" style-hover="background:var(--lg-glass-strong)"><span style="display:flex;justify-content:space-between;font-size:12px;color:var(--lg-text-muted)"><span>{{ d.time }}</span><span>{{ d.sky }}</span></span><span style="font-size:16px;font-weight:600;letter-spacing:-.01em">{{ d.t }}</span><span style="font-size:14px;color:var(--lg-text-muted);padding-left:10px;border-left:2px solid rgba(143,240,232,.4)">{{ d.q }}</span></a>
+</sc-for>
+<p style="margin:0;font-size:13px;color:var(--lg-text-muted);text-wrap:pretty">Hard days are part of it. If storms keep coming, <a href="#" style="color:var(--lg-care)">talking to a person can help</a>.</p>
+</sc-if>
+<sc-if value="{{ pPatterns }}" hint-placeholder-val="{{ false }}">
+<h2 style="margin:0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--lg-text-faint)">Most often this month</h2>
+<ol style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ ranked }}" as="r" hint-placeholder-count="6"><li><button style="width:100%;min-height:48px;padding:0 12px;border-radius:12px;border:0;background:transparent;color:var(--lg-text);display:grid;grid-template-columns:minmax(0,1fr) 90px 28px;align-items:center;gap:10px;text-align:left;font-size:14px" style-hover="background:var(--lg-glass)"><span>{{ r.name }}</span><span aria-hidden="true" style="height:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden"><span style="display:block;height:100%;width:{{ r.pct }}%;background:var(--lg-accent)"></span></span><span style="font-size:13px;color:var(--lg-text-muted);text-align:right">{{ r.n }}</span></button></li></sc-for>
+</ol>
+<p style="margin:0 2px;font-size:12px;color:var(--lg-text-faint)">Select a star or a topic to see where it came up.</p>
+</sc-if>
+<sc-if value="{{ pTopic }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:flex-start;gap:10px"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><h2 style="margin:0;font-size:26px;font-weight:600;letter-spacing:-.03em">Work</h2><p style="margin:0;font-size:14px;color:var(--lg-text-muted)">Came up in 3 conversations this month</p></div><button aria-label="Close topic" style="width:40px;height:40px;flex:none;border-radius:50%;background:var(--lg-glass);border:1px solid var(--lg-edge-lo);color:var(--lg-text);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+<div style="display:flex;flex-direction:column;border-radius:var(--lg-radius-md);background:var(--lg-glass);border:1px solid var(--lg-edge-hi);overflow:hidden">
+<sc-for list="{{ topicConvos }}" as="c" hint-placeholder-count="3"><a href="#" style="min-height:56px;display:flex;align-items:center;gap:12px;padding:0 14px;border-top:{{ c.bt }};color:var(--lg-text);text-decoration:none" style-hover="background:var(--lg-glass)"><span aria-hidden="true" style="width:22px;height:22px;flex:none;border-radius:50%;background:{{ c.bg }}"></span><span style="flex:1;font-size:15px">{{ c.t }}</span><span style="font-size:13px;color:var(--lg-text-muted)">{{ c.d }}</span></a></sc-for>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><button style="min-height:44px;padding:0 18px;border-radius:var(--lg-pill);border:0;background:var(--lg-mic);color:var(--lg-mic-fg);font-size:14px;font-weight:600">Talk about this</button><button style="min-height:44px;padding:0 14px;border-radius:var(--lg-pill);background:transparent;border:1px solid var(--lg-edge-hi);color:var(--lg-text);font-size:14px">Hide this topic</button></div>
+</sc-if>
+<sc-if value="{{ pMemory }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:10px;padding:12px 6px 12px 14px;border-radius:var(--lg-radius-md);background:var(--lg-glass);border:1px solid var(--lg-edge-hi)"><span style="flex:1;display:flex;flex-direction:column"><span style="font-size:15px;font-weight:600">Remember our conversations</span><span style="font-size:13px;color:var(--lg-text-muted)">{{ memSwitchNote }}</span></span><button role="switch" aria-checked="{{ memOnStr }}" aria-label="Remember our conversations" style="width:52px;height:44px;flex:none;border:0;background:transparent;display:flex;align-items:center;justify-content:center"><span style="width:44px;height:26px;border-radius:13px;background:{{ swBg }};border:1px solid {{ swBd }};box-sizing:border-box;position:relative;display:block"><span style="position:absolute;top:2px;left:{{ swX }};width:20px;height:20px;border-radius:50%;background:{{ swKnob }}"></span></span></button></div>
+<sc-if value="{{ memOn }}" hint-placeholder-val="{{ true }}"><div style="padding:14px 16px;border-radius:var(--lg-radius-md);background:var(--lg-glass-strong);display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;font-weight:600;color:var(--lg-accent-strong)">In short</span><p style="margin:0;font-size:15px;text-wrap:pretty">You're figuring out work after a hard stretch, and you're close to your sister Maya. Saying things out loud tends to help you.</p></div></sc-if>
+<p style="margin:0;font-size:13px;color:var(--lg-text-muted);text-wrap:pretty">I use these notes so you don't have to start over. Only you can see them, and I never share them.</p>
+<button aria-haspopup="dialog" style="margin-top:auto;align-self:flex-start;min-height:40px;padding:0 4px;border:0;background:transparent;color:var(--lg-text-muted);font-size:14px;text-decoration:underline;text-underline-offset:3px">Forget everything</button>
+</sc-if>
+<sc-if value="{{ pPrivacy }}" hint-placeholder-val="{{ false }}">
+<h2 style="margin:0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--lg-text-faint)">Your controls</h2>
+<button style="min-height:48px;padding:0 16px;border-radius:var(--lg-pill);background:var(--lg-glass-strong);border:1px solid var(--lg-edge-hi);color:var(--lg-text);font-size:15px;font-weight:500">Export everything</button>
+<button aria-haspopup="dialog" style="min-height:48px;padding:0 16px;border-radius:var(--lg-pill);background:transparent;border:1px solid rgba(255,180,168,.4);color:#ffc4b8;font-size:15px;font-weight:500">Delete everything</button>
+<a href="#" style="min-height:40px;display:flex;align-items:center;font-size:14px;text-decoration:none">Manage what I remember</a>
+<p style="margin:auto 0 0;font-size:13px;color:var(--lg-text-muted)">Questions? <a href="#">privacy@haven.app</a></p>
+</sc-if>
+</aside>
+</sc-if>
+
+<sc-if value="{{ menuOpenB }}" hint-placeholder-val="{{ false }}">
+<div role="menu" aria-label="Account" style="position:absolute;z-index:20;left:14px;bottom:76px;width:236px;padding:6px;border-radius:var(--lg-radius-md);background:rgba(10,34,44,.98);border:1px solid var(--lg-edge-hi);box-shadow:0 24px 60px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:2px">
+<div style="padding:10px 12px 8px;display:flex;flex-direction:column;border-bottom:1px solid var(--lg-edge-lo);margin-bottom:4px"><span style="font-size:14px;font-weight:600">Guest</span><span style="font-size:12px;color:var(--lg-text-muted)">Everything stays on this device</span></div>
+<sc-for list="{{ menuItems }}" as="m" hint-placeholder-count="5"><a href="#" role="menuitem" style="min-height:40px;padding:0 12px;border-radius:10px;display:flex;align-items:center;gap:12px;color:{{ m.fg }};text-decoration:none;font-size:14px;font-weight:{{ m.w }}" style-hover="background:var(--lg-glass)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="color:var(--lg-accent-strong)"><path d="{{ m.icon }}"></path></svg><span style="flex:1">{{ m.t }}</span><kbd style="color:var(--lg-text-faint)">{{ m.k }}</kbd></a></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ dialog }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:30;background:rgba(3,10,16,.62);display:flex;align-items:center;justify-content:center;padding:40px">
+<div role="{{ dRole }}" aria-modal="true" aria-labelledby="dT" style="width:100%;max-width:{{ dMax }};max-height:100%;overflow:auto;box-sizing:border-box;padding:28px;border-radius:var(--lg-radius-lg);background:rgba(10,34,44,.98);border:1px solid var(--lg-edge-hi);box-shadow:0 30px 80px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;flex-direction:column;gap:6px"><h2 id="dT" style="margin:0;font-size:26px;font-weight:600;letter-spacing:-.03em;line-height:1.15">{{ dTitle }}</h2><sc-if value="{{ dSub }}" hint-placeholder-val="{{ true }}"><p style="margin:0;font-size:15px;color:var(--lg-text-muted);text-wrap:pretty">{{ dSub }}</p></sc-if></div>
+<sc-if value="{{ dConsent }}" hint-placeholder-val="{{ false }}">
+<ul style="margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<sc-for list="{{ consentRules }}" as="c" hint-placeholder-count="4"><li style="padding:14px;border-radius:var(--lg-radius-md);background:{{ c.bg }};border:1px solid var(--lg-edge-lo);display:flex;flex-direction:column;gap:6px"><span aria-hidden="true" style="width:32px;height:32px;border-radius:50%;background:var(--lg-glass-strong);display:flex;align-items:center;justify-content:center;color:{{ c.ic }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ c.icon }}"></path></svg></span><strong style="font-size:15px;font-weight:600">{{ c.t }}</strong><span style="font-size:14px;color:var(--lg-text-muted);text-wrap:pretty">{{ c.d }}</span></li></sc-for>
+</ul>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 6px 12px 16px;border-radius:var(--lg-radius-md);background:var(--lg-glass);border:1px solid var(--lg-edge-lo)"><span style="flex:1;display:flex;flex-direction:column"><span style="font-size:15px;font-weight:600">Remember our conversations</span><span style="font-size:13px;color:var(--lg-text-muted)">So you don't have to start over. Change it anytime.</span></span><button role="switch" aria-checked="true" aria-label="Remember our conversations" style="width:52px;height:44px;border:0;background:transparent;display:flex;align-items:center;justify-content:center"><span style="width:44px;height:26px;border-radius:13px;background:var(--lg-mic);position:relative;display:block"><span style="position:absolute;top:3px;left:21px;width:20px;height:20px;border-radius:50%;background:var(--lg-mic-fg)"></span></span></button></div>
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+<label style="flex:1;display:flex;align-items:center;gap:12px;min-height:44px;font-size:15px;cursor:pointer"><span role="checkbox" aria-checked="true" tabindex="0" style="width:22px;height:22px;flex:none;border-radius:7px;background:var(--lg-mic);color:var(--lg-mic-fg);display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>I'm 18 or older</label>
+<button style="min-height:44px;padding:0 14px;border:0;background:transparent;color:var(--lg-text-muted);font-size:15px">Not now</button>
+<button style="min-height:52px;padding:0 28px;border-radius:var(--lg-pill);border:0;background:var(--lg-mic);color:var(--lg-mic-fg);font-size:16px;font-weight:600">Let's begin</button>
+</div>
+</sc-if>
+<sc-if value="{{ dEnd }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap"><button style="min-height:48px;padding:0 14px;border:0;background:transparent;color:var(--lg-text-muted);font-size:15px;margin-right:auto">End without a card</button><button style="min-height:48px;padding:0 20px;border-radius:var(--lg-pill);background:var(--lg-glass-strong);border:1px solid var(--lg-edge-hi);color:var(--lg-text);font-size:15px;font-weight:500">Keep talking</button><button style="min-height:48px;padding:0 22px;border-radius:var(--lg-pill);border:0;background:var(--lg-mic);color:var(--lg-mic-fg);font-size:15px;font-weight:600">End and make my card</button></div>
+</sc-if>
+<sc-if value="{{ dDelete }}" hint-placeholder-val="{{ false }}">
+<label style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:var(--lg-radius-sm);background:var(--lg-glass);border:1px solid var(--lg-edge-lo);font-size:15px;cursor:pointer"><span role="checkbox" aria-checked="false" tabindex="0" style="width:22px;height:22px;flex:none;border-radius:7px;border:1.5px solid var(--lg-text-faint);box-sizing:border-box"></span><span style="display:flex;flex-direction:column"><span>Also forget the 3 notes from this conversation</span><span style="font-size:13px;color:var(--lg-text-muted)">Otherwise I'll still remember them.</span></span></label>
+<div style="display:flex;justify-content:flex-end;gap:8px"><button style="min-height:48px;padding:0 20px;border-radius:var(--lg-pill);background:var(--lg-glass-strong);border:1px solid var(--lg-edge-hi);color:var(--lg-text);font-size:15px;font-weight:500">Keep it</button><button style="min-height:48px;padding:0 22px;border-radius:var(--lg-pill);border:0;background:#ffb4a8;color:#3a1410;font-size:15px;font-weight:600">Delete reflection</button></div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home-first&quot;,&quot;consent&quot;,&quot;home-return&quot;,&quot;menu&quot;,&quot;talk-start&quot;,&quot;talk-off&quot;,&quot;talk-listening&quot;,&quot;talk-speaking&quot;,&quot;talk-text&quot;,&quot;talk-style&quot;,&quot;talk-styled&quot;,&quot;talk-slow&quot;,&quot;talk-error&quot;,&quot;transcript&quot;,&quot;end-confirm&quot;,&quot;safety-elevated&quot;,&quot;safety-acute&quot;,&quot;help&quot;,&quot;breathe&quot;,&quot;reflection&quot;,&quot;reflection-edit&quot;,&quot;sky-picker&quot;,&quot;delete-confirm&quot;,&quot;skies&quot;,&quot;skies-empty&quot;,&quot;patterns&quot;,&quot;patterns-topic&quot;,&quot;memory&quot;,&quot;memory-off&quot;,&quot;settings&quot;,&quot;signin&quot;,&quot;signin-sent&quot;,&quot;privacy&quot;],&quot;default&quot;:&quot;home-return&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;compact&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const SKY = { clear: ['#8ff0e8', '#3fd6cd'], haze: ['#b3d4d3', '#5f8f91'], drizzle: ['#6f9bff', '#2a6fd0'], storm: ['#5b5fb8', '#232a66'], breaking: ['#b8a8ff', '#6ff0e6'], quiet: ['#2a5560', '#0f2a33'] };
+const NAME = { clear: 'Clear', haze: 'Haze', drizzle: 'Drizzle', storm: 'Storm', breaking: 'Rain, then clearing', quiet: 'Quiet' };
+const g = (w) => `linear-gradient(160deg,${SKY[w][0]},${SKY[w][1]})`;
+const OCT = 'haze clear - haze drizzle drizzle haze clear breaking - clear haze storm drizzle breaking clear - haze clear drizzle storm storm drizzle breaking clear - storm breaking breaking'.split(' ');
+const TEXT = ['talk-start', 'talk-text', 'talk-style', 'talk-styled', 'talk-slow', 'talk-error', 'end-confirm', 'safety-elevated', 'safety-acute', 'help'];
+const VOICE = ['talk-off', 'talk-listening', 'talk-speaking', 'transcript'];
+const sw = (on, dis) => ({ isSwitch: true, on: on ? 'true' : 'false', disabled: !!dis, swBg: on ? 'var(--lg-mic)' : 'transparent', swBd: on ? 'transparent' : 'var(--lg-text-faint)', swX: on ? '21px' : '2px', swKnob: on ? 'var(--lg-mic-fg)' : 'var(--lg-text-muted)', op: dis ? .5 : 1 });
+const row = (t, d, o) => Object.assign({ t, d: d || '', isSwitch: false, isLink: false, isButton: false, isActions: false, isUndo: false, v: '', fg: 'var(--lg-text)', op: 1, bt: '0', tsize: '16px', tw: 400 }, o);
+const grp = (name, rows, op = 1) => ({ name, op, rows: rows.map((r, i) => ({ ...r, bt: i ? '1px solid var(--lg-edge-lo)' : '0' })) });
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.props.screen || 'home-return', compact = !!this.props.compact, is = (...a) => a.includes(s);
+    const isTalk = TEXT.includes(s) || VOICE.includes(s), textMode = TEXT.includes(s), voiceMode = VOICE.includes(s);
+    const first = is('home-first', 'consent');
+    const isHome = is('home-first', 'consent', 'home-return', 'menu');
+    const isRefl = is('reflection', 'reflection-edit', 'sky-picker', 'delete-confirm');
+    const isList = is('memory', 'memory-off', 'settings', 'privacy');
+    const noPanel = is('home-first', 'consent', 'home-return', 'menu', 'breathe', 'reflection-edit', 'skies-empty', 'settings', 'signin', 'signin-sent', 'memory-off');
+    const hasPanel = !noPanel && !compact;
+    const area = isTalk || isHome || s === 'breathe' ? 'Talk' : (isRefl || s.startsWith('skies')) ? 'Your skies' : s.startsWith('patterns') ? 'Patterns' : s.startsWith('memory') ? 'What I remember' : '';
+    const v = {
+      label: `Desktop · ${s}${compact ? ' · compact' : ''}`, compact, full: !compact,
+      cols: compact ? '76px minmax(0,1fr)' : hasPanel ? '264px minmax(0,1fr) 340px' : '264px minmax(0,1fr)',
+      sidePad: compact ? '12px' : '14px', sideAlign: compact ? 'center' : 'stretch', newPad: compact ? '0' : '12px 0 14px', navJustify: compact ? 'center' : 'flex-start',
+      headPadR: compact ? '76px' : '28px',
+      hasPanel, panelBg: is('help', 'safety-acute') ? 'linear-gradient(180deg, rgba(40,30,80,.55), #0a1f2a 60%)' : '#0a1f2a',
+      panelLabel: isTalk ? (is('help', 'safety-acute') ? 'Get help' : 'This conversation') : isRefl ? 'Your say' : 'Details',
+      nav: [['Talk', 'M12 3.5a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0v-5a3 3 0 0 1 3-3M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5', ''], ['Your skies', 'M4 16h16M7 12a5 5 0 0 1 10 0', ''], ['Patterns', 'M5 7l5 4 4-3 5 6', ''], ['What I remember', 'M6 4h12v16l-6-4-6 4z', '']]
+        .map(([t, icon, val]) => { const on = t === area; return { t, icon, v: val, cur: on ? 'page' : 'false', bg: on ? 'var(--lg-glass-strong)' : 'transparent', fg: on ? 'var(--lg-text)' : 'var(--lg-text-muted)', w: on ? 600 : 400 }; }),
+      hasRecent: !first, noRecent: first,
+      recent: [[s === 'talk-start' ? 'New conversation' : 'Feeling behind', isTalk ? 'Now' : 'Today', s === 'talk-start' ? 'quiet' : 'drizzle'], ['A better conversation with Maya', 'Wed', 'breaking'], ['When everything piles up', 'Tue', 'storm'], ['Missing home', 'Mon', 'drizzle'], ]
+        .map(([t, d, w], i) => { const on = (isTalk && i === 0) || (isRefl && i === 1); return { t, d, sky: g(w), glow: SKY[w][1] + '55', cur: on ? 'page' : 'false', bg: on ? 'var(--lg-glass)' : 'transparent' }; }),
+      menuOpen: s === 'menu' ? 'true' : 'false', menuOpenB: s === 'menu', acctBg: s === 'menu' ? 'var(--lg-glass)' : 'transparent',
+      acctInitial: 'S', acctName: 'Sam · guest', acctSub: 'Settings & privacy',
+      menuItems: [['Settings', 'M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6M12 3v3M12 18v3M3 12h3M18 12h3', ','], ['Privacy', 'M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z', ''], ['Keyboard shortcuts', 'M4 7h16v10H4zM7 10h.01M11 10h.01M15 10h.01M8 14h8', '?'], ['Help and crisis lines', 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z', ''], ['Sign in to keep your cards', 'M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l4-4-4-4M14 12H4', '']]
+        .map(([t, icon, k], i) => ({ t, icon, k, fg: 'var(--lg-text)', w: i === 4 ? 600 : 400 })),
+      isHome, isTalk, textMode, voiceMode, isBreathe: s === 'breathe', isRefl, isSkies: is('skies', 'skies-empty'), skiesEmpty: s === 'skies-empty',
+      isPatterns: is('patterns', 'patterns-topic'), isList, isSignin: is('signin', 'signin-sent'), signinForm: s === 'signin', signinSent: s === 'signin-sent',
+      homeKicker: first ? 'Welcome to Haven' : 'Good evening, Sam · Thursday, Oct 29',
+      homeTitle: first ? 'Somewhere quiet to think out loud' : 'How are you, really?',
+      homeSub: first ? 'Untangle a thought, get through a hard moment, or check in with yourself.' : '',
+      starters: ['Something happened today', "I've been feeling off", 'I just need to vent'], homePick: is('home-return', 'menu'),
+      pHome: hasPanel && is('home-return', 'menu'), pFirst: hasPanel && first,
+      lastSky: g('breaking'),
+      fortnight: 'clear haze drizzle storm storm drizzle breaking clear haze storm breaking breaking clear drizzle'.split(' ').map((w) => SKY[w][1]),
+      notesShort: ['Maya is your sister. You worry she judges you.', "You're job hunting after August.", 'Saying things out loud helps.'],
+      expect: [
+        { t: 'Talk or write, your way', d: 'I listen first and reply calmly. No chat bubbles, no rush.', icon: 'M12 3.5a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0v-5a3 3 0 0 1 3-3M5.5 11.5a6.5 6.5 0 0 0 13 0' },
+        { t: 'Leave with a card and a sky', d: 'Each conversation becomes a short reflection you can edit or delete.', icon: 'M4 16h16M7 12a5 5 0 0 1 10 0' },
+        { t: 'I remember, you decide', d: 'I keep short notes so you don\'t start over. See or delete any of them.', icon: 'M6 4h12v16l-6-4-6 4z' },
+      ],
+    };
+    return Object.assign(v, this.talk(s, is, isTalk, voiceMode, hasPanel), this.pages(s, is, hasPanel, isRefl), this.dialogs(s));
+  }
+  talk(s, is, isTalk, voiceMode, hasPanel) {
+    if (!isTalk) return { pTalk: false, pHelp: false };
+    const T = (who, text, time) => ({ who, text, time });
+    const base = [T('Haven', "Hi Sam. I'm here, and there's no rush. What's on your mind?", '7:50'), T('You', "I've been feeling off since the weekend.", '7:51'), T('Haven', 'Thank you for telling me. What was going through your mind when it started?', '7:51'), T('You', 'Everyone I know is getting jobs.', '7:53'), T('Haven', "I'm with you. That's a lot to watch from where you are. How has it been showing up for you day to day?", '7:53')];
+    const per = {
+      'talk-start': { turns: base.slice(0, 1), starterRow: true },
+      'talk-slow': { turns: base.concat([T('You', "Like I'm the only one still stuck.", '7:55')]), slowRow: true },
+      'talk-error': { turns: base.concat([T('You', "I don't know how to tell my mom.", '7:55')]), errorRow: true, failed: true },
+      'talk-styled': { turns: base, ack: "Okay. I'll just listen." },
+      'safety-elevated': { turns: base.slice(2).concat([T('You', 'Everything just feels really heavy lately.', '7:56'), T('Haven', "That sounds exhausting to carry. I'm here. What's been weighing on you most?", '7:56')]), elevated: true },
+      'safety-acute': { turns: base.slice(2).concat([T('You', "I don't really see the point of any of it anymore.", '7:56'), T('Haven', "Thank you for telling me. I'm staying right here with you. Are you safe right now?", '7:56')]) },
+    }[s] || { turns: base };
+    const turns = per.turns.map((t, i, a) => {
+      const h = t.who === 'Haven', last = i === a.length - 1, fail = per.failed && last;
+      return { ...t, align: h ? 'flex-start' : 'flex-end', whoFg: h ? 'var(--lg-accent-strong)' : 'var(--lg-text-faint)', max: h ? '100%' : '80%',
+        pad: h ? '0' : '10px 16px', rad: h ? '0' : '20px 20px 6px 20px', bg: h ? 'transparent' : 'rgba(150,240,230,.10)', bd: fail ? '1px dashed rgba(255,196,184,.5)' : '0',
+        size: h ? (last ? '24px' : '19px') : '16px', w: h ? 500 : 400, ls: h ? '-.015em' : '0', fg: h ? (last ? 'var(--lg-text)' : 'rgba(239,252,250,.82)') : 'var(--lg-text-muted)' };
+    });
+    const mic = s === 'talk-listening' ? 'listening' : (s === 'talk-speaking' || s === 'transcript') ? 'speaking' : 'idle';
+    const orbState = { 'talk-listening': 'listening', 'talk-speaking': 'speaking', transcript: 'speaking', 'talk-slow': 'thinking', 'safety-elevated': 'concerned', 'safety-acute': 'concerned', help: 'concerned' }[s] || 'idle';
+    const selStyle = is('talk-styled', 'talk-text', 'talk-style', 'talk-slow', 'talk-error', 'end-confirm') ? 'listen' : 'auto';
+    const help = is('help', 'safety-acute'), trTab = s === 'transcript';
+    const draft = s === 'talk-text' ? "Like I'm the only one still stuck" : '';
+    return {
+      convTitle: s === 'talk-start' ? 'New conversation' : 'Feeling behind', convSky: s === 'talk-start' ? g('quiet') : g('drizzle'),
+      convSub: `${voiceMode ? 'Talking' : 'Writing'} · ${s === 'talk-start' ? 'just now' : '6 min'}${selStyle === 'listen' ? ' · Just listen' : ''}`,
+      statusText: { 'talk-listening': 'Listening', 'talk-speaking': 'Speaking', transcript: 'Speaking', 'talk-off': 'Ready', 'talk-slow': 'Thinking' }[s] || 'Your turn',
+      turns, starterRow: !!per.starterRow, slowRow: !!per.slowRow, errorRow: !!per.errorRow, ack: per.ack || '', elevated: !!per.elevated, typingRow: false,
+      draftText: draft || "Write what's on your mind", draftFg: draft ? 'var(--lg-text)' : 'var(--lg-text-faint)', composerBd: draft ? 'rgba(143,240,232,.45)' : 'var(--lg-edge-hi)',
+      noDraft: !draft, sendBg: draft ? 'var(--lg-mic)' : 'var(--lg-glass)', sendFg: draft ? 'var(--lg-mic-fg)' : 'var(--lg-text-faint)',
+      orbState, micIdle: mic === 'idle', micListening: mic === 'listening', micSpeaking: mic === 'speaking', muteOp: mic === 'idle' ? .45 : 1, bars: [0, .15, .3, .45, .6],
+      micAria: mic === 'listening' ? 'Listening. Press to pause' : mic === 'speaking' ? 'Haven is speaking. Press to interrupt' : 'Start talking',
+      micHint: mic === 'listening' ? 'Listening · Space to pause · M to mute' : mic === 'speaking' ? 'Speak anytime to interrupt · Space to pause' : "I'll say hello first · press Space when you're ready",
+      vPrev: mic === 'idle' ? '' : 'Thank you for telling me. What was going through your mind when it started?',
+      vPerson: mic === 'listening' ? "Honestly it's been a lot. Everyone I know is moving ahead and I'm just…" : mic === 'speaking' ? 'Everyone I know is getting jobs.' : '',
+      vCompanion: mic === 'speaking' ? "That sounds lonely, watching everyone else move ahead. What's the hardest part of it for you?" : mic === 'idle' ? "Hi Sam. I'm here, and there's no rush." : '',
+      pTalk: hasPanel && !help, pHelp: hasPanel && help,
+      panelOrb: !voiceMode, showConvoTab: !trTab, showTranscriptTab: trTab,
+      tabs: [['This conversation', !trTab], ['Transcript', trTab]].map(([t, on]) => ({ t, on: on ? 'true' : 'false', bg: on ? 'var(--lg-glass-strong)' : 'transparent', fg: on ? 'var(--lg-text)' : 'var(--lg-text-muted)', w: on ? 600 : 400 })),
+      styles: [['auto', 'Whatever feels right', "I'll follow your lead", '1'], ['listen', 'Just listen', 'Room to get it all out', '2'], ['sense', 'Help me make sense of it', "We'll untangle what's going on", '3'], ['step', 'Help me find a next step', 'Something small you can do', '4']]
+        .map(([id, t, d, key]) => { const on = id === selStyle; return { t, d, key, on: on ? 'true' : 'false', bg: on ? 'var(--lg-glass-strong)' : 'transparent', bd: on ? 'var(--lg-edge-hi)' : 'transparent', w: on ? 600 : 400, ring: on ? '5px solid var(--lg-mic)' : '1.5px solid var(--lg-text-faint)', fill: on ? 'var(--lg-mic-fg)' : 'transparent', focus: s === 'talk-style' && id === 'sense' ? '2px solid #e6f59a' : '0 solid transparent' }; }),
+      noticing: ['Comparing yourself to friends who found jobs', 'Feeling stuck, mostly in the mornings'],
+      transcript: base.map((t) => { const h = t.who === 'Haven'; return { ...t, fg: h ? 'var(--lg-text)' : 'var(--lg-text-muted)', whoFg: h ? 'var(--lg-accent-strong)' : 'var(--lg-text-faint)', rule: h ? 'rgba(143,240,232,.45)' : 'var(--lg-edge-lo)' }; }),
+      helpTitle: s === 'safety-acute' ? "You don't have to carry this alone" : 'Talk to a person now',
+      helpSub: s === 'safety-acute' ? "You can talk to someone right now, free, any time. I'll stay right here." : 'You deserve support. These are free and confidential.',
+      helpClose: s === 'help', helpSafe: s === 'safety-acute',
+      lines: [{ name: '988 Suicide & Crisis Lifeline', d: 'For anyone in distress · 24/7', acts: ['Call 988', 'Text 988', 'Chat online'] }, { name: 'Crisis Text Line', d: 'Text with a trained volunteer · 24/7', acts: ['Text HOME to 741741'] }, { name: 'The Trevor Project', d: 'For LGBTQ+ young people · 24/7', acts: ['Call', 'Text START to 678678'] }],
+    };
+  }
+  pages(s, is, hasPanel, isRefl) {
+    const ed = s === 'reflection-edit', fld = (label, value, o) => Object.assign({ label, value, count: '', bd: 'var(--lg-edge-hi)', size: '16px', w: 400, removable: false, removeAria: '' }, o);
+    const cal = [], blank = { n: '', count: '', empty: true, aria: '', pressed: 'false', bg: 'transparent', bd: '0', fg: 'transparent', op: 0, sh: 'none' };
+    const empty = s === 'skies-empty';
+    for (let i = 0; i < 3; i++) cal.push(blank);
+    OCT.forEach((w, i) => {
+      const day = i + 1, sel = !empty && day === 27, future = day > 29, none = empty || w === '-' || future;
+      cal.push({ n: String(day), count: none ? (day === 29 && empty ? 'Today' : '') : (day % 3 === 0 ? '2 talks' : '1 talk'), empty: future || empty, pressed: sel ? 'true' : 'false',
+        aria: none ? `October ${day}, no conversations` : `October ${day}, ${NAME[w]}`, bg: none ? 'rgba(255,255,255,.03)' : g(w),
+        bd: sel ? '2px solid #effcfa' : none ? (empty && day === 29 ? '1.5px solid rgba(143,240,232,.6)' : '1px dashed var(--lg-edge-lo)') : '0',
+        fg: none ? 'var(--lg-text-faint)' : (['clear', 'haze', 'breaking'].includes(w) ? '#06302c' : '#effcfa'), op: future ? .35 : 1, sh: sel ? '0 0 0 4px rgba(239,252,250,.15)' : 'none' });
+    });
+    while (cal.length % 7) cal.push(blank);
+    const topic = s === 'patterns-topic';
+    const memOn = s !== 'memory-off';
+    const note = (t, gone) => gone ? row('Forgotten: “' + t + '”', '', { isUndo: true, fg: 'var(--lg-text-muted)' }) : row(t, '', { isActions: true, editAria: 'Edit: ' + t, forgetAria: 'Forget: ' + t });
+    let groups = [], pageTitle = '', pageSub = '', listFoot = '', memAdd = false;
+    if (is('memory', 'memory-off')) {
+      pageTitle = 'What I remember'; pageSub = 'Short notes I keep between conversations. Edit or forget anything.'; memAdd = memOn;
+      groups = [grp('People', [note("Maya is your sister. You're close, but you worry she judges you."), note('Your manager, Dev, has been supportive.')], memOn ? 1 : .55),
+        grp("What's going on", [note("You're looking for a new job after being let go in August."), note('Mornings are the hardest part of the week.', memOn)], memOn ? 1 : .55),
+        grp('What helps', [note('Saying things plainly, out loud.'), note('A short walk before bed.')], memOn ? 1 : .55)];
+    } else if (s === 'settings') {
+      pageTitle = 'Settings'; pageSub = ''; listFoot = 'Haven 1.4 · Made for everyday reflection, not emergencies.';
+      groups = [grp('Account', [row("You're using Haven without an account", 'Everything stays on this device.', { isButton: true, v: 'Sign in' })]),
+        grp('Conversations', [row('Remember our conversations', 'See or change everything in What I remember', { isLink: true, v: 'On' }), row('Start in', 'What opens when you press New conversation', { isLink: true, v: 'Writing' }), row('Voice', 'How I sound when I speak', { isLink: true, v: 'Calm · normal speed' }), row('Ambient sound', 'Soft rain, room tone or a low hum while you talk', sw(false)), row('Match my sky', 'Let the sound follow the weather', sw(false, true))]),
+        grp('Keyboard', [row('Shortcuts', 'N new · Space talk · B breathe · Esc end · 1–4 style', { isLink: true })]),
+        grp('Your data', [row('Export everything', 'Your conversations, cards and notes as one file', { isLink: true }), row('Delete everything', "Conversations, cards, skies and notes. This can't be undone.", { isLink: true, fg: '#ffc4b8' }), row('How I handle your data', '', { isLink: true })]),
+        grp('About', [row('Terms', '', { isLink: true }), row('Help and crisis lines', '', { isLink: true })])];
+    } else if (s === 'privacy') {
+      pageTitle = 'Privacy, in plain words'; pageSub = 'What you share here is personal. Here is exactly what happens to it. Updated Oct 1, 2026.';
+      const p = (t, d) => row(t, d, { tw: 600 });
+      groups = [grp('Where your words go', [p('Without an account', 'Everything stays on this device. Clearing your browser deletes it.'), p('With an account', 'Stored encrypted. Only you can see it. Our team cannot read your conversations.'), p('To reply', 'Your words go to our AI provider, and spoken words to a speech service. Neither may keep or train on them.')]),
+        grp('What we never do', [p('Sell or share for ads', 'Never. Not your words, not your skies, not your notes.'), p('Put conversations in analytics', 'We count things like "a conversation started", never what was said.')]),
+        grp('Your controls', [p('See and edit memory', 'Everything I remember is listed in What I remember.'), p('Export or delete', 'Take everything with you as one file, or delete it all at once.')])];
+    }
+    return {
+      editing: ed, viewing: !ed, cardBd: ed ? 'rgba(143,240,232,.45)' : 'var(--lg-edge-hi)', cardSky: g('breaking'), cardSkyName: NAME.breaking,
+      editFields: [fld('Title', 'A better conversation with Maya', { size: '22px', w: 600, bd: 'rgba(143,240,232,.6)', count: '49 left' }), fld('What you said', '“I always assume she\'s judging me.”', { removable: true, removeAria: 'Remove quote 1' }), fld('What you said', '“Honestly it felt good to just say it.”', { removable: true, removeAria: 'Remove quote 2' }), fld('What I noticed', 'You came in expecting a fight and found a way to say what you needed. That took courage.'), fld('A small next step', 'Text Maya something kind tonight', { removable: true, removeAria: 'Remove the next step' })],
+      pRefl: hasPanel && isRefl, skyPicker: s === 'sky-picker', skyOpen: s === 'sky-picker' ? 'true' : 'false', skyRowBg: s === 'sky-picker' ? 'var(--lg-glass)' : 'transparent',
+      skyOpts: ['clear', 'haze', 'drizzle', 'storm', 'breaking', 'quiet'].map((w) => { const on = w === 'breaking'; return { name: NAME[w], bg: g(w), on: on ? 'true' : 'false', bd: on ? '#8ff0e8' : 'transparent', w: on ? 600 : 400 }; }),
+      reflNotes: [["Maya is Sam's sister.", false], ['Sam often worries Maya is judging them.', true], ['Saying things plainly, out loud, helped.', false]].map(([t, gone]) => ({ t, live: !gone, gone, aria: 'Forget: ' + t })),
+      cal, legend: ['clear', 'haze', 'drizzle', 'storm', 'breaking'].map((w) => ({ name: NAME[w], bg: g(w) })).concat([{ name: 'No talk', bg: 'rgba(255,255,255,.08)' }]),
+      pSkies: hasPanel && s === 'skies', selSky: g('storm'),
+      dayConvos: [{ time: '10:20 AM', sky: 'Storm', t: 'When everything piles up', q: '“I can\'t even start, there\'s too much.”' }, { time: '9:40 PM', sky: 'Drizzle', t: 'Winding down', q: '“It helped to list it out.”' }],
+      stars: [['Gratitude', 56, 12, 6, 8, 1], ['Loneliness', 27, 23, 7, 12, 2], ['Self-worth', 86, 20, 5, 8, 1], ['Work', 62, 40, 11, 24, 6], ['Family', 14, 48, 8, 14, 3], ['Sleep', 76, 56, 8, 14, 3], ['Boss', 48, 66, 7, 12, 2], ['Sister', 12, 80, 6, 10, 2]]
+        .map(([name, x, y, size, glow, halo]) => { const on = topic && name === 'Work'; return { name, x, y, size, glow, halo, aria: `${name}, ${Math.max(1, Math.round(size / 3))} conversations`, pressed: on ? 'true' : 'false', ring: on ? '1.5px solid #8ff0e8' : '0 solid transparent', weight: on ? 600 : 400, fg: on ? 'var(--lg-text)' : 'var(--lg-text-muted)' }; }),
+      pPatterns: hasPanel && s === 'patterns', pTopic: hasPanel && topic,
+      ranked: [['Work', 4], ['Family', 3], ['Sleep', 3], ['Loneliness', 2], ['Boss', 2], ['Sister', 2]].map(([name, n]) => ({ name, n, pct: n * 25 })),
+      topicConvos: [['When everything piles up', 'Oct 27', 'storm'], ['Restless nights', 'Oct 24', 'haze'], ['Feeling behind', 'Oct 19', 'drizzle']].map(([t, d, w], i) => ({ t, d, bg: g(w), bt: i ? '1px solid var(--lg-edge-lo)' : '0' })),
+      groups, pageTitle, pageSub, listFoot, memAdd, memOffNote: s === 'memory-off',
+      pMemory: hasPanel && is('memory', 'memory-off'), memOn, memOnStr: memOn ? 'true' : 'false',
+      memSwitchNote: memOn ? 'On. Short notes, only for you.' : 'Off. Turn it on whenever you like.',
+      swBg: memOn ? 'var(--lg-mic)' : 'transparent', swBd: memOn ? 'transparent' : 'var(--lg-text-faint)', swX: memOn ? '21px' : '2px', swKnob: memOn ? 'var(--lg-mic-fg)' : 'var(--lg-text-muted)',
+      pPrivacy: hasPanel && s === 'privacy',
+      patterns: [['Calm', 'In 4 · out 6'], ['Box', '4 · 4 · 4 · 4'], ['Deep', '4 · 7 · 8']].map(([name, beat], i) => { const on = i === 0; return { name, beat, on: on ? 'true' : 'false', bg: on ? 'var(--lg-glass-strong)' : 'var(--lg-glass)', bd: on ? 'rgba(143,240,232,.5)' : 'var(--lg-edge-lo)', w: on ? 600 : 400, ring: on ? '5px solid var(--lg-mic)' : '1.5px solid var(--lg-text-faint)', fill: on ? 'var(--lg-mic-fg)' : 'transparent' }; }),
+    };
+  }
+  dialogs(s) {
+    const D = { consent: ['Before we begin', 'Four things to know. It takes a minute, once.', '760px'], 'end-confirm': ['End and make your card?', "I'll turn this into a reflection card. You can edit or delete it after.", '520px'], 'delete-confirm': ['Delete this reflection?', "The card, its sky and the conversation will be gone. This can't be undone.", '520px'] }[s];
+    if (!D) return { dialog: false };
+    return {
+      dialog: true, dTitle: D[0], dSub: D[1], dMax: D[2], dRole: s === 'consent' ? 'dialog' : 'alertdialog',
+      dConsent: s === 'consent', dEnd: s === 'end-confirm', dDelete: s === 'delete-confirm',
+      consentRules: [
+        { t: "I'm an AI companion, not a clinician.", d: "I'm here to listen and help you reflect. I can't diagnose or give medical advice.", icon: 'M12 4a8 8 0 1 0 0 16a8 8 0 1 0 0-16M9 10h.01M15 10h.01M9 14.5c1.6 1.4 4.4 1.4 6 0', ic: 'var(--lg-accent-strong)', bg: 'var(--lg-glass)' },
+        { t: "I'm not for emergencies.", d: 'If you might be in danger, call or text 988, or call 911. Get help is always in the sidebar.', icon: 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z', ic: 'var(--lg-care)', bg: 'var(--lg-care-surface)' },
+        { t: 'Your words stay private.', d: 'Never sold, never used for ads. To reply, I send your words to our AI provider.', icon: 'M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z', ic: 'var(--lg-accent-strong)', bg: 'var(--lg-glass)' },
+        { t: 'You stay in control.', d: 'Export or delete everything at any time. Nothing needs an account.', icon: 'M4 12l5 5L20 6', ic: 'var(--lg-accent-strong)', bg: 'var(--lg-glass)' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
