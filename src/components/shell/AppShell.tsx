@@ -42,6 +42,9 @@ import { useIsFull } from "@/lib/useIsDesktop";
  */
 
 interface ShellApi {
+  /** The sidebar is tucked away (a conversation under way); `toggleSidebar` brings it back or hides it. */
+  sidebarHidden: boolean;
+  toggleSidebar: () => void;
   openHelp: () => void;
   openShortcuts: () => void;
   closeHelp: () => void;
@@ -115,9 +118,14 @@ export interface AppShellProps {
   refreshKey?: string;
   /** The main area scrolls (pages) or the page manages its own layout (talk). */
   scroll?: boolean;
+  /**
+   * The conversation: the sidebar shows when it opens (so Home → Talk is one continuous move) and
+   * slides away once the person starts talking or writing. They can bring it back.
+   */
+  autoHideSidebar?: boolean;
 }
 
-export function AppShell({ children, panel, panelLabel = "Details", panelCare = false, currentSessionId, refreshKey = "", scroll = true }: AppShellProps) {
+export function AppShell({ children, panel, panelLabel = "Details", panelCare = false, currentSessionId, refreshKey = "", scroll = true, autoHideSidebar }: AppShellProps) {
   const full = useIsFull();
   const compact = !full;
   const pathname = usePathname();
@@ -137,7 +145,14 @@ export function AppShell({ children, panel, panelLabel = "Details", panelCare = 
   }, []);
   const closeHelp = useCallback(() => setHelpOpen(false), []);
   const openShortcuts = useCallback(() => setShortcutsOpen(true), []);
-  const api = useMemo(() => ({ openHelp, openShortcuts, closeHelp, helpOpen, compact }), [openHelp, openShortcuts, closeHelp, helpOpen, compact]);
+  // null = follow autoHideSidebar; true/false = the person chose.
+  const [sidebarPref, setSidebarPref] = useState<boolean | null>(null);
+  const sidebarHidden = sidebarPref === null ? Boolean(autoHideSidebar) : !sidebarPref;
+  const toggleSidebar = useCallback(() => setSidebarPref(sidebarHidden), [sidebarHidden]);
+  const api = useMemo(
+    () => ({ sidebarHidden, toggleSidebar, openHelp, openShortcuts, closeHelp, helpOpen, compact }),
+    [sidebarHidden, toggleSidebar, openHelp, openShortcuts, closeHelp, helpOpen, compact],
+  );
 
   const newConversation = useCallback(() => start(startIn), [start, startIn]);
   useShortcuts({
@@ -180,13 +195,31 @@ export function AppShell({ children, panel, panelLabel = "Details", panelCare = 
     <ShellContext.Provider value={api}>
       <div
         className="relative grid h-dvh min-h-[600px] overflow-hidden bg-ink-deep text-[15px] leading-normal text-text"
-        style={{ gridTemplateColumns: compact ? "76px minmax(0,1fr)" : showPanel ? "264px minmax(0,1fr) 340px" : "264px minmax(0,1fr)" }}
+        style={{
+          gridTemplateColumns: `${sidebarHidden ? "0px" : compact ? "76px" : "264px"} minmax(0,1fr)${showPanel && !compact ? " 340px" : ""}`,
+          transition: "grid-template-columns 480ms cubic-bezier(.2,.7,.2,1)",
+        }}
       >
         <aside
           aria-label="Sidebar"
-          className={`relative z-[2] flex min-h-0 flex-col gap-5 border-r border-edge-lo pt-5 pb-4 ${compact ? "items-center px-3" : "items-stretch px-3.5"}`}
+          aria-hidden={sidebarHidden || undefined}
+          inert={sidebarHidden}
+          className={`relative z-[2] flex min-h-0 flex-col gap-5 border-r border-edge-lo pt-5 pb-4 transition-opacity duration-300 ${compact ? "items-center px-3" : "items-stretch px-3.5"} ${
+            sidebarHidden ? "overflow-hidden border-r-0 opacity-0" : "opacity-100"
+          }`}
           style={{ background: PANEL_BG }}
         >
+          {autoHideSidebar !== undefined && !sidebarHidden && (
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              aria-label="Hide menu"
+              title="Hide menu"
+              className={`press flex size-10 items-center justify-center rounded-[12px] text-muted hover:bg-glass hover:text-text ${compact ? "" : "absolute top-5 right-3.5"}`}
+            >
+              <PanelIcon size={18} />
+            </button>
+          )}
           <Link
             href={HOME}
             aria-label={`${BRAND.name} home`}

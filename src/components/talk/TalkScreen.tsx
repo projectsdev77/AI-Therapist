@@ -27,7 +27,9 @@ import { HOME } from "@/lib/routes";
 import { riskAtLeast } from "@/lib/safety/keywords";
 import { useServiceStatus } from "@/lib/serviceStatus";
 import { useShortcuts } from "@/lib/shortcuts";
-import { useIsDesktop } from "@/lib/useIsDesktop";
+import { useIsDesktop, useIsWide } from "@/lib/useIsDesktop";
+import { AppShell } from "@/components/shell/AppShell";
+import { TalkTopBar } from "./TalkTopBar";
 import { useVoice, type Voice } from "@/lib/voice/useVoice";
 import { StyleSheet, TranscriptSheet, WrapUpSheet } from "./TalkSheets";
 import { TextComposer } from "./TextComposer";
@@ -210,6 +212,7 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
 
   // The conversation keeps its simple, distraction-free layout at every size; keyboard shortcuts on larger screens.
   const desktop = useIsDesktop();
+  const wide = useIsWide();
 
   function starter(s: (typeof STARTERS)[number]) {
     void (async () => {
@@ -243,21 +246,20 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
     desktop && consented,
   );
 
-  return (
-    <div className="relative flex h-dvh flex-col overflow-hidden">
-      <Backdrop />
-      <TopBar variant="talk" status={breathing ? "Breathing" : status} onBack={askToWrapUp} backLabel="Back to Home" />
-
+  // Desktop shell: the page sits inside the shell's <main>, so the conversation uses a div.
+  const Main = wide ? "div" : "main";
+  const content = (
+    <>
       {convo.demo && (
         <p className="relative z-[1] mx-auto mt-2 mb-0 rounded-pill bg-glass px-3 py-0.5 text-[12px] text-faint">Demo mode · replies are scripted</p>
       )}
 
       {breathing ? (
-        <main className="relative z-[1] flex min-h-0 flex-1 flex-col">
+        <Main className="relative z-[1] flex min-h-0 flex-1 flex-col">
           <BreatheMode onDone={() => setBreathing(false)} simple />
-        </main>
+        </Main>
       ) : (
-        <main
+        <Main
           className="relative z-[1] flex min-h-0 flex-1 flex-col items-center"
           data-phase={convo.phase}
           data-replies={convo.lines.filter((l) => l.speaker === "companion" && !l.pending).length}
@@ -369,14 +371,38 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
               <VoiceDock voice={voice} started={voiceActive} onStart={() => void startVoice()} onWrapUp={askToWrapUp} />
             )}
           </div>
-        </main>
+        </Main>
       )}
-
+    </>
+  );
+  const sheets = (
+    <>
       <StyleSheet open={styleOpen} onClose={() => setStyleOpen(false)} value={convo.supportStyle} onChange={chooseStyle} />
       <TranscriptSheet open={transcriptOpen} onClose={() => setTranscriptOpen(false)} lines={convo.lines} startedAt={convo.session?.startedAt} />
       <WrapUpSheet open={wrapOpen} onClose={() => setWrapOpen(false)} onWrapUp={() => void wrapUp()} onLater={later} busy={ending} />
       <HelpSheet open={helpOpen} onClose={() => setHelpOpen(false)} />
       <ConsentSheet open={profile !== null && !consented} onAccept={() => undefined} onCancel={() => router.push(HOME)} />
+    </>
+  );
+
+  if (wide) {
+    // Desktop: the sidebar from Home stays while the conversation opens, then slides away once it's under way.
+    const underway = convo.userTurns > 0 || voiceActive;
+    return (
+      <AppShell scroll={false} autoHideSidebar={underway} currentSessionId={convo.session?.id} refreshKey={convo.session?.id}>
+        <TalkTopBar status={breathing ? "Breathing" : status} />
+        {content}
+        {sheets}
+      </AppShell>
+    );
+  }
+
+  return (
+    <div className="relative flex h-dvh flex-col overflow-hidden">
+      <Backdrop />
+      <TopBar variant="talk" status={breathing ? "Breathing" : status} onBack={askToWrapUp} backLabel="Back to Home" />
+      {content}
+      {sheets}
     </div>
   );
 }

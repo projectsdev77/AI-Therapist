@@ -36,9 +36,17 @@ test("writing from Home starts the conversation with those words", async ({ page
   await expectAccessible(page);
 });
 
-test("the conversation stays simple on desktop: no sidebar or panel, keyboard shortcuts work", async ({ page }) => {
+test("the conversation: the sidebar slides away once it starts, keyboard shortcuts work", async ({ page }) => {
   await startConversation(page, "Write");
+  // The sidebar from Home is there while the conversation opens…
+  await expect(page.getByRole("complementary", { name: "Sidebar" })).toBeVisible();
   await say(page, "Something happened today.");
+  // …and slides away once it's under way; help stays one tap away, and the menu can come back.
+  await expect(page.getByRole("complementary", { name: "Sidebar" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Get help" })).toBeVisible();
+  await page.getByRole("button", { name: "Show menu" }).click();
+  await expect(page.getByRole("complementary", { name: "Sidebar" })).toBeVisible();
+  await page.getByRole("button", { name: "Hide menu" }).click();
   await expect(page.getByRole("complementary", { name: "Sidebar" })).toHaveCount(0);
   await expectAccessible(page);
 
