@@ -49,3 +49,4 @@ next-env.d.ts
 
 # eval reports
 /evals/results/
+docs/design-handoff/v4-simplify/screens/

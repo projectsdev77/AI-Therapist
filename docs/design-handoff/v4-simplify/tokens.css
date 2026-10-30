@@ -1,0 +1,114 @@
+/*
+ * Haven design tokens: "Deep lagoon" (docs/design-handoff/from-designer-v2/lagoon.css).
+ * Dark only; there is no light theme. The --lg-* values are the designer's file as delivered
+ * (the font points at the next/font variable from src/app/layout.tsx). The --color-* names
+ * below map the lagoon values onto the names the components and Tailwind use.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* ---------- Lagoon ----------
+     Changed from the delivered values so every text colour passes WCAG AA (4.5:1) at the
+     lightest point of the gradient, on glass too: the top stops are darker and muted, faint,
+     accent-strong and care text are lighter. Delivered: #15726c / #10565c, #b3d4d3, #9cc0bf,
+     #8ff0e8, #dccfff. */
+  --lg-bg: linear-gradient(180deg, #0d4643 0%, #0b3a40 30%, #0b2a35 66%, #081822 100%);
+  --lg-ink: #0b2a35;
+  --lg-ink-deep: #081822;
+  --lg-text: #effcfa;
+  --lg-text-muted: #d3eae9;
+  --lg-text-faint: #c2dedd;
+  --lg-accent: #3fd6cd;
+  --lg-accent-strong: #a8f5ee;
+  --lg-on-accent: #032a2a;
+  --lg-focus: #e6f59a;
+  --lg-care: #e6dcff;
+  --lg-care-surface: rgba(10, 20, 50, 0.32);
+  --lg-glass: rgba(150, 240, 230, 0.1);
+  --lg-glass-strong: rgba(150, 240, 230, 0.17);
+  --lg-glass-hover: rgba(150, 240, 230, 0.24);
+  --lg-edge-hi: rgba(255, 255, 255, 0.16);
+  --lg-edge-lo: rgba(255, 255, 255, 0.06);
+  --lg-streak-a: rgba(80, 230, 215, 0.16);
+  --lg-streak-b: rgba(30, 90, 170, 0.26);
+  --lg-streak-c: rgba(40, 200, 190, 0.14);
+  --lg-mic: #5fe3da;
+  --lg-mic-hover: #8ff0e8;
+  --lg-mic-fg: #032a2a;
+  --lg-mic-ring: rgba(160, 250, 240, 0.24);
+  --lg-mic-shadow: rgba(0, 0, 0, 0.22);
+  --lg-radius-sm: 14px;
+  --lg-radius-md: 18px;
+  --lg-radius-lg: 32px;
+  --lg-pill: 999px;
+  --lg-font: var(--font-geist), "Geist", system-ui, sans-serif;
+  --lg-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --lg-fast: 160ms;
+  --lg-base: 320ms;
+  --lg-slow: 640ms;
+
+  /* Not tokens in the handoff, but named so they're used consistently. */
+  --lg-care-on: #1b1433;
+  --lg-care-edge: rgba(220, 207, 255, 0.35);
+  --lg-sheet: rgba(10, 34, 44, 0.97);
+  --lg-scrim: rgba(3, 10, 16, 0.62);
+  --lg-field: rgba(4, 16, 22, 0.45);
+  --lg-danger: #ffb4a8;
+  --lg-danger-on: #3a1410;
+  --lg-danger-edge: rgba(255, 180, 168, 0.4);
+  --lg-danger-text: #ffc4b8;
+
+  /* Skies: linear-gradient(160deg, A, B). See src/lib/design/skies.ts. */
+  --sky-clear-a: #8ff0e8;
+  --sky-clear-b: #3fd6cd;
+  --sky-haze-a: #b3d4d3;
+  --sky-haze-b: #5f8f91;
+  --sky-drizzle-a: #6f9bff;
+  --sky-drizzle-b: #2a6fd0;
+  --sky-storm-a: #5b5fb8;
+  --sky-storm-b: #232a66;
+  --sky-breaking-a: #b8a8ff;
+  --sky-breaking-b: #6ff0e6;
+  --sky-quiet-a: #2a5560;
+  --sky-quiet-b: #0f2a33;
+
+  /* ---------- Names the app uses, mapped to lagoon ---------- */
+  --font-display: var(--lg-font);
+  --font-body: var(--lg-font);
+  --font-accent: var(--lg-font);
+
+  --color-bg: var(--lg-ink);
+  --color-bg-deep: var(--lg-ink-deep);
+  --color-band: var(--lg-glass);
+  --color-surface: var(--lg-glass);
+  --color-surface-strong: var(--lg-glass-strong);
+  --color-border: var(--lg-edge-hi);
+  --color-text: var(--lg-text);
+  --color-text-muted: var(--lg-text-muted);
+  --color-text-faint: var(--lg-text-faint);
+  --color-accent: var(--lg-mic);
+  --color-accent-strong: var(--lg-accent-strong);
+  --color-on-accent: var(--lg-mic-fg);
+  --color-focus: var(--lg-focus);
+  --color-care: var(--lg-care);
+  --color-care-surface: var(--lg-care-surface);
+  --color-care-strong: var(--lg-care);
+  --color-on-care: var(--lg-care-on);
+
+  --radius-sm: var(--lg-radius-sm);
+  --radius-md: var(--lg-radius-md);
+  --radius-lg: var(--lg-radius-lg);
+  --radius-pill: var(--lg-pill);
+
+  --motion-fast: var(--lg-fast);
+  --motion-base: var(--lg-base);
+  --motion-slow: var(--lg-slow);
+  --motion-sheet: var(--lg-base);
+  --ease-calm: var(--lg-ease);
+  --ease-settle: var(--lg-ease);
+  --ease-breath: cubic-bezier(0.45, 0, 0.55, 1);
+
+  --shadow-soft: none;
+  --shadow-raised: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
