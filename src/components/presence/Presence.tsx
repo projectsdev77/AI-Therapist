@@ -186,7 +186,7 @@ export function Presence({ state, size, desktopSize, breath, getLevel, className
   }, []);
 
   return (
-    <div ref={host} aria-hidden data-presence-state={state} className={className} style={{ position: "relative", width: px, height: px, flex: "none" }}>
+    <div ref={host} aria-hidden data-presence-state={state} className={className} style={{ position: "relative", width: px, height: px, flex: "none", transition: "width .6s cubic-bezier(.2,.7,.2,1), height .6s cubic-bezier(.2,.7,.2,1)" }}>
       <div
         style={{
           position: "absolute",
@@ -196,6 +196,7 @@ export function Presence({ state, size, desktopSize, breath, getLevel, className
           height: DESIGN,
           margin: `-${DESIGN / 2}px 0 0 -${DESIGN / 2}px`,
           transform: `scale(${px / DESIGN})`,
+          transition: "transform .6s cubic-bezier(.2,.7,.2,1)",
         }}
       >
         <div style={{ position: "absolute", inset: 0, animation: "ho-float 8s ease-in-out infinite" }}>

@@ -30,10 +30,13 @@ import { useShortcuts } from "@/lib/shortcuts";
 import { useIsDesktop, useIsWide } from "@/lib/useIsDesktop";
 import { AppShell } from "@/components/shell/AppShell";
 import { TalkTopBar } from "./TalkTopBar";
+import { DesktopComposer } from "./DesktopComposer";
 import { useVoice, type Voice } from "@/lib/voice/useVoice";
 import { StyleSheet, TranscriptSheet, WrapUpSheet } from "./TalkSheets";
 import { TextComposer } from "./TextComposer";
 import { ToolButton, VoiceDock } from "./VoiceControls";
+
+const quiet = "press min-h-10 rounded-pill px-3.5 text-[14px] text-muted hover:bg-glass hover:text-text";
 
 export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: SessionMode; resumeId?: string; topic?: string }) {
   const router = useRouter();
@@ -246,39 +249,11 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
     desktop && consented,
   );
 
-  // Desktop shell: the page sits inside the shell's <main>, so the conversation uses a div.
-  const Main = wide ? "div" : "main";
-  const content = (
+  // What's said, and how to start (shared by the phone and desktop layouts).
+  const words = (
     <>
-      {convo.demo && (
-        <p className="relative z-[1] mx-auto mt-2 mb-0 rounded-pill bg-glass px-3 py-0.5 text-[12px] text-faint">Demo mode · replies are scripted</p>
-      )}
-
-      {breathing ? (
-        <Main className="relative z-[1] flex min-h-0 flex-1 flex-col">
-          <BreatheMode onDone={() => setBreathing(false)} simple />
-        </Main>
-      ) : (
-        <Main
-          className="relative z-[1] flex min-h-0 flex-1 flex-col items-center"
-          data-phase={convo.phase}
-          data-replies={convo.lines.filter((l) => l.speaker === "companion" && !l.pending).length}
-        >
-          <div className="flex min-h-[112px] flex-[1_1_auto] items-center justify-center overflow-hidden py-2">
-            <Presence
-              state={presence}
-              size={acuteOpen ? 104 : mode === "voice" ? 180 : 130}
-              desktopSize={acuteOpen ? 130 : mode === "voice" ? 230 : 170}
-              getLevel={voiceActive ? voice.getLevel : undefined}
-            />
-          </div>
-
-          <div
-            ref={captionsRef}
-            className="flex min-h-0 w-full max-w-[720px] shrink flex-col items-start gap-3 overflow-y-auto px-7 text-left min-[720px]:items-center min-[720px]:text-center"
-          >
             {voiceOff && !voiceBlocked && !convo.session ? (
-              <p className="m-0 text-[clamp(23px,2.4vw,30px)] leading-[1.3] font-medium tracking-[-0.02em]">
+              <p className="m-0 text-[clamp(20px,1.9vw,24px)] leading-[1.35] font-medium tracking-[-0.015em]">
                 I&apos;ll say hello first. Tap the mic whenever you&apos;re ready.
               </p>
             ) : (
@@ -328,6 +303,10 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
                 </Button>
               </div>
             )}
+    </>
+  );
+  const startersBlock = (
+    <>
             {showStarters && (
               <div role="group" aria-label="Ways to start" className="mt-1 flex flex-wrap justify-start gap-1.5 min-[720px]:justify-center">
                 {STARTERS.map((s) => (
@@ -342,6 +321,43 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
                 ))}
               </div>
             )}
+    </>
+  );
+  const underway = convo.userTurns > 0 || voiceActive;
+
+  // Desktop shell: the page sits inside the shell's <main>, so the conversation uses a div.
+  const Main = wide ? "div" : "main";
+  const content = (
+    <>
+      {convo.demo && (
+        <p className="relative z-[1] mx-auto mt-2 mb-0 rounded-pill bg-glass px-3 py-0.5 text-[12px] text-faint">Demo mode · replies are scripted</p>
+      )}
+
+      {breathing ? (
+        <Main className="relative z-[1] flex min-h-0 flex-1 flex-col">
+          <BreatheMode onDone={() => setBreathing(false)} simple />
+        </Main>
+      ) : (
+        <Main
+          className="relative z-[1] flex min-h-0 flex-1 flex-col items-center"
+          data-phase={convo.phase}
+          data-replies={convo.lines.filter((l) => l.speaker === "companion" && !l.pending).length}
+        >
+          <div className="flex min-h-[112px] flex-[1_1_auto] items-center justify-center overflow-hidden py-2">
+            <Presence
+              state={presence}
+              size={acuteOpen ? 104 : mode === "voice" ? 180 : 130}
+              desktopSize={acuteOpen ? 130 : mode === "voice" ? 230 : 170}
+              getLevel={voiceActive ? voice.getLevel : undefined}
+            />
+          </div>
+
+          <div
+            ref={captionsRef}
+            className="flex min-h-0 w-full max-w-[720px] shrink flex-col items-start gap-3 overflow-y-auto px-7 text-left min-[720px]:items-center min-[720px]:text-center"
+          >
+            {words}
+            {startersBlock}
           </div>
 
           {acuteOpen && (
@@ -387,11 +403,74 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
 
   if (wide) {
     // Desktop: the sidebar from Home stays while the conversation opens, then slides away once it's under way.
-    const underway = convo.userTurns > 0 || voiceActive;
     return (
       <AppShell scroll={false} autoHideSidebar={underway} currentSessionId={convo.session?.id} refreshKey={convo.session?.id}>
         <TalkTopBar status={breathing ? "Breathing" : status} />
-        {content}
+        {convo.demo && (
+          <p className="relative z-[1] mx-auto mt-2 mb-0 rounded-pill bg-glass px-3 py-0.5 text-[12px] text-faint">Demo mode · replies are scripted</p>
+        )}
+        {breathing ? (
+          <div className="relative z-[1] flex min-h-0 flex-1 flex-col">
+            <BreatheMode onDone={() => setBreathing(false)} simple />
+          </div>
+        ) : (
+          // Laid out like Home: the orb, the words where Home's question is, then Home's text box.
+          <div
+            className="relative z-[1] flex min-h-0 flex-1 flex-col items-center justify-center gap-5 px-12 pt-2 pb-10 text-center"
+            data-phase={convo.phase}
+            data-replies={convo.lines.filter((l) => l.speaker === "companion" && !l.pending).length}
+          >
+            <div className="shrink-0">
+              <Presence state={presence} size={underway ? 150 : 200} getLevel={voiceActive ? voice.getLevel : undefined} />
+            </div>
+            <div ref={captionsRef} className="flex max-h-[min(42vh,380px)] min-h-0 w-full max-w-[720px] shrink flex-col items-center gap-3 overflow-y-auto px-2">
+              {words}
+            </div>
+            {acuteOpen && <CarePanel onSafe={imSafe} />}
+            <div className="flex w-full max-w-[680px] shrink-0 flex-col gap-3">
+              <DesktopComposer
+                mode={mode}
+                voice={voice}
+                voiceActive={voiceActive}
+                onSend={(t) => void send(t)}
+                onStartVoice={() => void startVoice()}
+                onSwitchMode={switchMode}
+                onBreathe={() => setBreathing(true)}
+              />
+              {showStarters ? (
+                <div role="group" aria-label="Ways to start" className="flex flex-wrap justify-center gap-1.5">
+                  {STARTERS.filter((x) => x.id !== "stuck").map((x) => (
+                    <button
+                      key={x.id}
+                      type="button"
+                      onClick={() => starter(x)}
+                      className="press min-h-10 rounded-pill px-3.5 text-[14px] text-muted hover:bg-glass hover:text-text"
+                    >
+                      {x.label}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-wrap justify-center gap-1">
+                  {mode === "voice" && (
+                    <button type="button" onClick={() => switchMode("text")} className={quiet}>
+                      Write
+                    </button>
+                  )}
+                  <button type="button" onClick={() => setStyleOpen(true)} aria-label={styleLabel} aria-haspopup="dialog" className={quiet}>
+                    {convo.supportStyle ? `Style: ${SUPPORT_STYLE_LABELS[convo.supportStyle]}` : "Style"}
+                  </button>
+                  <button type="button" onClick={() => setTranscriptOpen(true)} aria-haspopup="dialog" className={quiet}>
+                    Transcript
+                  </button>
+                  <button type="button" onClick={askToWrapUp} aria-label="Wrap up this conversation" aria-haspopup="dialog" className={quiet}>
+                    Wrap up
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         {sheets}
       </AppShell>
     );

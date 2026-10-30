@@ -56,7 +56,12 @@ export function Captions({ view, waiting = false, children }: CaptionsProps) {
           </p>
         )}
         {companion && (
-          <p key={companion.id} className="caption-line m-0 text-[clamp(23px,2.4vw,30px)] leading-[1.3] font-medium tracking-[-0.02em]">
+          <p
+            key={companion.id}
+            className={`caption-line m-0 max-w-[680px] font-medium tracking-[-0.015em] ${
+              companion.text.length > 160 ? "text-[clamp(18px,1.5vw,21px)] leading-[1.45]" : "text-[clamp(20px,1.9vw,24px)] leading-[1.35]"
+            }`}
+          >
             {companion.text}
             {streaming && <span aria-hidden className="pulse-dot ml-2 inline-block size-2 rounded-full bg-dot align-middle" />}
           </p>
