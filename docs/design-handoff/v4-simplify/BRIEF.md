@@ -60,7 +60,7 @@ Simplify how these look and where they live; don't remove them.
 - Read back the conversation (transcript, copy text).
 - Breathe from inside a conversation and come back to it.
 - **Wrap up** (this name is agreed) asks: **Wrap up and make my card** / **I'll be back** / **Keep talking**. "I'll be back" leaves it open; Home offers **Pick up**. There is no "End without a card".
-- States to design: Haven greeting first; thinking; "Taking a little longer…" with Stop waiting (after 8 seconds); "That didn't send. Your words are still here." with Try again; voice not available, so write instead.
+- States to design: Haven greeting first; thinking; "Taking a little longer…" (a quiet line after 20 seconds, no buttons); "That didn't send. Your words are still here." with Try again; voice not available, so write instead.
 
 **The card**
 - Title, one or two of the person's own words, what Haven noticed, a small next step, topic tags, a sky.
