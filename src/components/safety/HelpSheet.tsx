@@ -87,6 +87,7 @@ export function HelpContent({ footer = "Free, confidential, any time. Closing th
         </select>
       </label>
       <SafetyPlanLink />
+      <PrepareLink />
       <p className="m-0 text-sm text-muted">{footer}</p>
     </>
   );
@@ -106,6 +107,21 @@ export function SafetyPlanLink() {
     >
       <span>{has ? "Open my safety plan" : "Make a safety plan"}</span>
       <span className="font-medium text-accent-strong">{has ? "Open" : "Start"}</span>
+    </Link>
+  );
+}
+
+/** Notes to bring to a first therapy appointment. */
+function PrepareLink() {
+  const inConversation = usePathname().startsWith("/talk");
+  return (
+    <Link
+      href="/prepare"
+      target={inConversation ? "_blank" : undefined}
+      className="press flex min-h-[52px] items-center justify-between rounded-sm border border-edge-lo px-4 text-[15px] text-text no-underline hover:bg-glass hover:text-text"
+    >
+      <span>Thinking about seeing a therapist?</span>
+      <span className="font-medium text-accent-strong">Prepare</span>
     </Link>
   );
 }

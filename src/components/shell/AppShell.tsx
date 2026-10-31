@@ -7,6 +7,8 @@ import { LogoMark } from "@/components/brand/Logo";
 import { ConsentSheet } from "@/components/consent/ConsentSheet";
 import { HELP_SUBTITLE, HELP_TITLE, HelpContent } from "@/components/safety/HelpSheet";
 import {
+  BreatheIcon,
+  WriteIcon,
   ChevronUpIcon,
   CloseIcon,
   HelpIcon,
@@ -61,6 +63,7 @@ const NAV: { href: string; label: string; Icon: ComponentType<{ size?: number }>
   { href: "/history", label: "Your skies", Icon: SkiesIcon, match: ["/history"] },
   { href: "/patterns", label: "Patterns", Icon: PatternsIcon, match: ["/patterns"] },
   { href: "/memory", label: "What I remember", Icon: MemoryIcon, match: ["/memory"] },
+  { href: "/exercises", label: "Exercises", Icon: BreatheIcon, match: ["/exercises"] },
 ];
 
 export const PANEL_BG = "#0a1f2a";
@@ -470,6 +473,14 @@ function AccountMenu({
             <SettingsIcon size={18} />
             <span className="flex-1">Settings</span>
             <kbd className="font-mono text-[11px] text-faint">,</kbd>
+          </Link>
+          <Link role="menuitem" href="/safety-plan" onClick={close} className={item}>
+            <HelpIcon size={18} />
+            <span className="flex-1">My safety plan</span>
+          </Link>
+          <Link role="menuitem" href="/prepare" onClick={close} className={item}>
+            <WriteIcon size={18} />
+            <span className="flex-1">My first appointment</span>
           </Link>
           <Link role="menuitem" href="/privacy" onClick={close} className={item}>
             <LockIcon size={18} />

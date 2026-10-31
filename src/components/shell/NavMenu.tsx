@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, type ComponentType } from "react";
-import { HelpIcon, LockIcon, MemoryIcon, PatternsIcon, SettingsIcon, SignInIcon, SkiesIcon, TalkNavIcon } from "@/components/ui/icons";
+import { BreatheIcon, HelpIcon, LockIcon, MemoryIcon, PatternsIcon, SettingsIcon, SignInIcon, SkiesIcon, TalkNavIcon, WriteIcon } from "@/components/ui/icons";
 import { Sheet } from "@/components/ui/Sheet";
 import { useStore } from "@/lib/data/StoreProvider";
 import { HOME } from "@/lib/routes";
@@ -32,6 +32,9 @@ export function NavMenu({ open, onClose, onHelp }: { open: boolean; onClose: () 
     { href: "/history", label: "Your skies", Icon: SkiesIcon, value: "30 days" },
     { href: "/patterns", label: "Your patterns", Icon: PatternsIcon },
     { href: "/memory", label: "What I remember", Icon: MemoryIcon, value: notes === null ? undefined : `${notes} ${notes === 1 ? "note" : "notes"}` },
+    { href: "/exercises", label: "Exercises", Icon: BreatheIcon },
+    { href: "/safety-plan", label: "My safety plan", Icon: HelpIcon, divider: true },
+    { href: "/prepare", label: "My first appointment", Icon: WriteIcon },
     { href: "/settings", label: "Settings", Icon: SettingsIcon, divider: true },
     ...(accountsEnabled && !user ? [{ href: "/signin", label: "Sign in", Icon: SignInIcon, value: "Keep your cards" }] : []),
     { href: "/privacy", label: "Privacy", Icon: LockIcon },
