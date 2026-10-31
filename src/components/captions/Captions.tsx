@@ -76,3 +76,53 @@ export function Captions({ view, waiting = false, children }: CaptionsProps) {
     </>
   );
 }
+
+/**
+ * The whole conversation as captions, newest at the bottom: earlier lines quieter so the latest
+ * exchange stands out, and all of it scrollable so the person can look back.
+ */
+export function CaptionHistory({ lines, waiting = false, live = true, children }: { lines: CaptionLine[]; waiting?: boolean; live?: boolean; children?: ReactNode }) {
+  const visible = lines.filter((l) => l.text.trim().length > 0);
+  const lastCompanion = visible.findLastIndex((l) => l.speaker === "companion");
+  // The latest exchange: the newest line, and the person's words just before a reply.
+  const last = visible.length - 1;
+  const latestStart = last >= 1 && visible[last].speaker === "companion" && visible[last - 1].speaker === "user" ? last - 1 : last;
+  return (
+    <div className="flex w-full flex-col items-start gap-3 min-[720px]:items-center">
+      {visible.map((l, i) => {
+        const latest = i >= latestStart;
+        if (l.speaker === "user") {
+          return (
+            <p
+              key={l.id}
+              className={`caption-line m-0 max-w-[680px] ${latest ? "text-[clamp(17px,1.4vw,19px)] text-muted" : "text-[15px] text-muted opacity-60"}`}
+            >
+              {l.text}
+            </p>
+          );
+        }
+        const isLast = i === lastCompanion;
+        return (
+          <p
+            key={l.id}
+            aria-live={isLast && live ? "polite" : undefined}
+            className={`caption-line m-0 max-w-[680px] tracking-[-0.015em] ${
+              isLast
+                ? `font-medium ${l.text.length > 160 ? "text-[clamp(18px,1.5vw,21px)] leading-[1.45]" : "text-[clamp(20px,1.9vw,24px)] leading-[1.35]"}`
+                : "text-[16px] leading-[1.45] opacity-60"
+            }`}
+          >
+            {l.text}
+            {isLast && l.pending && <span aria-hidden className="pulse-dot ml-2 inline-block size-2 rounded-full bg-dot align-middle" />}
+          </p>
+        );
+      })}
+      {waiting && (
+        <p role="status" aria-label="Thinking" className="m-0 flex h-[39px] items-center">
+          <span aria-hidden className="pulse-dot inline-block size-2 rounded-full bg-dot" />
+        </p>
+      )}
+      {children}
+    </div>
+  );
+}

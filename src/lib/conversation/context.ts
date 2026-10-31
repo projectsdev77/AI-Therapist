@@ -20,6 +20,7 @@ export async function buildCompanionContext(store: DataStore, profile: Profile, 
     sessionCount: sessions.length,
     mode,
     localTime: timeFmt.format(new Date()),
+    ...(sessions[0] ? { lastTalkedMinutesAgo: Math.max(0, Math.round((Date.now() - Date.parse(sessions[0].endedAt ?? sessions[0].startedAt)) / 60_000)) } : {}),
     recentSafety: safety ? { date: dateFmt.format(new Date(safety.createdAt)), level: safety.riskLevel as "elevated" | "acute" } : null,
     hasSafetyPlan: Boolean(profile.safetyPlan),
   };

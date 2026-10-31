@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { BreatheIcon, MicIcon, MicOffIcon, PauseIcon, SendIcon } from "@/components/ui/icons";
+import { BreatheIcon, MicIcon, MicOffIcon, PauseIcon, SendIcon, WriteIcon } from "@/components/ui/icons";
 import type { SessionMode } from "@/lib/data/types";
 import type { Voice } from "@/lib/voice/useVoice";
 import { micLook } from "./VoiceControls";
@@ -160,6 +160,9 @@ export function DesktopComposer({
     );
     right = (
       <>
+        <button type="button" onClick={() => onSwitchMode("text")} aria-label="Switch to writing" title="Write (W)" className={round}>
+          <WriteIcon size={20} />
+        </button>
         <button
           type="button"
           onClick={() => voice.setMuted(!voice.muted)}

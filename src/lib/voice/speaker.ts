@@ -9,6 +9,10 @@ export interface Speaker {
   readonly speaking: boolean;
   onDrained?: () => void;
   onStart?: () => void;
+  /** A sentence starts playing; `durationMs` is its length when known (server audio). */
+  onSentence?: (sentence: string, durationMs: number | null) => void;
+  /** Browser voices report each word as it's spoken: `charIndex` within the current sentence. */
+  onWord?: (charIndex: number) => void;
   dispose(): void;
 }
 
@@ -17,7 +21,7 @@ export class ServerSpeaker implements Speaker {
   private ctx = new AudioContext();
   private analyser: AnalyserNode;
   private data: Float32Array<ArrayBuffer>;
-  private queue: Promise<AudioBuffer | null>[] = [];
+  private queue: { text: string; audio: Promise<AudioBuffer | null> }[] = [];
   private current: AudioBufferSourceNode | null = null;
   private playing = false;
   private finished = false;
@@ -25,6 +29,8 @@ export class ServerSpeaker implements Speaker {
   speaking = false;
   onDrained?: () => void;
   onStart?: () => void;
+  onSentence?: (sentence: string, durationMs: number | null) => void;
+  onWord?: (charIndex: number) => void;
 
   constructor(private voiceId?: string | null) {
     this.analyser = this.ctx.createAnalyser();
@@ -52,7 +58,7 @@ export class ServerSpeaker implements Speaker {
         console.warn("tts failed", err);
         return null;
       });
-    this.queue.push(audio);
+    this.queue.push({ text: sentence, audio });
     if (!this.playing) void this.pump();
   }
 
@@ -98,9 +104,14 @@ export class ServerSpeaker implements Speaker {
     const gen = this.generation;
     this.playing = true;
     while (this.queue.length > 0 && gen === this.generation) {
-      const buffer = await this.queue.shift()!;
+      const next = this.queue.shift()!;
+      const buffer = await next.audio;
       if (gen !== this.generation) return;
-      if (!buffer) continue;
+      if (!buffer) {
+        // No audio for this sentence: still show it.
+        this.onSentence?.(next.text, 0);
+        continue;
+      }
       if (!this.speaking) {
         this.speaking = true;
         this.onStart?.();
@@ -112,6 +123,7 @@ export class ServerSpeaker implements Speaker {
         source.onended = () => resolve();
         this.current = source;
         source.start();
+        this.onSentence?.(next.text, buffer.duration * 1000);
       });
     }
     if (gen !== this.generation) return;
@@ -128,6 +140,8 @@ export class BrowserSpeaker implements Speaker {
   speaking = false;
   onDrained?: () => void;
   onStart?: () => void;
+  onSentence?: (sentence: string, durationMs: number | null) => void;
+  onWord?: (charIndex: number) => void;
   private voice: SpeechSynthesisVoice | null = null;
   // Chrome can drop events for utterances that get garbage-collected; keep references.
   private live = new Set<SpeechSynthesisUtterance>();
@@ -136,10 +150,12 @@ export class BrowserSpeaker implements Speaker {
     const pick = () => {
       const voices = speechSynthesis.getVoices();
       const lang = navigator.language.split("-")[0];
-      this.voice =
-        voices.find((v) => v.lang.startsWith(lang) && /natural|neural|premium|enhanced|samantha|google/i.test(v.name)) ??
-        voices.find((v) => v.lang.startsWith(lang)) ??
-        null;
+      // The most natural-sounding voice the device has: neural/"Natural" voices first (Edge, Windows),
+      // then premium/enhanced Apple voices, then Google's, then any voice in their language.
+      const mine = voices.filter((v) => v.lang.startsWith(lang));
+      const rank = (v: SpeechSynthesisVoice) =>
+        /natural|neural/i.test(v.name) ? 0 : /premium|enhanced/i.test(v.name) ? 1 : /ava|samantha|zoe|serena|aria|jenny|libby|sonia/i.test(v.name) ? 2 : /google/i.test(v.name) ? 3 : v.localService ? 5 : 4;
+      this.voice = [...mine].sort((a, b) => rank(a) - rank(b))[0] ?? null;
     };
     pick();
     speechSynthesis.addEventListener?.("voiceschanged", pick);
@@ -149,8 +165,9 @@ export class BrowserSpeaker implements Speaker {
     const gen = this.generation;
     const u = new SpeechSynthesisUtterance(sentence);
     if (this.voice) u.voice = this.voice;
-    u.rate = 0.97;
-    u.pitch = 1;
+    // A little slower and lower than default: calmer, closer to how a counselor speaks.
+    u.rate = 0.9;
+    u.pitch = 0.95;
     this.pending++;
     u.onstart = () => {
       if (gen !== this.generation) return;
@@ -158,6 +175,10 @@ export class BrowserSpeaker implements Speaker {
         this.speaking = true;
         this.onStart?.();
       }
+      this.onSentence?.(sentence, null);
+    };
+    u.onboundary = (e) => {
+      if (gen === this.generation && e.name !== "sentence") this.onWord?.(e.charIndex);
     };
     this.live.add(u);
     const done = () => {

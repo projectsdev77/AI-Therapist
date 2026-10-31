@@ -49,3 +49,24 @@ export function takeTalkNow(): boolean {
     return false;
   }
 }
+
+const FRESH_KEY = "haven:fresh";
+
+/** "New conversation": start a new one even if an unfinished conversation is recent. */
+export function setFresh() {
+  try {
+    sessionStorage.setItem(FRESH_KEY, "1");
+  } catch {
+    /* storage blocked: a recent conversation is continued instead */
+  }
+}
+
+export function takeFresh(): boolean {
+  try {
+    const on = sessionStorage.getItem(FRESH_KEY) === "1";
+    sessionStorage.removeItem(FRESH_KEY);
+    return on;
+  } catch {
+    return false;
+  }
+}

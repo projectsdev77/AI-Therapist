@@ -17,8 +17,9 @@ const ctx: CompanionContext = {
 };
 
 describe("companion prompt", () => {
-  it("never calls itself a therapist", () => {
-    expect(COMPANION_SYSTEM).toMatch(/never claim to be a therapist/);
+  it("never claims to be human or licensed, and doesn't add therapy disclaimers", () => {
+    expect(COMPANION_SYSTEM).toMatch(/Never claim to be human or to hold a professional license/);
+    expect(COMPANION_SYSTEM).toMatch(/Don't volunteer that you're not a therapist/);
   });
 
   it("includes memory when enabled and hides it when off", () => {

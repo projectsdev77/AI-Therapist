@@ -40,6 +40,11 @@ export interface Voice {
   /** Stops the companion mid-sentence and goes back to listening (tap to interrupt). */
   interrupt: () => void;
   getLevel: () => number;
+  /**
+   * While a reply is being spoken: the part already said, so captions follow the voice word by word.
+   * null when nothing is being spoken (show the full text).
+   */
+  spoken: string | null;
   /** Pass to useConversation so replies are spoken. */
   callbacks: ConversationCallbacks;
 }
@@ -57,6 +62,9 @@ export function useVoice({ serverVoice, voiceId, phase, onUtterance, onBargeIn }
   const [partial, setPartial] = useState("");
   const [muted, setMutedState] = useState(false);
   const [supported, setSupported] = useState(true);
+  const [spoken, setSpoken] = useState<string | null>(null);
+  // Caption sync: sentences already said, the one being said, and how much of it.
+  const said = useRef({ base: "", sentence: "", shown: 0, timer: 0 as ReturnType<typeof setInterval> | 0 });
 
   const recognizerRef = useRef<Recognizer | null>(null);
   const speakerRef = useRef<Speaker | null>(null);
@@ -78,11 +86,60 @@ export function useVoice({ serverVoice, voiceId, phase, onUtterance, onBargeIn }
     setSupported(voiceSupported(serverVoice));
   }, [serverVoice]);
 
+  const clearSync = useCallback(() => {
+    if (said.current.timer) clearInterval(said.current.timer);
+    said.current = { base: "", sentence: "", shown: 0, timer: 0 };
+    setSpoken(null);
+  }, []);
+
+  const showWords = useCallback(() => {
+    const { base, sentence, shown } = said.current;
+    setSpoken(`${base}${sentence.slice(0, shown)}`.trimEnd());
+  }, []);
+
+  /** A sentence started: reveal it word by word over its length (or as the browser reports words). */
+  const onSentence = useCallback(
+    (sentence: string, durationMs: number | null) => {
+      const s = said.current;
+      if (s.timer) clearInterval(s.timer);
+      if (s.sentence) s.base += `${s.sentence} `;
+      s.sentence = sentence;
+      s.shown = 0;
+      const words = sentence.split(/(?<=\s)/);
+      // Unknown length (browser voice): about 2.4 words a second at the calm rate we use.
+      const perWord = Math.max(120, (durationMs ?? (words.length / 2.4) * 1000) / Math.max(1, words.length));
+      let i = 0;
+      s.timer = setInterval(() => {
+        i++;
+        const upTo = words.slice(0, i).join("").length;
+        if (upTo > said.current.shown) said.current.shown = upTo;
+        showWords();
+        if (i >= words.length && said.current.timer) clearInterval(said.current.timer);
+      }, perWord);
+      showWords();
+    },
+    [showWords],
+  );
+
+  const onWord = useCallback(
+    (charIndex: number) => {
+      const s = said.current;
+      const end = s.sentence.slice(charIndex).search(/\s|$/);
+      const upTo = charIndex + Math.max(0, end);
+      if (upTo > s.shown) {
+        s.shown = upTo;
+        showWords();
+      }
+    },
+    [showWords],
+  );
+
   const backToListening = useCallback(() => {
+    clearSync();
     replyActive.current = false;
     recognizerRef.current?.resume();
     if (recognizerRef.current) set("listening");
-  }, [set]);
+  }, [set, clearSync]);
 
   const stop = useCallback(() => {
     recognizerRef.current?.stop();
@@ -91,9 +148,10 @@ export function useVoice({ serverVoice, voiceId, phase, onUtterance, onBargeIn }
     speakerRef.current = null;
     chunker.current.reset();
     replyActive.current = false;
+    clearSync();
     setPartial("");
     set("off");
-  }, [set]);
+  }, [set, clearSync]);
 
   const start = useCallback(async () => {
     if (recognizerRef.current) return;
@@ -108,6 +166,8 @@ export function useVoice({ serverVoice, voiceId, phase, onUtterance, onBargeIn }
       if (speaker instanceof ServerSpeaker) await speaker.unlock();
       speaker.onStart = () => set("speaking");
       speaker.onDrained = backToListening;
+      speaker.onSentence = onSentence;
+      speaker.onWord = onWord;
       speakerRef.current = speaker;
 
       const events = {
@@ -118,6 +178,7 @@ export function useVoice({ serverVoice, voiceId, phase, onUtterance, onBargeIn }
             speakerRef.current?.stop();
             chunker.current.reset();
             replyActive.current = false;
+            clearSync();
             handlersRef.current.onBargeIn();
             recognizerRef.current?.resume();
           }
@@ -154,7 +215,7 @@ export function useVoice({ serverVoice, voiceId, phase, onUtterance, onBargeIn }
       );
       set("error");
     }
-  }, [serverVoice, voiceId, set, backToListening]);
+  }, [serverVoice, voiceId, set, backToListening, onSentence, onWord, clearSync]);
 
   // If a turn ends without any spoken reply (e.g. an error), go back to listening.
   useEffect(() => {
@@ -175,10 +236,11 @@ export function useVoice({ serverVoice, voiceId, phase, onUtterance, onBargeIn }
     speakerRef.current?.stop();
     chunker.current.reset();
     replyActive.current = false;
+    clearSync();
     handlersRef.current.onBargeIn();
     recognizerRef.current?.resume();
     if (recognizerRef.current) set("listening");
-  }, [set]);
+  }, [set, clearSync]);
 
   const getLevel = useCallback(() => {
     const speaker = speakerRef.current;
@@ -192,6 +254,9 @@ export function useVoice({ serverVoice, voiceId, phase, onUtterance, onBargeIn }
         if (!recognizerRef.current) return;
         replyActive.current = true;
         chunker.current.reset();
+        clearSync();
+        // Nothing said yet: captions wait for the voice.
+        setSpoken("");
         recognizerRef.current.pause();
         if (statusRef.current !== "speaking") set("thinking");
       },
@@ -207,8 +272,8 @@ export function useVoice({ serverVoice, voiceId, phase, onUtterance, onBargeIn }
         speakerRef.current?.finish();
       },
     }),
-    [set],
+    [set, clearSync],
   );
 
-  return { status, error, partial, muted, supported, start, stop, setMuted, interrupt, getLevel, callbacks };
+  return { status, error, partial, muted, supported, start, stop, setMuted, interrupt, getLevel, spoken, callbacks };
 }

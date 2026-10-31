@@ -43,7 +43,7 @@ export interface Conversation {
    * Starts the conversation, or picks up an unfinished one by id. With `firstMessage`, the
    * person's words open the conversation instead of the companion's greeting.
    */
-  start: (resumeId?: string, firstMessage?: string) => Promise<void>;
+  start: (resumeId?: string, firstMessage?: string, opts?: { fresh?: boolean }) => Promise<void>;
   /** Asks again for the reply to the last message (after an error). */
   retry: () => void;
   /** True when this conversation was picked up from before. */
@@ -62,13 +62,21 @@ export interface Conversation {
   sendStarter: (starter: Starter) => Promise<void>;
   /** A reply has been pending for SLOW_REPLY_MS with no text yet. */
   slow: boolean;
+  /** They rated their mood in the last 3 hours, so don't ask again at the start. */
+  moodRecent: boolean;
   /** The person's own 0–10 mood rating, at the start ("start") or at Wrap up ("end"). */
   rateMood: (when: "start" | "end", value: number) => Promise<void>;
 }
 
+/** Coming back within this long to an unfinished conversation continues it. */
+const CONTINUE_WITHIN_MS = 30 * 60_000;
+/** The start-of-conversation mood check is asked at most this often. */
+const MOOD_EVERY_MS = 3 * 60 * 60_000;
+
 export function useConversation(mode: SessionMode, callbacks: ConversationCallbacks = {}): Conversation {
   const { store, profile } = useStore();
   const [session, setSession] = useState<Session | null>(null);
+  const [moodRecent, setMoodRecent] = useState(false);
   const [lines, setLines] = useState<CaptionLine[]>([]);
   const [phase, setPhase] = useState<TurnPhase>("idle");
   const [tone, setTone] = useState<Tone>("neutral");
@@ -207,15 +215,29 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
 
   const sendNowRef = useRef<(text: string) => Promise<void>>(async () => undefined);
   const start = useCallback(
-    async (resumeId?: string, firstMessage?: string) => {
+    async (resumeId?: string, firstMessage?: string, opts: { fresh?: boolean } = {}) => {
       if (startedRef.current || !profile) return;
       startedRef.current = true;
       let picked = false;
       setupRef.current = (async () => {
-        const previous = resumeId ? await store.getSession(resumeId) : null;
+        let previous = resumeId ? await store.getSession(resumeId) : null;
+        let earlier: Awaited<ReturnType<typeof store.listMessages>> | null = null;
+        const recent = await store.listSessions(10);
+        // Back within half an hour of an unfinished conversation: carry on with it, like stepping
+        // back into the room, rather than a new greeting and check-in (unless they asked for a new one).
+        if (!previous && !opts.fresh && recent[0] && !recent[0].endedAt) {
+          const messages = await store.listMessages(recent[0].id);
+          const lastAt = Date.parse(messages.at(-1)?.createdAt ?? recent[0].startedAt);
+          if (Date.now() - lastAt < CONTINUE_WITHIN_MS) {
+            previous = recent[0];
+            earlier = messages;
+          }
+        }
+        const rated = (iso: string | null) => iso !== null && Date.now() - Date.parse(iso) < MOOD_EVERY_MS;
+        setMoodRecent(recent.some((x) => (x.moodStart != null && rated(x.startedAt)) || (x.moodEnd != null && rated(x.endedAt))));
         if (previous && !previous.endedAt) {
           // Pick up where we left off: same session, same words, no new greeting.
-          const messages = await store.listMessages(previous.id);
+          const messages = earlier ?? (await store.listMessages(previous.id));
           historyRef.current = messages.map((m) => ({ role: m.role === "user" ? "user" : "assistant", content: m.content }));
           setLines(messages.map((m) => ({ id: m.id, speaker: m.role === "user" ? "user" : "companion", text: m.content, at: Date.parse(m.createdAt) })));
           setUserTurns(messages.filter((m) => m.role === "user").length);
@@ -235,7 +257,11 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
         setResumed(picked);
       })();
       await setupRef.current;
-      if (picked) return;
+      if (picked) {
+        // Words typed on Home still go in, carrying on the same conversation.
+        if (firstMessage && !resumeId) await sendNowRef.current(firstMessage);
+        return;
+      }
       if (firstMessage) await sendNowRef.current(firstMessage);
       else await runTurn();
     },
@@ -348,5 +374,6 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
     sendStarter,
     slow,
     rateMood,
+    moodRecent,
   };
 }

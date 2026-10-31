@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/icons";
 import { Sheet } from "@/components/ui/Sheet";
 import { BRAND } from "@/lib/brand";
+import { setFresh } from "@/lib/conversation/opening";
 import { useStartConversation } from "@/lib/conversation/startConversation";
 import { useStore } from "@/lib/data/StoreProvider";
 import type { Weather } from "@/lib/conversation/types";
@@ -157,7 +158,10 @@ export function AppShell({ children, panel, panelLabel = "Details", panelCare = 
     [sidebarHidden, toggleSidebar, openHelp, openShortcuts, closeHelp, helpOpen, compact],
   );
 
-  const newConversation = useCallback(() => start(startIn), [start, startIn]);
+  const newConversation = useCallback(() => {
+    setFresh();
+    start(startIn);
+  }, [start, startIn]);
   useShortcuts({
     n: newConversation,
     N: newConversation,

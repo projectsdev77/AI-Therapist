@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BreatheMode } from "@/components/breathe/BreatheMode";
-import { Captions, pickCaptions } from "@/components/captions/Captions";
+import { CaptionHistory, pickCaptions } from "@/components/captions/Captions";
 import { ConsentSheet } from "@/components/consent/ConsentSheet";
 import { Presence } from "@/components/presence/Presence";
 import { CarePanel, SupportPill } from "@/components/safety/CrisisPanel";
@@ -15,7 +15,7 @@ import { AlertIcon, BreatheIcon, CheckIcon, StyleIcon, TranscriptIcon, WriteIcon
 import { useAmbientSettings, weatherToAmbient } from "@/lib/ambient/settings";
 import { useAmbient } from "@/lib/ambient/useAmbient";
 import { markPaused } from "@/lib/conversation/paused";
-import { takeOpening, takeTalkNow } from "@/lib/conversation/opening";
+import { takeFresh, takeOpening, takeTalkNow } from "@/lib/conversation/opening";
 import { STARTERS, starterById } from "@/lib/conversation/starters";
 import { SUPPORT_STYLE_LABELS, SUPPORT_STYLE_OPTIONS, type PresenceState, type RiskLevel, type SupportStyle } from "@/lib/conversation/types";
 import { useConversation, type ConversationCallbacks } from "@/lib/conversation/useConversation";
@@ -92,18 +92,21 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
   // Write starts right away; voice waits for a tap so the greeting can be heard.
   const { start } = convo;
   const { setSupportStyle } = convo;
+  // "New conversation" asks for a new one; otherwise a conversation from the last half hour continues.
+  const freshRef = useRef<boolean | null>(null);
+  const isFresh = () => (freshRef.current ??= takeFresh());
   useEffect(() => {
     if (!consented || mode !== "text") return;
     const opening = resumeId ? null : takeOpening();
     const starter = opening && "starterId" in opening ? starterById(opening.starterId) : undefined;
     if (starter?.supportStyle) setSupportStyle(starter.supportStyle);
     const first = starter?.message ?? (opening && "text" in opening ? opening.text : undefined) ?? (topic ? `I'd like to talk about ${topic}.` : undefined);
-    void start(resumeId, first);
+    void start(resumeId, first, { fresh: isFresh() || Boolean(topic) });
   }, [consented, mode, start, resumeId, topic, setSupportStyle]);
 
   async function startVoice() {
     await voice.start();
-    void start(resumeId);
+    void start(resumeId, undefined, { fresh: isFresh() });
   }
 
   // Arrived from a Talk button: start right away, as if the mic had been tapped here.
@@ -199,19 +202,39 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
   }
 
   // Long replies scroll inside the caption area; keep the newest words in view.
+  // The conversation scrolls; it follows the newest words unless the person has scrolled up to read back.
   const captionsRef = useRef<HTMLDivElement>(null);
+  const following = useRef(true);
   const lastText = convo.lines.at(-1)?.text;
   useEffect(() => {
     const el = captionsRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [lastText, convo.slow, convo.error, ack]);
+    if (!el) return;
+    const onScroll = () => {
+      following.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  });
+  useEffect(() => {
+    const el = captionsRef.current;
+    if (el && following.current) el.scrollTop = el.scrollHeight;
+  }, [lastText, convo.lines.length, voice.spoken, voice.partial, convo.slow, convo.error, ack]);
 
   const acuteOpen = panelRisk === "acute" && panelOpen;
   // A quick mood check after Haven's greeting, before the person's first words (once per conversation).
   const askMood =
-    !moodAsked && !convo.resumed && convo.userTurns === 0 && convo.session?.moodStart == null && convo.lines.some((l) => l.speaker === "companion" && !l.pending) && !acuteOpen;
+    !moodAsked && !convo.moodRecent && !convo.resumed && convo.userTurns === 0 && convo.session?.moodStart == null && convo.lines.some((l) => l.speaker === "companion" && !l.pending) && !acuteOpen;
   const showPill = !acuteOpen && (panelRisk === "elevated" || panelRisk === "acute");
-  const view = pickCaptions(voice.partial ? [...convo.lines, { id: "partial", speaker: "user", text: voice.partial, pending: true }] : convo.lines);
+  // Captions follow the voice: while a reply is being spoken, show only the words already said.
+  const shownLines = useMemo(() => {
+    let lines = convo.lines;
+    if (voiceActive && voice.spoken !== null) {
+      const i = lines.findLastIndex((l) => l.speaker === "companion");
+      if (i >= 0) lines = lines.map((l, j) => (j === i ? { ...l, text: voice.spoken ?? l.text, pending: true } : l));
+    }
+    return voice.partial ? [...lines, { id: "partial", speaker: "user" as const, text: voice.partial, pending: true }] : lines;
+  }, [convo.lines, voiceActive, voice.spoken, voice.partial]);
+  const view = pickCaptions(shownLines);
   const showStarters = convo.userTurns === 0 && !convo.resumed && !voice.partial && (voiceOff ? !voiceBlocked : view.companion !== null);
   const styleLabel = convo.supportStyle ? `Reply style: ${SUPPORT_STYLE_LABELS[convo.supportStyle]}` : "Reply style";
 
@@ -274,7 +297,7 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
                 I&apos;ll say hello first. Tap the mic whenever you&apos;re ready.
               </p>
             ) : (
-              <Captions view={view} waiting={convo.phase === "waiting" && !convo.slow && convo.lines.length > 0}>
+              <CaptionHistory lines={shownLines} live={!voiceActive} waiting={convo.phase === "waiting" && !convo.slow && convo.lines.length > 0}>
                 {ack && (
                   <p role="status" className="m-0 flex items-center gap-2 text-[15px] text-muted">
                     <StyleIcon size={16} className="text-accent-strong" />
@@ -314,7 +337,7 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
                     </button>
                   </div>
                 )}
-              </Captions>
+              </CaptionHistory>
             )}
             {voiceBlocked && (
               <div role="alert" className="flex flex-wrap items-center gap-3 rounded-md border border-edge-hi bg-glass py-2.5 pr-2.5 pl-4">
