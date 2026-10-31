@@ -12,7 +12,7 @@ import type { Starter } from "./starters";
 import type { RiskLevel, SupportStyle, Tone } from "./types";
 
 /** After this long with no reply text, the conversation counts as slow. */
-export const SLOW_REPLY_MS = 8000;
+export const SLOW_REPLY_MS = 20_000;
 
 export type TurnPhase = "idle" | "waiting" | "streaming";
 
@@ -62,8 +62,6 @@ export interface Conversation {
   sendStarter: (starter: Starter) => Promise<void>;
   /** A reply has been pending for SLOW_REPLY_MS with no text yet. */
   slow: boolean;
-  /** Gives up on the pending reply. The person's message stays; they can say more or switch modes. */
-  cancelReply: () => void;
 }
 
 export function useConversation(mode: SessionMode, callbacks: ConversationCallbacks = {}): Conversation {
@@ -333,6 +331,5 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
     setSupportStyle,
     sendStarter,
     slow,
-    cancelReply: interrupt,
   };
 }

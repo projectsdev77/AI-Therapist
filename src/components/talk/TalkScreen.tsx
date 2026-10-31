@@ -265,22 +265,10 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
                   </p>
                 )}
                 {convo.slow && (
-                  <div role="status" className="flex flex-col items-start gap-3 min-[720px]:items-center">
-                    <p className="m-0 flex items-center gap-3 text-[clamp(19px,1.8vw,22px)] text-muted">
-                      <span aria-hidden className="pulse-dot-slow size-2 shrink-0 rounded-full bg-dot" />
-                      Taking a little longer than usual…
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="secondary" onClick={convo.cancelReply}>
-                        Stop waiting
-                      </Button>
-                      {mode === "voice" && (
-                        <Button variant="tertiary" onClick={() => switchMode("text")}>
-                          Switch to writing
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+                  <p role="status" className="m-0 flex items-center gap-3 text-[clamp(17px,1.5vw,19px)] text-muted">
+                    <span aria-hidden className="pulse-dot-slow size-2 shrink-0 rounded-full bg-dot" />
+                    Taking a little longer than usual…
+                  </p>
                 )}
                 {convo.error && convo.phase === "idle" && (
                   <div role="alert" className="flex flex-wrap items-center gap-3 rounded-md border border-edge-hi bg-glass py-2.5 pr-2.5 pl-4">
