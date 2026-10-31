@@ -24,9 +24,9 @@ test("a written conversation becomes a reflection, a sky, and memories", async (
   await expect(page.getByRole("link", { name: /Talking through work/ })).toBeVisible();
 
   await page.goto("/memory");
-  await expect(page.getByText("Has been talking about work")).toBeVisible();
-  await page.getByRole("button", { name: "Forget: Has been talking about work" }).click();
-  await expect(page.getByText("Has been talking about work")).toHaveCount(0);
+  await expect(page.getByText("You've been talking about work")).toBeVisible();
+  await page.getByRole("button", { name: "Forget: You've been talking about work" }).click();
+  await expect(page.getByText("You've been talking about work")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Undo" })).toBeVisible();
 
   // A returning visitor skips the landing page.

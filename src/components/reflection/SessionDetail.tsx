@@ -16,7 +16,7 @@ import { useStore } from "@/lib/data/StoreProvider";
 import type { Memory, Message, Reflection, ReflectionFeedback, Session } from "@/lib/data/types";
 import { skyGradient } from "@/lib/design/skies";
 import { usePendingForget } from "@/lib/memory/usePendingForget";
-import { cleanCardEdit, editCard, memoriesFromConversation, setCardFeedback, setConversationSky, type CardEdit } from "@/lib/reflection/edit";
+import { cleanCardEdit, editCard, memoriesFromConversation, rewriteCard, setCardFeedback, setConversationSky, type CardEdit } from "@/lib/reflection/edit";
 import { finalizeSession } from "@/lib/reflection/finalize";
 import { accountsEnabled } from "@/lib/supabase/config";
 import { ReflectionCard, ReflectionCardEditor } from "./ReflectionCard";
@@ -45,6 +45,9 @@ export function SessionDetail() {
   const [sheet, setSheet] = useState<null | "transcript" | "sky" | "delete" | "share">(null);
   const [draft, setDraft] = useState<Required<CardEdit> | null>(null);
   const [guestDismissed, setGuestDismissed] = useState(true);
+  const [fixing, setFixing] = useState(false);
+  const [fixNote, setFixNote] = useState("");
+  const [fixState, setFixState] = useState<"idle" | "working" | "error">("idle");
 
   const load = useCallback(async () => {
     if (!profile) return;
@@ -85,7 +88,23 @@ export function SessionDetail() {
 
   async function feedback(value: ReflectionFeedback) {
     if (!reflection) return;
-    setReflection(await setCardFeedback(store, id, reflection.feedback === value ? null : value));
+    const next = reflection.feedback === value ? null : value;
+    setReflection(await setCardFeedback(store, id, next));
+    // "Not quite" asks what's off, so the card can be rewritten with their correction.
+    setFixing(next === "not_quite");
+  }
+
+  async function fixCard() {
+    if (!profile || !fixNote.trim()) return;
+    setFixState("working");
+    try {
+      setReflection(await rewriteCard(store, id, fixNote.trim(), profile));
+      setFixing(false);
+      setFixNote("");
+      setFixState("idle");
+    } catch {
+      setFixState("error");
+    }
   }
 
   async function saveEdits() {
@@ -291,6 +310,41 @@ export function SessionDetail() {
                         );
                       })}
                     </div>
+                  )}
+                  {reflection && fixing && (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        void fixCard();
+                      }}
+                      className="flex flex-col gap-2 rounded-md border border-edge-hi bg-glass p-3.5"
+                    >
+                      <label htmlFor="fix-note" className="text-[15px] font-medium">
+                        What&apos;s off? I&apos;ll rewrite the card.
+                      </label>
+                      <textarea
+                        id="fix-note"
+                        value={fixNote}
+                        onChange={(e) => setFixNote(e.target.value)}
+                        rows={3}
+                        maxLength={600}
+                        placeholder="e.g. It wasn't really about work, it was about my dad"
+                        className="w-full resize-none rounded-sm border border-edge-hi bg-field px-4 py-3 text-base text-text placeholder:text-faint focus:border-[rgba(143,240,232,.6)] focus:outline-none"
+                      />
+                      {fixState === "error" && (
+                        <p role="alert" className="m-0 text-sm text-danger">
+                          Couldn&apos;t rewrite it right now. Try again in a moment, or edit the card yourself.
+                        </p>
+                      )}
+                      <div className="flex flex-wrap gap-2">
+                        <Button type="submit" variant="primary" disabled={!fixNote.trim() || fixState === "working"}>
+                          {fixState === "working" ? "Rewriting…" : "Rewrite my card"}
+                        </Button>
+                        <Button variant="tertiary" onClick={() => setFixing(false)}>
+                          Not now
+                        </Button>
+                      </div>
+                    </form>
                   )}
                   <div className="flex flex-wrap gap-2">
                     {reflection && (

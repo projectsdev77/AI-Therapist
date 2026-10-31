@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import type { Heard } from "@/lib/data/types";
+import { MoodScale } from "./MoodScale";
 import type { CaptionLine } from "@/components/captions/Captions";
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
@@ -128,10 +131,13 @@ export function WrapUpSheet({
 }: {
   open: boolean;
   onClose: () => void;
-  onWrapUp: () => void;
+  /** With the person's optional end-of-conversation ratings. */
+  onWrapUp: (feedback: { mood: number | null; heard: Heard | null }) => void;
   onLater: () => void;
   busy?: boolean;
 }) {
+  const [mood, setMood] = useState<number | null>(null);
+  const [heard, setHeard] = useState<Heard | null>(null);
   return (
     <Sheet
       open={open}
@@ -141,8 +147,39 @@ export function WrapUpSheet({
       title="Wrap up and make your card?"
       subtitle="I'll turn this into a reflection card. You can edit or delete it after."
     >
+      <div className="flex flex-col gap-1.5">
+        <p className="m-0 text-[15px] font-medium">How are you feeling now? (optional)</p>
+        <MoodScale label="How are you feeling now?" value={mood} onChange={setMood} compact />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <p id="heard-label" className="m-0 text-[15px] font-medium">
+          Did you feel heard today? (optional)
+        </p>
+        <div role="radiogroup" aria-labelledby="heard-label" className="grid grid-cols-3 gap-1.5">
+          {(
+            [
+              ["yes", "Yes"],
+              ["somewhat", "Somewhat"],
+              ["no", "Not really"],
+            ] as const
+          ).map(([value, text]) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={heard === value}
+              onClick={() => setHeard(value)}
+              className={`press min-h-11 rounded-pill text-[14px] ${
+                heard === value ? "bg-mic font-semibold text-mic-fg" : "border border-edge-lo bg-glass text-text hover:bg-glass-strong"
+              }`}
+            >
+              {text}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="flex flex-col gap-2">
-        <Button variant="primary" size="xl" onClick={onWrapUp} disabled={busy} className="w-full">
+        <Button variant="primary" size="xl" onClick={() => onWrapUp({ mood, heard })} disabled={busy} className="w-full">
           {busy ? "Wrapping up…" : "Wrap up and make my card"}
         </Button>
         <Button variant="secondary" onClick={onLater} disabled={busy} className="min-h-[52px] w-full text-base">

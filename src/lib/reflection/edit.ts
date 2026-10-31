@@ -49,3 +49,38 @@ export async function setConversationSky(store: DataStore, sessionId: string, we
 export async function memoriesFromConversation(store: DataStore, sessionId: string): Promise<Memory[]> {
   return (await store.listMemories()).filter((m) => m.sourceSessionId === sessionId);
 }
+
+/**
+ * "Not quite": the person says what's off, and the card is rewritten to fit (a collaborative
+ * summary they can correct). Memory and notes are left alone.
+ */
+export async function rewriteCard(store: DataStore, sessionId: string, note: string, profile: { displayName: string | null }): Promise<Reflection> {
+  const [messages, card] = await Promise.all([store.listMessages(sessionId), store.getReflection(sessionId)]);
+  if (!card) throw new Error("No card to rewrite.");
+  const transcript = messages.slice(-60).map((m) => ({ role: m.role === "user" ? ("user" as const) : ("assistant" as const), content: m.content.slice(0, 4000) }));
+  if (transcript[0]?.role !== "user") transcript.unshift({ role: "user", content: "(conversation start)" });
+  const res = await fetch("/api/reflect", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      transcript,
+      memoryEnabled: false,
+      displayName: profile.displayName,
+      clientSummary: null,
+      memories: [],
+      knownThemes: card.themes,
+      correction: { note: note.slice(0, 600), card: { title: card.title, quotes: card.quotes, insight: card.insight, nextStep: card.nextStep } },
+    }),
+  });
+  if (!res.ok) throw new Error("Couldn't rewrite the card right now.");
+  const out = (await res.json()) as { reflection: { title: string; quotes: string[]; insight: string; nextStep: string | null } };
+  return store.updateReflection(sessionId, {
+    title: out.reflection.title,
+    quotes: out.reflection.quotes,
+    insight: out.reflection.insight,
+    nextStep: out.reflection.nextStep,
+    // Corrected now, so the companion can lean on it again.
+    feedback: null,
+    editedAt: new Date().toISOString(),
+  });
+}

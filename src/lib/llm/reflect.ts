@@ -24,6 +24,15 @@ function renderRequest(req: ReflectRequest): string {
     "",
     "Conversation:",
     transcript,
+    ...(req.correction
+      ? [
+          "",
+          "# Correction from the person",
+          `They read this card and said it wasn't quite right: "${req.correction.note}"`,
+          `Current card: ${JSON.stringify(req.correction.card)}`,
+          "Rewrite the card so it fits what they said. Keep their quotes word-for-word from the conversation. Return empty memory lists and a null client summary.",
+        ]
+      : []),
   ]
     .filter((l) => l !== null)
     .join("\n");
@@ -72,13 +81,13 @@ export function demoReflection(req: ReflectRequest): ReflectOutput {
     },
     memory: {
       add: themes
-        .map((t) => ({ fact: `Has been talking about ${t}`, category: "situation" as const }))
+        .map((t) => ({ fact: `You've been talking about ${t}`, category: "situation" as const }))
         .filter((m) => !known.has(m.fact)),
       update: [],
       remove: [],
     },
     clientSummary: req.memoryEnabled
-      ? `${req.displayName ?? "They"} ha${req.displayName ? "s" : "ve"} been talking about ${themes.join(", ") || "how they're doing"}.`
+      ? `You've been talking about ${themes.join(", ") || "how you're doing"}.`
       : null,
   };
 }

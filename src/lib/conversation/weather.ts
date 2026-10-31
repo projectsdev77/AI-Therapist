@@ -48,3 +48,16 @@ export function sessionWeather(tones: Tone[]): Weather {
   if (avg >= 1.0) return "haze";
   return "clear";
 }
+
+/**
+ * A conversation's sky from the person's own 0–10 mood ratings (preferred over the AI's read of
+ * their tone). A clear lift from start to end is "breaking"; otherwise the end rating sets it.
+ */
+export function moodWeather(start: number | null, end: number | null): Weather | null {
+  if (end == null) return null;
+  if (start != null && end - start >= 3) return "breaking";
+  if (end >= 7) return "clear";
+  if (end >= 5) return "haze";
+  if (end >= 3) return "drizzle";
+  return "storm";
+}

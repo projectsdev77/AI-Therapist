@@ -62,6 +62,8 @@ export interface Conversation {
   sendStarter: (starter: Starter) => Promise<void>;
   /** A reply has been pending for SLOW_REPLY_MS with no text yet. */
   slow: boolean;
+  /** The person's own 0–10 mood rating, at the start ("start") or at Wrap up ("end"). */
+  rateMood: (when: "start" | "end", value: number) => Promise<void>;
 }
 
 export function useConversation(mode: SessionMode, callbacks: ConversationCallbacks = {}): Conversation {
@@ -309,6 +311,19 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
     return ended;
   }, [store, interrupt]);
 
+  const rateMood = useCallback(
+    async (when: "start" | "end", value: number) => {
+      await setupRef.current;
+      const s = sessionRef.current;
+      if (!s) return;
+      if (when === "start" && contextRef.current) contextRef.current = { ...contextRef.current, moodNow: value };
+      const next = await store.updateSession(s.id, when === "start" ? { moodStart: value } : { moodEnd: value });
+      sessionRef.current = next;
+      setSession(next);
+    },
+    [store],
+  );
+
   return {
     session,
     lines,
@@ -331,5 +346,6 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
     setSupportStyle,
     sendStarter,
     slow,
+    rateMood,
   };
 }

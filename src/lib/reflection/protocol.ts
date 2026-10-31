@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isUsableTheme } from "@/lib/patterns/tags";
 import { ChatTurnSchema, LIMITS } from "@/lib/conversation/protocol";
 import { MEMORY_CATEGORIES } from "@/lib/data/types";
 
@@ -11,6 +12,13 @@ export const ReflectRequestSchema = z.object({
     .array(z.object({ id: z.string().max(64), fact: z.string().max(400), category: z.enum(MEMORY_CATEGORIES) }))
     .max(LIMITS.memories),
   knownThemes: z.array(z.string().max(40)).max(60),
+  /** The person said the card wasn't quite right: rewrite it to fit what they said (no memory changes). */
+  correction: z
+    .object({
+      note: z.string().max(600),
+      card: z.object({ title: z.string().max(200), quotes: z.array(z.string().max(400)).max(3), insight: z.string().max(600), nextStep: z.string().max(300).nullable() }),
+    })
+    .optional(),
 });
 export type ReflectRequest = z.infer<typeof ReflectRequestSchema>;
 
@@ -50,7 +58,7 @@ export function normalizeReflectOutput(out: ReflectOutput, req: ReflectRequest):
       quotes: out.reflection.quotes.map((q) => clip(q.trim().replace(/^["“]|["”]$/g, ""), 200)).filter(Boolean).slice(0, 3),
       insight: clip(out.reflection.insight.trim(), 400),
       nextStep: out.reflection.nextStep?.trim() ? clip(out.reflection.nextStep.trim(), 160) : null,
-      themes: [...new Set(out.reflection.themes.map((t) => t.trim().toLowerCase()).filter(Boolean))].slice(0, 4),
+      themes: [...new Set(out.reflection.themes.map((t) => t.trim().toLowerCase()).filter(isUsableTheme))].slice(0, 3),
     },
     memory,
     clientSummary: req.memoryEnabled && out.clientSummary?.trim() ? clip(out.clientSummary.trim(), 1200) : null,

@@ -34,6 +34,8 @@ import { DesktopComposer } from "./DesktopComposer";
 import { useVoice, type Voice } from "@/lib/voice/useVoice";
 import { StyleSheet, TranscriptSheet, WrapUpSheet } from "./TalkSheets";
 import { TextComposer } from "./TextComposer";
+import { MoodScale } from "./MoodScale";
+import type { Heard } from "@/lib/data/types";
 import { ToolButton, VoiceDock } from "./VoiceControls";
 
 const quiet = "press min-h-10 rounded-pill px-3.5 text-[14px] text-muted hover:bg-glass hover:text-text";
@@ -49,6 +51,7 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
   const [breathing, setBreathing] = useState(false);
   const [ending, setEnding] = useState(false);
   const [ack, setAck] = useState<string | null>(null);
+  const [moodAsked, setMoodAsked] = useState(false);
 
   // Safety: the care panel opens itself on acute risk; elevated risk offers a pill.
   const [panelRisk, setPanelRisk] = useState<RiskLevel | null>(null);
@@ -149,10 +152,12 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
     micListening: voiceActive,
   });
 
-  async function wrapUp() {
+  async function wrapUp(feedback?: { mood: number | null; heard: Heard | null }) {
     setEnding(true);
     voice.stop();
-    const session = await convo.end();
+    if (feedback?.mood != null) await convo.rateMood("end", feedback.mood).catch(() => undefined);
+    let session = await convo.end();
+    if (session && feedback?.heard) session = await store.updateSession(session.id, { heard: feedback.heard }).catch(() => session);
     // Start the card now, so it's made even if the tab closes before the card page loads.
     if (session && profile && convo.userTurns > 0) void finalizeSession(store, profile, session.id).catch(() => undefined);
     router.push(session && convo.userTurns > 0 ? `/history/${session.id}?new=1` : HOME);
@@ -193,6 +198,9 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
   }, [lastText, convo.slow, convo.error, ack]);
 
   const acuteOpen = panelRisk === "acute" && panelOpen;
+  // A quick mood check after Haven's greeting, before the person's first words (once per conversation).
+  const askMood =
+    !moodAsked && !convo.resumed && convo.userTurns === 0 && convo.session?.moodStart == null && convo.lines.some((l) => l.speaker === "companion" && !l.pending) && !acuteOpen;
   const showPill = !acuteOpen && (panelRisk === "elevated" || panelRisk === "acute");
   const view = pickCaptions(voice.partial ? [...convo.lines, { id: "partial", speaker: "user", text: voice.partial, pending: true }] : convo.lines);
   const showStarters = convo.userTurns === 0 && !convo.resumed && !voice.partial && (voiceOff ? !voiceBlocked : view.companion !== null);
@@ -280,6 +288,23 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
                   </div>
                 )}
                 {showPill && <SupportPill onOpen={() => setHelpOpen(true)} />}
+                {askMood && (
+                  <div className="mt-1 flex w-full max-w-[440px] flex-col gap-2">
+                    <p className="m-0 text-[15px] text-muted">Before we start: how are you feeling right now?</p>
+                    <MoodScale
+                      label="How are you feeling right now?"
+                      value={null}
+                      onChange={(v) => {
+                        setMoodAsked(true);
+                        void convo.rateMood("start", v);
+                      }}
+                      compact
+                    />
+                    <button type="button" onClick={() => setMoodAsked(true)} className="min-h-10 self-center bg-transparent text-[14px] text-muted underline-offset-2 hover:underline">
+                      Skip
+                    </button>
+                  </div>
+                )}
               </Captions>
             )}
             {voiceBlocked && (
@@ -383,7 +408,7 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
     <>
       <StyleSheet open={styleOpen} onClose={() => setStyleOpen(false)} value={convo.supportStyle} onChange={chooseStyle} />
       <TranscriptSheet open={transcriptOpen} onClose={() => setTranscriptOpen(false)} lines={convo.lines} startedAt={convo.session?.startedAt} />
-      <WrapUpSheet open={wrapOpen} onClose={() => setWrapOpen(false)} onWrapUp={() => void wrapUp()} onLater={later} busy={ending} />
+      <WrapUpSheet open={wrapOpen} onClose={() => setWrapOpen(false)} onWrapUp={(f) => void wrapUp(f)} onLater={later} busy={ending} />
       <HelpSheet open={helpOpen} onClose={() => setHelpOpen(false)} />
       <ConsentSheet open={profile !== null && !consented} onAccept={() => undefined} onCancel={() => router.push(HOME)} />
     </>

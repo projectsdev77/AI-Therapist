@@ -1,4 +1,5 @@
 import { seeded } from "@/lib/design/random";
+import { isUsableTheme } from "./tags";
 
 export interface ThemeInput {
   themes: string[];
@@ -28,11 +29,14 @@ export interface Constellation {
 }
 
 /**
- * Builds a constellation from reflection themes: a star per theme, lines between
- * themes that came up in the same conversation, laid out with a small deterministic
- * force simulation in a 0..1 square.
+ * Builds a constellation from reflection themes: a star per theme that has come up in at least
+ * `minCount` conversations, lines between themes that came up together at least that often,
+ * laid out with a small deterministic force simulation in a 0..1 square.
  */
-export function buildConstellation(items: ThemeInput[], maxStars = 24): Constellation {
+/** A topic becomes a star once it has come up in this many separate conversations. */
+export const MIN_CONVERSATIONS = 2;
+
+export function buildConstellation(items: ThemeInput[], maxStars = 24, minCount = MIN_CONVERSATIONS): Constellation {
   const byTheme = new Map<string, { count: number; last: number; sessionIds: string[] }>();
   const pairs = new Map<string, number>();
   const times = items.map((i) => new Date(i.createdAt).getTime());
@@ -40,7 +44,7 @@ export function buildConstellation(items: ThemeInput[], maxStars = 24): Constell
   const maxT = Math.max(...times);
 
   items.forEach((item, idx) => {
-    const unique = [...new Set(item.themes)];
+    const unique = [...new Set(item.themes.map((t) => t.trim().toLowerCase()).filter(isUsableTheme))];
     for (const t of unique) {
       const entry = byTheme.get(t) ?? { count: 0, last: 0, sessionIds: [] };
       entry.count++;
@@ -56,7 +60,9 @@ export function buildConstellation(items: ThemeInput[], maxStars = 24): Constell
     }
   });
 
-  const top = [...byTheme.entries()].sort((a, b) => b[1].count - a[1].count || b[1].last - a[1].last).slice(0, maxStars);
+  const top = [...byTheme.entries()]
+    .filter(([, e]) => e.count >= minCount)
+    .sort((a, b) => b[1].count - a[1].count || b[1].last - a[1].last).slice(0, maxStars);
   const keep = new Set(top.map(([t]) => t));
   const rnd = seeded(top.length * 7919 + items.length);
   const stars: Star[] = top.map(([id, e], i) => {
@@ -75,7 +81,8 @@ export function buildConstellation(items: ThemeInput[], maxStars = 24): Constell
       const [a, b] = key.split("\u0000");
       return { a, b, weight };
     })
-    .filter((l) => keep.has(l.a) && keep.has(l.b));
+    // A line means two topics keep coming up together, not that they shared one card.
+    .filter((l) => l.weight >= minCount && keep.has(l.a) && keep.has(l.b));
 
   layout(stars, links);
   return { stars, links };

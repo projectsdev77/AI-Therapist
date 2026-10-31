@@ -93,7 +93,7 @@ export function PatternsView() {
         {reflections && stars.length === 0 ? (
           <div className="mx-auto mt-10 flex max-w-[420px] flex-col items-center gap-3 px-5 text-center">
             <h2 className="m-0 text-[20px] font-semibold">Your first stars are waiting</h2>
-            <p className="m-0 text-[15px] text-muted">As we talk, the topics that come up will appear here as stars, linked when they come up together.</p>
+            <p className="m-0 text-[15px] text-muted">When a topic comes up in two or more of our conversations, it appears here as a star. Topics that keep coming up together get linked.</p>
             <LinkButton href={HOME} variant="primary" size="lg" className="mt-1.5">
               Start a conversation
             </LinkButton>

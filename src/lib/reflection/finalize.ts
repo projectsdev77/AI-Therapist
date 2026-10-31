@@ -1,5 +1,5 @@
 import type { Tone } from "@/lib/conversation/types";
-import { sessionWeather } from "@/lib/conversation/weather";
+import { moodWeather, sessionWeather } from "@/lib/conversation/weather";
 import type { DataStore, Profile, Reflection } from "@/lib/data/types";
 import { SESSION_START } from "@/lib/prompts/companion";
 import type { ReflectOutput, ReflectRequest } from "./protocol";
@@ -55,9 +55,12 @@ async function run(store: DataStore, profile: Profile, sessionId: string): Promi
     .slice(firstUser)
     .filter((m) => m.role === "companion" && m.tone)
     .map((m) => m.tone as Tone);
-  const weather = sessionWeather(tones);
+  // The person's own mood ratings win over the AI's read of their tone.
+  const session = await store.getSession(sessionId);
+  const rated = session ? moodWeather(session.moodStart, session.moodEnd) : null;
+  const weather = rated ?? sessionWeather(tones);
 
-  const reflection = await store.saveReflection({ sessionId, ...out.reflection, weather });
+  const reflection = await store.saveReflection({ sessionId, ...out.reflection, weather, weatherByPerson: rated !== null });
   await store.updateSession(sessionId, { weather, title: out.reflection.title });
 
   if (profile.memoryEnabled) {
