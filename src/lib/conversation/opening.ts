@@ -27,3 +27,25 @@ export function takeOpening(): Opening | null {
     return null;
   }
 }
+
+const TALK_KEY = "haven:talk-now";
+
+/** A Talk button was pressed (Home, the landing page, New conversation): start talking on arrival. */
+export function setTalkNow() {
+  try {
+    sessionStorage.setItem(TALK_KEY, "1");
+  } catch {
+    /* storage blocked: the person taps the mic on the conversation screen instead */
+  }
+}
+
+/** Reads and clears the Talk request, so it's used once. */
+export function takeTalkNow(): boolean {
+  try {
+    const on = sessionStorage.getItem(TALK_KEY) === "1";
+    sessionStorage.removeItem(TALK_KEY);
+    return on;
+  } catch {
+    return false;
+  }
+}

@@ -15,7 +15,7 @@ import { AlertIcon, BreatheIcon, CheckIcon, StyleIcon, TranscriptIcon, WriteIcon
 import { useAmbientSettings, weatherToAmbient } from "@/lib/ambient/settings";
 import { useAmbient } from "@/lib/ambient/useAmbient";
 import { markPaused } from "@/lib/conversation/paused";
-import { takeOpening } from "@/lib/conversation/opening";
+import { takeOpening, takeTalkNow } from "@/lib/conversation/opening";
 import { STARTERS, starterById } from "@/lib/conversation/starters";
 import { SUPPORT_STYLE_LABELS, SUPPORT_STYLE_OPTIONS, type PresenceState, type RiskLevel, type SupportStyle } from "@/lib/conversation/types";
 import { useConversation, type ConversationCallbacks } from "@/lib/conversation/useConversation";
@@ -105,6 +105,15 @@ export function TalkScreen({ initialMode, resumeId, topic }: { initialMode: Sess
     await voice.start();
     void start(resumeId);
   }
+
+  // Arrived from a Talk button: start right away, as if the mic had been tapped here.
+  const autoTalked = useRef(false);
+  useEffect(() => {
+    if (!consented || mode !== "voice" || autoTalked.current) return;
+    autoTalked.current = true;
+    if (takeTalkNow() && voice.supported) void startVoice();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on arrival
+  }, [consented, mode]);
 
   function switchMode(next: SessionMode) {
     if (next === "text") voice.stop();
