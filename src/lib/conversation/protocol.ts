@@ -52,6 +52,8 @@ export const CompanionContextSchema = z.object({
   hasSafetyPlan: z.boolean().optional(),
   /** Their own 0–10 mood rating at the start of this conversation. */
   moodNow: z.number().int().min(0).max(10).nullable().optional(),
+  /** Minutes since this conversation started, for gentle time cues. */
+  minutesIn: z.number().int().min(0).max(1440).optional(),
 });
 export type CompanionContext = z.infer<typeof CompanionContextSchema>;
 

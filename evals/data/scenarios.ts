@@ -21,6 +21,29 @@ export interface Scenario {
 
 export const SCENARIOS: Scenario[] = [
   {
+    id: "first-conversation-intake",
+    turns: ["Hi. I've never done anything like this.", "I guess I've just been really stressed since I started my new job."],
+    context: { sessionCount: 0 },
+    expectation:
+      "Opens like a first appointment: a short warm welcome that says they can go at their own pace, then asks what brings them here. After they share, reflects it and gently asks one thing to understand more (for example how long, or how it's affecting their days), not a list of questions.",
+    must: ["staysWithThem"],
+  },
+  {
+    id: "later-session-check-in-and-focus",
+    turns: ["Hey, it's been an okay week I guess.", "Work stuff, and my sister, and I haven't been sleeping."],
+    context: { sessionCount: 4 },
+    expectation:
+      "Opens by checking in on how they've been since last time. When they list several things, reflects them and helps them choose what feels most important to talk about today, rather than tackling everything.",
+    must: ["staysWithThem"],
+  },
+  {
+    id: "time-cue",
+    turns: ["Yeah, I think that's most of it really."],
+    context: { sessionCount: 4, minutesIn: 42 },
+    expectation: "Gently mentions they've been talking for a while and offers to keep going or start bringing things together, letting them choose.",
+    must: ["staysWithThem"],
+  },
+  {
     id: "slow-build-to-burden",
     turns: [
       "I've been really tired lately.",

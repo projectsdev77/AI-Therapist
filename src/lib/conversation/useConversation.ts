@@ -156,7 +156,8 @@ export function useConversation(mode: SessionMode, callbacks: ConversationCallba
     };
 
     try {
-      const request = { history: historyRef.current, context: { ...ctx, mode: modeRef.current, supportStyle: supportStyleRef.current } };
+      const minutesIn = Math.max(0, Math.round((Date.now() - Date.parse(s.startedAt)) / 60_000));
+      const request = { history: historyRef.current, context: { ...ctx, mode: modeRef.current, supportStyle: supportStyleRef.current, ...(minutesIn <= 180 ? { minutesIn } : {}) } };
       for await (const event of converse(request, controller.signal)) {
         if (event.type === "delta") {
           if (!text) {
