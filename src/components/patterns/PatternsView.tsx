@@ -56,7 +56,7 @@ const subscribe = (cb: () => void) => {
 };
 const EMPTY: string[] = [];
 
-/** "Your patterns": a constellation of recurring topics. Brighter means more often. */
+/** "Your patterns": a constellation of recurring topics (brighter = more often). */
 export function PatternsView() {
   const router = useRouter();
   const { store } = useStore();
@@ -87,13 +87,15 @@ export function PatternsView() {
   const at = (v: number) => 8 + v * 84;
 
   const wide = useIsWide();
+  // Nothing to show yet: just the gentle empty state, centred, with no title or footnotes.
+  const empty = reflections !== null && stars.length === 0;
   const ranked = [...stars].sort((x, y) => y.count - x.count).slice(0, 8);
   const constellation = (
     <>
         {reflections && stars.length === 0 ? (
-          <div className="mx-auto mt-10 flex max-w-[420px] flex-col items-center gap-3 px-5 text-center">
-            <h2 className="m-0 text-[20px] font-semibold">Your first stars are waiting</h2>
-            <p className="m-0 text-[15px] text-muted">When a topic comes up in two or more of our conversations, it appears here as a star. Topics that keep coming up together get linked.</p>
+          <div className="m-auto flex max-w-[420px] flex-col items-center gap-3 px-5 py-10 text-center">
+            <h1 className="m-0 text-[22px] font-semibold tracking-[-0.02em]">Your first stars are waiting</h1>
+            <p className="m-0 text-[15px] text-muted">The things that matter to you will show up here as we talk.</p>
             <LinkButton href={HOME} variant="primary" size="lg" className="mt-1.5">
               Start a conversation
             </LinkButton>
@@ -158,7 +160,7 @@ export function PatternsView() {
   );
   const footer = (
         <div className="mx-auto mb-12 flex w-full max-w-[760px] flex-col items-start gap-1 px-6">
-          <p className="m-0 text-[14px] text-muted">Topics that came up when we talked. Only you can say what they mean.</p>
+          <p className="m-0 text-[14px] text-muted">Only you can say what they mean.</p>
           {hidden.length > 0 && (
             <button type="button" onClick={() => writeHidden([])} className="min-h-11 bg-transparent px-0 text-[14px] text-accent-strong">
               Show {hidden.length} hidden {hidden.length === 1 ? "topic" : "topics"}
@@ -252,14 +254,18 @@ export function PatternsView() {
       ) : undefined;
     return (
       <AppShell panel={panel} panelLabel={star ? capitalize(star.id) : "Most often"}>
-        <div className="flex min-h-full flex-col px-10 pt-8 pb-6">
-          <div className="mx-auto flex w-full max-w-[880px] flex-col gap-1">
-            <h1 className="m-0 text-[40px] leading-[1.1] font-semibold tracking-[-0.04em]">Your patterns</h1>
-            <p className="m-0 text-muted">Things that keep coming up. Brighter means more often.</p>
+        {empty ? (
+          <div className="flex min-h-full flex-1 flex-col">{constellation}</div>
+        ) : (
+          <div className="flex min-h-full flex-col px-10 pt-8 pb-6">
+            <div className="mx-auto flex w-full max-w-[880px] flex-col gap-1">
+              <h1 className="m-0 text-[40px] leading-[1.1] font-semibold tracking-[-0.04em]">Your patterns</h1>
+              <p className="m-0 text-muted">Things that keep coming up.</p>
+            </div>
+            <div className="mx-auto mt-3 flex min-h-[480px] w-full max-w-[880px] flex-1 flex-col">{constellation}</div>
+            <div className="mx-auto w-full max-w-[880px] [&>div]:mb-0 [&>div]:px-0">{footer}</div>
           </div>
-          <div className="mx-auto mt-3 flex min-h-[480px] w-full max-w-[880px] flex-1 flex-col">{constellation}</div>
-          <div className="mx-auto w-full max-w-[880px] [&>div]:mb-0 [&>div]:px-0">{footer}</div>
-        </div>
+        )}
       </AppShell>
     );
   }
@@ -267,16 +273,18 @@ export function PatternsView() {
   return (
     <div className="relative flex min-h-dvh flex-col">
       <Backdrop />
-      <TopBar title="Your patterns" />
+      <TopBar title={empty ? undefined : "Your patterns"} />
       <main className="relative z-[1] flex flex-1 flex-col">
-        <div className="mx-auto w-full max-w-[760px] px-5 pt-4">
-          <h1 className="t-page-h1 m-0 mb-1 hidden min-[720px]:block">Your patterns</h1>
-          <p className="m-0 text-muted">Things that keep coming up. Brighter means more often.</p>
-        </div>
+        {!empty && (
+          <div className="mx-auto w-full max-w-[760px] px-5 pt-4">
+            <h1 className="t-page-h1 m-0 mb-1 hidden min-[720px]:block">Your patterns</h1>
+            <p className="m-0 text-muted">Things that keep coming up.</p>
+          </div>
+        )}
 
         {constellation}
 
-        {footer}
+        {!empty && footer}
       </main>
 
       <Sheet

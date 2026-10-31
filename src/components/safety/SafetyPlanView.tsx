@@ -160,7 +160,7 @@ export function SafetyPlanView() {
           </section>
         ))}
       <p className="m-0 text-[13px] text-faint">
-        Based on the Stanley-Brown Safety Planning Intervention. If you might be in danger now, use the emergency number above.
+        If you might be in danger now, use the emergency number above.
       </p>
     </PageShell>
   );

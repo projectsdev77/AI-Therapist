@@ -161,7 +161,7 @@ function FirstSky() {
     <div className="flex flex-wrap items-center gap-4 rounded-md border border-edge-hi bg-glass-strong px-5 py-[18px]">
       <span className="flex min-w-[260px] flex-1 flex-col">
         <strong className="text-[18px] font-semibold">Your first sky is waiting</strong>
-        <span className="text-[15px] text-muted">After each conversation, its sky fills in a day here, so you can look back and notice how things have felt.</span>
+        <span className="text-[15px] text-muted">Your skies will appear here as we talk.</span>
       </span>
       <button type="button" onClick={() => start(startIn)} className="press min-h-12 rounded-pill bg-mic px-5 text-[15px] font-semibold text-mic-fg hover:bg-mic-hover">
         Start a conversation

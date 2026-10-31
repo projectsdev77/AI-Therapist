@@ -80,7 +80,7 @@ export function HistoryView() {
             style={{ background: "repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 10px, transparent 10px 12px)" }}
           />
           <h2 className="m-0 mt-2 text-[20px] font-semibold">Your first sky is waiting</h2>
-          <p className="m-0 max-w-[360px] text-[15px] text-muted">After each conversation, a sky appears here, so you can look back and notice how things have felt.</p>
+          <p className="m-0 max-w-[360px] text-[15px] text-muted">Your skies will appear here as we talk.</p>
           <LinkButton href={HOME} variant="primary" size="lg" className="mt-1.5 px-[22px]">
             Start a conversation
           </LinkButton>
