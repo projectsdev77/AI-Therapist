@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildDays } from "@/lib/history/days";
 import type { Reflection, Session } from "@/lib/data/types";
 
-const session = (id: string, startedAt: string): Session => ({ id, mode: "text", startedAt, endedAt: null, weather: null, toneStart: null, toneEnd: null, title: null });
+const session = (id: string, startedAt: string): Session => ({ id, mode: "text", startedAt, endedAt: null, weather: null, toneStart: null, toneEnd: null, title: null, moodStart: null, moodEnd: null, heard: null });
 const reflection = (sessionId: string, weather: Reflection["weather"]): Reflection => ({ id: `r${sessionId}`, sessionId, title: "t", quotes: [], insight: "", nextStep: null, themes: [], weather, feedback: null, editedAt: null, weatherByPerson: false, createdAt: "" });
 
 describe("buildDays", () => {

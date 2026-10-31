@@ -15,8 +15,49 @@ export interface Profile {
   /** Running "case notes" summary, rewritten after each session. */
   clientSummary: string | null;
   clientSummaryUpdatedAt: string | null;
+  /** The person's own safety plan (Stanley-Brown steps). null = not made yet. */
+  safetyPlan: SafetyPlan | null;
   createdAt: string;
 }
+
+/**
+ * A personal safety plan, after the Stanley-Brown Safety Planning Intervention: each step is a
+ * short list in the person's own words.
+ */
+export interface SafetyPlan {
+  /** Thoughts, feelings or situations that tell me a crisis may be starting. */
+  warningSigns: string[];
+  /** Things I can do on my own to take my mind off things. */
+  coping: string[];
+  /** People and places that help me feel better or distracted. */
+  distractions: string[];
+  /** People I can ask for help. */
+  people: string[];
+  /** Professionals and services I can contact (crisis lines are added from my region). */
+  professionals: string[];
+  /** Ways to make my surroundings safer. */
+  safeSurroundings: string[];
+  /** What matters most to me and is worth living for. */
+  reasons: string[];
+  updatedAt: string;
+}
+
+export const SAFETY_PLAN_STEPS = ["warningSigns", "coping", "distractions", "people", "professionals", "safeSurroundings", "reasons"] as const;
+export type SafetyPlanStep = (typeof SAFETY_PLAN_STEPS)[number];
+
+export const emptySafetyPlan = (): SafetyPlan => ({
+  warningSigns: [],
+  coping: [],
+  distractions: [],
+  people: [],
+  professionals: [],
+  safeSurroundings: [],
+  reasons: [],
+  updatedAt: nowIso(),
+});
+
+/** How the person felt about a conversation, asked at Wrap up (after the Session Rating Scale). */
+export type Heard = "yes" | "somewhat" | "no";
 
 export interface Session {
   id: string;
@@ -27,6 +68,16 @@ export interface Session {
   toneStart: Tone | null;
   toneEnd: Tone | null;
   title: string | null;
+  /** The person's own mood rating, 0–10, at the start and at Wrap up (null = not rated). */
+  moodStart: number | null;
+  moodEnd: number | null;
+  /** "Did you feel heard?" at Wrap up. */
+  heard: Heard | null;
+}
+
+/** Older sessions were saved before mood and "heard" existed. */
+export function withSessionDefaults(s: Omit<Session, "moodStart" | "moodEnd" | "heard"> & Partial<Session>): Session {
+  return { ...s, moodStart: s.moodStart ?? null, moodEnd: s.moodEnd ?? null, heard: s.heard ?? null };
 }
 
 export interface Message {
@@ -146,6 +197,8 @@ export interface DataStore {
   deleteMemory(id: string): Promise<void>;
 
   addSafetyEvent(event: Omit<SafetyEvent, "id" | "createdAt">): Promise<void>;
+  /** Most recent first. */
+  listSafetyEvents(limit?: number): Promise<SafetyEvent[]>;
 
   exportAll(): Promise<ExportBundle>;
   deleteEverything(): Promise<void>;

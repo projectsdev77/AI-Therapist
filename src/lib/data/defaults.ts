@@ -10,6 +10,7 @@ export function defaultProfile(id: string = newId()): Profile {
     consentedAt: null,
     clientSummary: null,
     clientSummaryUpdatedAt: null,
+    safetyPlan: null,
     createdAt: nowIso(),
   };
 }

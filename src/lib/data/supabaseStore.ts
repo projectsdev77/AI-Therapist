@@ -14,6 +14,8 @@ import type {
   ReflectionPatch,
   SafetyEvent,
   Session,
+  SafetyPlan,
+  Heard,
   SessionMode,
 } from "./types";
 
@@ -27,6 +29,7 @@ interface ProfileRow {
   consented_at: string | null;
   client_summary: string | null;
   client_summary_updated_at: string | null;
+  safety_plan: SafetyPlan | null;
   created_at: string;
 }
 interface SessionRow {
@@ -38,6 +41,9 @@ interface SessionRow {
   tone_start: Tone | null;
   tone_end: Tone | null;
   title: string | null;
+  mood_start: number | null;
+  mood_end: number | null;
+  heard: Heard | null;
 }
 interface MessageRow {
   id: string;
@@ -81,6 +87,7 @@ const toProfile = (r: ProfileRow): Profile => ({
   consentedAt: r.consented_at,
   clientSummary: r.client_summary,
   clientSummaryUpdatedAt: r.client_summary_updated_at,
+  safetyPlan: r.safety_plan ?? null,
   createdAt: r.created_at,
 });
 const fromProfilePatch = (p: Partial<Profile>) => {
@@ -92,6 +99,7 @@ const fromProfilePatch = (p: Partial<Profile>) => {
   if ("consentedAt" in p) row.consented_at = p.consentedAt;
   if ("clientSummary" in p) row.client_summary = p.clientSummary;
   if ("clientSummaryUpdatedAt" in p) row.client_summary_updated_at = p.clientSummaryUpdatedAt;
+  if ("safetyPlan" in p) row.safety_plan = p.safetyPlan;
   return row;
 };
 const toSession = (r: SessionRow): Session => ({
@@ -103,6 +111,9 @@ const toSession = (r: SessionRow): Session => ({
   toneStart: r.tone_start,
   toneEnd: r.tone_end,
   title: r.title,
+  moodStart: r.mood_start ?? null,
+  moodEnd: r.mood_end ?? null,
+  heard: r.heard ?? null,
 });
 const fromSessionPatch = (p: Partial<Session>) => {
   const row: Record<string, unknown> = {};
@@ -113,6 +124,9 @@ const fromSessionPatch = (p: Partial<Session>) => {
   if ("toneStart" in p) row.tone_start = p.toneStart;
   if ("toneEnd" in p) row.tone_end = p.toneEnd;
   if ("title" in p) row.title = p.title;
+  if ("moodStart" in p) row.mood_start = p.moodStart;
+  if ("moodEnd" in p) row.mood_end = p.moodEnd;
+  if ("heard" in p) row.heard = p.heard;
   return row;
 };
 const toMessage = (r: MessageRow): Message => ({
@@ -289,6 +303,17 @@ export class SupabaseStore implements DataStore {
 
   async addSafetyEvent(e: Omit<SafetyEvent, "id" | "createdAt">): Promise<void> {
     check(await this.sb.from("safety_events").insert({ session_id: e.sessionId, risk_level: e.riskLevel, action_taken: e.actionTaken }));
+  }
+
+  async listSafetyEvents(limit = 20): Promise<SafetyEvent[]> {
+    const rows = check(await this.sb.from("safety_events").select("*").order("created_at", { ascending: false }).limit(limit));
+    return (rows as { id: string; session_id: string | null; risk_level: SafetyEvent["riskLevel"]; action_taken: string; created_at: string }[]).map((r) => ({
+      id: r.id,
+      sessionId: r.session_id ?? "",
+      riskLevel: r.risk_level,
+      actionTaken: r.action_taken,
+      createdAt: r.created_at,
+    }));
   }
 
   async exportAll(): Promise<ExportBundle> {

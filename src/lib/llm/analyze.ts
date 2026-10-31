@@ -10,7 +10,7 @@ import { hasGemini, jsonGemini } from "./gemini";
 function transcript(history: ChatTurn[]): string {
   return history
     .filter((t) => t.content !== SESSION_START)
-    .slice(-8)
+    .slice(-16)
     .map((t) => `${t.role === "user" ? "Person" : "Companion"}: ${t.content}`)
     .join("\n");
 }

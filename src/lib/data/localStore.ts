@@ -15,6 +15,7 @@ import {
   type SafetyEvent,
   type Session,
   type SessionMode,
+  withSessionDefaults,
 } from "./types";
 
 interface HavenDB extends DBSchema {
@@ -55,7 +56,7 @@ export class LocalStore implements DataStore {
   async getProfile(): Promise<Profile> {
     const db = await this.dbPromise;
     const existing = await db.get("profile", PROFILE_KEY);
-    if (existing) return existing;
+    if (existing) return { ...existing, safetyPlan: existing.safetyPlan ?? null };
     const created = defaultProfile();
     await db.put("profile", created, PROFILE_KEY);
     return created;
@@ -78,20 +79,24 @@ export class LocalStore implements DataStore {
       toneStart: null,
       toneEnd: null,
       title: null,
+      moodStart: null,
+      moodEnd: null,
+      heard: null,
     };
     await (await this.dbPromise).put("sessions", session);
     return session;
   }
 
   async getSession(id: string): Promise<Session | null> {
-    return (await (await this.dbPromise).get("sessions", id)) ?? null;
+    const s = await (await this.dbPromise).get("sessions", id);
+    return s ? withSessionDefaults(s) : null;
   }
 
   async updateSession(id: string, patch: Partial<Omit<Session, "id">>): Promise<Session> {
     const db = await this.dbPromise;
     const current = await db.get("sessions", id);
     if (!current) throw new Error(`Session ${id} not found`);
-    const next = { ...current, ...patch };
+    const next = withSessionDefaults({ ...current, ...patch });
     await db.put("sessions", next);
     return next;
   }
@@ -99,7 +104,7 @@ export class LocalStore implements DataStore {
   async listSessions(limit = 100): Promise<Session[]> {
     const db = await this.dbPromise;
     const all = await db.getAllFromIndex("sessions", "byStartedAt");
-    return all.reverse().slice(0, limit);
+    return all.reverse().slice(0, limit).map(withSessionDefaults);
   }
 
   async deleteSession(id: string, opts: { keepMemories?: boolean } = {}): Promise<void> {
@@ -189,6 +194,11 @@ export class LocalStore implements DataStore {
 
   async addSafetyEvent(input: Omit<SafetyEvent, "id" | "createdAt">): Promise<void> {
     await (await this.dbPromise).put("safetyEvents", { ...input, id: newId(), createdAt: nowIso() });
+  }
+
+  async listSafetyEvents(limit = 20): Promise<SafetyEvent[]> {
+    const all = await (await this.dbPromise).getAll("safetyEvents");
+    return all.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, limit);
   }
 
   async exportAll(): Promise<ExportBundle> {

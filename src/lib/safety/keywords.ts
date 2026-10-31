@@ -19,6 +19,12 @@ const ACUTE = [
   /\b(hurt|harm)(ing)? (him|her|them|someone|people)\b/,
   /\b(he|she|they) (hits?|beats?|chok(es|ed)) me\b/,
   /\bnot safe at home\b/,
+  /\bkms\b/,
+  /\b(want|wanna|going) to die\b/,
+  /\b(saving|saved|stockpil(e|ing)) (up )?(my |the )?(pills|meds|tablets)\b/,
+  /\bhow many (pills |tablets )?(it )?would (it )?take\b/,
+  /\b(wrote|writing|left) (a |my )?(goodbye|suicide) (note|letters?)\b/,
+  /\b(cutting|burning) (my ?self )?(right )?now\b/,
 ];
 
 const ELEVATED = [
@@ -30,6 +36,15 @@ const ELEVATED = [
   /\bdisappear forever\b/,
   /\bcan'?t go on\b/,
   /\bhopeless\b/,
+  // Warning signs clinicians listen for: feeling like a burden, passive wishes, putting affairs in order.
+  /\b(better off|happier) without me\b/,
+  /\b(a|such a) burden (to|on) (everyone|everybody|my family|them)\b/,
+  /\b(go to sleep|sleep) and (never|not) wake up\b/,
+  /\b(won'?t|will not) be (a problem|around|here) (for anyone )?(much )?longer\b/,
+  /\bgiv(e|ing) (away )?(away )?(all )?my (stuff|things|belongings)\b/,
+  /\bscared of what i (might|could) do\b/,
+  /\b(don'?t|do not) deserve to (live|be alive|be here|exist)\b/,
+  /\bnot (be|being) here anymore\b/,
 ];
 
 export function keywordRisk(text: string): RiskLevel {

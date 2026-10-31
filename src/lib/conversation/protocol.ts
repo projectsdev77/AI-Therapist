@@ -41,6 +41,17 @@ export const CompanionContextSchema = z.object({
   localTime: z.string().max(80),
   /** The kind of support the person chose for this conversation, if any. */
   supportStyle: z.enum(SUPPORT_STYLES).nullable().optional(),
+  /** How the last conversation ended: the step they agreed to, and whether they felt heard. */
+  lastConversation: z
+    .object({ date: z.string().max(40), openStep: z.string().max(300).nullable(), heard: z.enum(["yes", "somewhat", "no"]).nullable() })
+    .nullable()
+    .optional(),
+  /** A safety moment in the last two weeks, so Haven can gently check in. */
+  recentSafety: z.object({ date: z.string().max(40), level: z.enum(["elevated", "acute"]) }).nullable().optional(),
+  /** They have a personal safety plan in the app. */
+  hasSafetyPlan: z.boolean().optional(),
+  /** Their own 0–10 mood rating at the start of this conversation. */
+  moodNow: z.number().int().min(0).max(10).nullable().optional(),
 });
 export type CompanionContext = z.infer<typeof CompanionContextSchema>;
 

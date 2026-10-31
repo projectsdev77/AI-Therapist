@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { HelpIcon, PhoneIcon } from "@/components/ui/icons";
+import { useStore } from "@/lib/data/StoreProvider";
 import { resourcesFor, smsHref } from "@/lib/safety/resources";
 import { useRegion } from "@/lib/safety/useRegion";
 
@@ -24,6 +26,7 @@ export function SupportPill({ onOpen }: { onOpen: () => void }) {
  * text. It never covers the composer, so the conversation keeps going.
  */
 export function CarePanel({ onSafe }: { onSafe: () => void }) {
+  const hasPlan = Boolean(useStore().profile?.safetyPlan);
   const region = useRegion();
   const res = resourcesFor(region);
   const line = res.lines[0];
@@ -76,6 +79,11 @@ export function CarePanel({ onSafe }: { onSafe: () => void }) {
           </a>
         ) : null}
       </div>
+      {hasPlan && (
+        <Link href="/safety-plan" target="_blank" className="text-[15px] font-medium text-care">
+          Open my safety plan
+        </Link>
+      )}
       <button
         type="button"
         onClick={onSafe}

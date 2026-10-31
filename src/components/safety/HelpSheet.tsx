@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Sheet } from "@/components/ui/Sheet";
 import { PhoneIcon } from "@/components/ui/icons";
 import { useStore } from "@/lib/data/StoreProvider";
@@ -84,7 +86,26 @@ export function HelpContent({ footer = "Free, confidential, any time. Closing th
           ))}
         </select>
       </label>
+      <SafetyPlanLink />
       <p className="m-0 text-sm text-muted">{footer}</p>
     </>
+  );
+}
+
+/** Opens (or starts) the person's own safety plan. */
+export function SafetyPlanLink() {
+  const { profile } = useStore();
+  const has = Boolean(profile?.safetyPlan);
+  // From inside a conversation, open it beside the conversation rather than leaving it.
+  const inConversation = usePathname().startsWith("/talk");
+  return (
+    <Link
+      href="/safety-plan"
+      target={inConversation ? "_blank" : undefined}
+      className="press flex min-h-[52px] items-center justify-between rounded-sm border border-edge-lo px-4 text-[15px] text-text no-underline hover:bg-glass hover:text-text"
+    >
+      <span>{has ? "Open my safety plan" : "Make a safety plan"}</span>
+      <span className="font-medium text-accent-strong">{has ? "Open" : "Start"}</span>
+    </Link>
   );
 }
