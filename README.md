@@ -58,7 +58,7 @@ Add keys to turn on each real service:
 | `npm run dev` | Development server |
 | `npm run check` | Lint, typecheck, and unit tests |
 | `npm run build && npm run test:e2e` | Playwright end-to-end tests with axe accessibility checks (mobile and desktop) |
-| `npm run eval` | Model evals: safety (must pass 100%) and conversation quality. Needs `ANTHROPIC_API_KEY`. |
+| `npm run eval` | Model evals: safety labels, single replies and whole-conversation scenarios (safety must pass 100%). Uses `GEMINI_API_KEY` or `ANTHROPIC_API_KEY`; on the free Gemini tier add `EVAL_CONCURRENCY=1`. Also runs in GitHub Actions ("Safety evals") when the AI code changes. |
 
 Database policy tests: see [supabase/tests/README.md](supabase/tests/README.md).
 

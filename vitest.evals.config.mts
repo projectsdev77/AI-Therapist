@@ -9,6 +9,7 @@ export default defineConfig({
     environment: "node",
     include: ["evals/**/*.eval.ts"],
     testTimeout: 120_000,
-    maxConcurrency: 6,
+    // Gemini's free tier allows only a few requests a minute: EVAL_CONCURRENCY=1.
+    maxConcurrency: Number(process.env.EVAL_CONCURRENCY ?? 6),
   },
 });
